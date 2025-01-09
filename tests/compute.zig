@@ -4,7 +4,7 @@ const testing = std.testing;
 const wgpu = @import("wgpu");
 
 fn handle_buffer_map(status: wgpu.BufferMapAsyncStatus, _: ?*anyopaque) callconv(.C) void {
-    std.debug.print("buffer_map status={x:.8}\n", .{@intFromEnum(status)});
+    std.log.info("buffer_map status={x:.8}\n", .{@intFromEnum(status)});
 }
 
 fn compute_collatz() ![4]u32 {

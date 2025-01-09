@@ -14,7 +14,7 @@ fn handle_request_device(_: wgpu.WGPURequestDeviceStatus, device: wgpu.WGPUDevic
 }
 
 fn handle_buffer_map(status: wgpu.WGPUBufferMapAsyncStatus, _: ?*anyopaque) callconv(.C) void {
-    std.debug.print("buffer_map status={x:.8}\n", .{status});
+    std.log.info("buffer_map status={x:.8}\n", .{status});
 }
 
 fn compute_collatz() [4]u32 {

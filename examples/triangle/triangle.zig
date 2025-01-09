@@ -11,7 +11,7 @@ const output_bytes_per_row = 4 * output_extent.width;
 const output_size = output_bytes_per_row * output_extent.height;
 
 fn handle_buffer_map(status: wgpu.BufferMapAsyncStatus, _: ?*anyopaque) callconv(.C) void {
-    std.debug.print("buffer_map status={x:.8}\n", .{@intFromEnum(status)});
+    std.log.info("buffer_map status={x:.8}\n", .{@intFromEnum(status)});
 }
 
 // Based off of headless triangle example from https://github.com/eliemichel/LearnWebGPU-Code/tree/step030-headless
