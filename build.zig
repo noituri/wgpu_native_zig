@@ -88,21 +88,23 @@ const WGPUBuildContext = struct {
         var libwgpu_path: std.Build.LazyPath = undefined;
         var is_windows: bool = false;
 
+        // TODO: When we upgrade wgpu-native, we'll need to at least switch on both os and abi, since the x86_64 build for Windows now supports both gnu and msvc.
+        // There are also a number of new os and cpu architecture options, so this might need to be broken out into a separate function.
         switch(target_res.os.tag) {
             .windows => {
                 is_windows = true;
                 libwgpu_path = wgpu_dep.path("wgpu_native.dll.lib");
 
-                // TODO: Find out if this propagates through when another module depends on this one; if not we may need to muck about with addNamedWriteFiles/addCopyFile.
+                // Unfortunately, it seems only the local tests can access the dll this way.
+                // For dependees, it copies to the zig cache, which you can use for testing if you do some weird stuff with the install steps,
+                // but it never copies to the output folder. So not helpful if you need to distribute a binary with the dll alongside it.
                 const dll_install_file = b.addInstallLibFile(wgpu_dep.path("wgpu_native.dll"), "wgpu_native.dll");
                 b.getInstallStep().dependOn(&dll_install_file.step);
 
-                wgpu_mod.addLibraryPath(wgpu_dep.path(""));
-                wgpu_c_mod.addLibraryPath(wgpu_dep.path(""));
-
-                // TODO: I think this has to be done by the thing that uses this module and not by the module itself?
-                // wgpu_mod.linkSystemLibrary("wgpu_native.dll", .{});
-                // wgpu_c_mod.linkSystemLibrary("wgpu_native.dll", .{});
+                // For dependees that need the dll file, this seems to be the only reliable way to propagate it through.
+                // In Zig 0.14 there seems to be some method for exposing LazyPaths to dependees, which might be a bit cleaner.
+                const writeFiles = b.addNamedWriteFiles("lib");
+                _ = writeFiles.addCopyFile(wgpu_dep.path("wgpu_native.dll"), "wgpu_native.dll");
             },
             else => {
                 // This only tries to account for linux/macos since we're using pre-compiled wgpu-native;
@@ -147,8 +149,6 @@ fn triangle_example(b: *std.Build, context: *const WGPUBuildContext) void {
     run_triangle_step.dependOn(&run_triangle_cmd.step);
 
     if (context.is_windows) {
-        triangle_example_exe.linkSystemLibrary2("wgpu_native.dll", .{});
-
         run_triangle_cmd.addPathDir(context.install_lib_dir);
         run_triangle_step.dependOn(b.getInstallStep());
     }
@@ -184,9 +184,6 @@ fn unit_tests(b: *std.Build, context: *const WGPUBuildContext) void {
         const run_test = b.addRunArtifact(t);
 
         if (context.is_windows) {
-            t.addLibraryPath(context.wgpu_dep.path(""));
-            t.linkSystemLibrary2("wgpu_native.dll", .{});
-
             run_test.addPathDir(context.install_lib_dir);
         }
 
@@ -217,9 +214,6 @@ fn compute_tests(b: *std.Build, context: *const WGPUBuildContext) void {
 
     const compute_test_step = b.step("compute-tests", "Run compute shader tests");
     if (context.is_windows) {
-        compute_test.linkSystemLibrary2("wgpu_native.dll", .{});
-        compute_test_c.linkSystemLibrary2("wgpu_native.dll", .{});
-
         run_compute_test.addPathDir(context.install_lib_dir);
         run_compute_test_c.addPathDir(context.install_lib_dir);
 
