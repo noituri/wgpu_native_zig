@@ -50,6 +50,7 @@ const wgpu_native_dep = b.dependency("wgpu_native_zig", .{
   .target = target
 });
 ```
+An example of using `wgpu-native-zig` on Windows can be found at [wgpu-native-zig-windows-test](https://github.com/bronter/wgpu-native-zig-windows-test).
 ### Dynamic linking
 Dynamic linking can be made to work, though it is a bit messy to use.
 When you initialize your `wgpu_native_dep`, add the option for dynamic linking like so:
