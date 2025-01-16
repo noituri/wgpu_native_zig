@@ -1,52 +1,46 @@
 const std = @import("std");
 
-// const TargetQuery = std.Target.Query;
-
-const PseudoTargetQuery = struct {
-    cpu_arch: ?std.Target.Cpu.Arch,
-    os_tag: ?std.Target.Os.Tag,
-    abi: ?std.Target.Abi = null,
-};
+const TargetQuery = std.Target.Query;
 
 // All the targets for which a pre-compiled build of wgpu-native is currently (as of July 9, 2024) available
-const target_whitelist = [_] PseudoTargetQuery {
-    PseudoTargetQuery {
+const target_whitelist = [_] TargetQuery {
+    TargetQuery {
         .cpu_arch = .aarch64,
         .os_tag = .linux,
     },
-    PseudoTargetQuery {
+    TargetQuery {
         .cpu_arch = .aarch64,
         .os_tag = .macos,
     },
-    PseudoTargetQuery {
+    TargetQuery {
         .cpu_arch = .x86_64,
         .os_tag = .linux,
     },
-    PseudoTargetQuery {
+    TargetQuery {
         .cpu_arch = .x86_64,
         .os_tag = .macos,
     },
-    PseudoTargetQuery {
+    TargetQuery {
         .cpu_arch = .x86,
         .os_tag = .windows,
-        // .abi = .msvc,
+        .abi = .msvc,
     },
-    PseudoTargetQuery {
+    TargetQuery {
         .cpu_arch = .x86_64,
         .os_tag = .windows,
-        // .abi = .msvc,
+        .abi = .msvc,
     },
 };
 
 // The whitelist function in standardTargetOptionsQueryOnly matches *exact* targets,
 // so unless you get extremely specific it will give false negatives and none of the targets will match when one of them should.
 // This is a way to get around that while still not allowing just any target.
-fn match_target_whitelist(target_query: std.Target.Query) bool {
+fn match_target_whitelist(target: std.Target) bool {
     var found = false;
     for (target_whitelist) |query| {
-        if (target_query.os_tag == query.os_tag and target_query.cpu_arch == query.cpu_arch) {
+        if (target.os.tag == query.os_tag and target.cpu.arch == query.cpu_arch) {
             if (query.abi != null) {
-                if (query.abi == target_query.abi) {
+                if (query.abi == target.abi) {
                     found = true;
                     break;
                 }
@@ -96,15 +90,6 @@ const WGPUBuildContext = struct {
         // for restricting supported target set are available.
         const target = b.standardTargetOptions(.{});
 
-        // TODO: Clean up this target query stuff; I must be missing something because it probably shouldn't be this complicated.
-        const target_query = target.query;
-        if (!match_target_whitelist(target_query)) {
-            std.log.err("chosen target '{s}' does not match one of the allowed targets", .{
-                target_query.zigTriple(b.allocator) catch @panic("OOM"),
-            });
-        }
-
-
         // Standard optimization options allow the person running `zig build` to select
         // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
         // set a preferred release mode, allowing the user to decide how to optimize.
@@ -113,6 +98,10 @@ const WGPUBuildContext = struct {
         const target_res = target.result;
         const os_str = @tagName(target_res.os.tag);
         const arch_str = @tagName(target_res.cpu.arch);
+        if (!match_target_whitelist(target_res)) {
+            // TODO: Fail step here
+            std.log.err("Target {s}-{s}-{s} does match any supported target", .{arch_str, os_str, @tagName(target_res.abi)});
+        }
         const mode_str = switch (optimize) {
             .Debug => "debug",
             else => "release",

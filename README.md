@@ -44,6 +44,12 @@ Or, specify it with your build command. For example, the triangle example in thi
 ```sh
 zig build run-triangle-example -Dtarget=x86_64-windows-msvc
 ```
+Either way, pass the resolved target to the dependency like so:
+```zig
+const wgpu_native_dep = b.dependency("wgpu_native_zig", .{
+  .target = target
+});
+```
 ### Dynamic linking
 Dynamic linking can be made to work, though it is a bit messy to use.
 When you initialize your `wgpu_native_dep`, add the option for dynamic linking like so:
