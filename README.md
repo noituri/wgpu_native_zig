@@ -31,6 +31,50 @@ Then, in `build.zig` add:
     lib.root_module.addImport("wgpu", wgpu_native_dep.module("wgpu"));
 ```
 
+### Building on Windows
+For Windows, static linking is currently only supported if using MSVC (this will soon change), so specify that in your build target:
+```zig
+const target = b.standardTargetOptions(.{
+    .default_target = .{
+        .abi = .msvc,
+    }
+});
+```
+Or, specify it with your build command. For example, the triangle example in this repository can be run like so:
+```sh
+zig build run-triangle-example -Dtarget=x86_64-windows-msvc
+```
+Either way, pass the resolved target to the dependency like so:
+```zig
+const wgpu_native_dep = b.dependency("wgpu_native_zig", .{
+  .target = target
+});
+```
+An example of using `wgpu-native-zig` on Windows can be found at [wgpu-native-zig-windows-test](https://github.com/bronter/wgpu-native-zig-windows-test).
+### Dynamic linking
+Dynamic linking can be made to work, though it is a bit messy to use.
+When you initialize your `wgpu_native_dep`, add the option for dynamic linking like so:
+```zig
+const wgpu_native_dep = b.dependency("wgpu_native_zig", .{
+  // Defaults to .static if you don't specify
+  .link_mode = .dynamic
+});
+```
+Then add the following with your install step dependencies:
+```zig
+const lib_dir = wgpu_native_dep.namedWriteFiles("lib").getDirectory();
+
+// This would also work with .so files on linux
+const dll_path = lib_dir.join(b.allocator, "wgpu_native.dll") catch return;
+
+// addInstallBinFile puts the dll in the same directory as your executable
+const install_dll = b.addInstallBinFile(dll_path, "wgpu_native.dll");
+
+// Make sure that the dll is installed when the install step is run
+b.getInstallStep().dependOn(&install_dll.step);
+```
+
+
 ## How the `wgpu` module differs from `wgpu-c`
 * Names are shortened to remove redundancy.
   * For example `wgpu.WGPUSurfaceDescriptor` becomes `wgpu.SurfaceDescriptor`
@@ -115,7 +159,6 @@ Then, in `build.zig` add:
   * This pretty much means, it is replaced with `bool` in the parameters and return values of methods, but not in structs or the parameters/return values of procs (which are supposed to be function pointers to things returned by `wgpuGetProcAddress`).
 
 ## TODO
-* Test this on other machines with different OS/CPU (currently only tested on linux x86_64; zig version 0.13.0-dev.351+64ef45eb0)
+* Test this on other machines with different OS/CPU (currently only tested on x86_64-linux-gnu and x86_64-windows-msvc; zig version 0.13.0-dev.351+64ef45eb0)
 * Port [wgpu-native-examples](https://github.com/samdauwe/webgpu-native-examples) using wrapper code, as a basic form of documentation.
 * Custom-build `wgpu-native`; provided all the necessary tools/dependencies are present.
-* Figure out dynamic linking
