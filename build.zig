@@ -95,6 +95,8 @@ const WGPUBuildContext = struct {
         // means any target is allowed, and the default is native. Other options
         // for restricting supported target set are available.
         const target = b.standardTargetOptions(.{});
+
+        // TODO: Clean up this target query stuff; I must be missing something because it probably shouldn't be this complicated.
         const target_query = target.query;
         if (!match_target_whitelist(target_query)) {
             std.log.err("chosen target '{s}' does not match one of the allowed targets", .{
