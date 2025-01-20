@@ -50,7 +50,9 @@ const wgpu_native_dep = b.dependency("wgpu_native_zig", .{
   .target = target
 });
 ```
-An example of using `wgpu-native-zig` on Windows can be found at [wgpu-native-zig-windows-test](https://github.com/bronter/wgpu-native-zig-windows-test).
+An example of using `wgpu-native-zig` with static linking on Windows can be found at [wgpu-native-zig-windows-test](https://github.com/bronter/wgpu-native-zig-windows-test).
+
+If using dynamic linking, MSVC may not be required.
 ### Dynamic linking
 Dynamic linking can be made to work, though it is a bit messy to use.
 When you initialize your `wgpu_native_dep`, add the option for dynamic linking like so:
@@ -162,3 +164,4 @@ b.getInstallStep().dependOn(&install_dll.step);
 * Test this on other machines with different OS/CPU (currently only tested on x86_64-linux-gnu and x86_64-windows-msvc; zig version 0.13.0-dev.351+64ef45eb0)
 * Port [wgpu-native-examples](https://github.com/samdauwe/webgpu-native-examples) using wrapper code, as a basic form of documentation.
 * Custom-build `wgpu-native`; provided all the necessary tools/dependencies are present.
+* Bindgen using [the webgpu-headers yaml](https://github.com/webgpu-native/webgpu-headers/blob/main/webgpu.yml)?
