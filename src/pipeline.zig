@@ -102,7 +102,7 @@ pub const CreatePipelineAsyncStatus = enum(u32) {
     unknown          = 0x00000005,
 };
 
-pub const CreatComputePipelineAsyncCallback = *const fn(
+pub const CreateComputePipelineAsyncCallback = *const fn(
     status: CreatePipelineAsyncStatus,
     pipeline: ?*ComputePipeline,
     message: ?[*:0]const u8,
