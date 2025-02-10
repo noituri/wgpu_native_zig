@@ -32,6 +32,19 @@ pub const FeatureName = enum(u32) {
     pipeline_statistics_query                                     = 0x00030008,
     storage_resource_binding_array                                = 0x00030009,
     partially_bound_binding_array                                 = 0x0003000A,
+    texture_format_16bit_norm                                     = 0x0003000B,
+    texture_compression_astc_hdr                                  = 0x0003000C,
+    mappable_primary_buffers                                      = 0x0003000E,
+    buffer_binding_array                                          = 0x0003000F,
+    uniform_buffer_and_storage_texture_array_non_uniform_indexing = 0x00030010,
+    vertex_attribute_64bit                                        = 0x00030019,
+    texture_format_nv12                                           = 0x0003001A,
+    ray_tracing_acceleration_structure                            = 0x0003001B,
+    ray_query                                                     = 0x0003001C,
+    shader_f64                                                    = 0x0003001D,
+    shader_i16                                                    = 0x0003001E,
+    shader_primitive_index                                        = 0x0003001F,
+    shader_early_depth_test                                       = 0x00030020,
 };
 
 pub const IndexFormat = enum(u32) {

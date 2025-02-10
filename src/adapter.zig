@@ -13,7 +13,7 @@ const Surface = @import("surface.zig").Surface;
 const _device = @import("device.zig");
 const Device = _device.Device;
 const DeviceDescriptor = _device.DeviceDescriptor;
-const RequestDeviceCallback = _device.RequestDeviceCallback;
+const AdapterRequestDeviceCallback = _device.AdapterRequestDeviceCallback;
 const RequestDeviceStatus = _device.RequestDeviceStatus;
 const RequestDeviceResponse = _device.RequestDeviceResponse;
 
@@ -56,7 +56,9 @@ pub const RequestAdapterStatus = enum(u32) {
     @"error"    = 0x00000002,
     unknown     = 0x00000003,
 };
-pub const RequestAdapterCallback = *const fn(status: RequestAdapterStatus, adapter: ?*Adapter, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void;
+
+// TODO: This should maybe be relocated to instance.zig; it is only used there.
+pub const InstanceRequestAdapterCallback = *const fn(status: RequestAdapterStatus, adapter: ?*Adapter, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void;
 
 pub const RequestAdapterResponse = struct {
     status: RequestAdapterStatus,
@@ -64,33 +66,43 @@ pub const RequestAdapterResponse = struct {
     adapter: ?*Adapter,
 };
 
-pub const AdapterProperties = extern struct {
+pub const AdapterInfoProcs = struct {
+    pub const FreeMembers = *const fn(AdapterInfo) callconv(.C) void;
+};
+
+extern fn wgpuAdapterInfoFreeMembers(adapter_info: AdapterInfo) void;
+
+pub const AdapterInfo = extern struct {
     next_in_chain: ?*ChainedStructOut = null,
-    vendor_id: u32,
-    vendor_name: [*:0]const u8,
+    vendor: [*:0]const u8,
     architecture: [*:0]const u8,
-    device_id: u32,
-    name: [*:0]const u8,
-    driver_description: [*:0]const u8,
-    adapter_type: AdapterType,
+    device: [*:0]const u8,
+    description: [*:0]const u8,
     backend_type: BackendType,
+    adapter_type: AdapterType,
+    vendor_id: u32,
+    device_id: u32,
+
+    pub inline fn freeMembers(self: AdapterInfo) void {
+        wgpuAdapterInfoFreeMembers(self);
+    }
 };
 
 pub const AdapterProcs = struct {
     pub const EnumerateFeatures = *const fn(Adapter, ?[*]FeatureName) callconv(.C) usize;
     pub const GetLimits = *const fn(Adapter, *SupportedLimits) callconv(.C) WGPUBool;
-    pub const GetProperties = *const fn(Adapter, *AdapterProperties) callconv(.C) void;
+    pub const GetInfo = *const fn(Adapter, *AdapterInfo) callconv(.C) void;
     pub const HasFeature = *const fn(Adapter, FeatureName) callconv(.C) WGPUBool;
-    pub const RequestDevice = *const fn(Adapter, ?*const DeviceDescriptor, RequestDeviceCallback, ?*anyopaque) callconv(.C) void;
+    pub const RequestDevice = *const fn(Adapter, ?*const DeviceDescriptor, AdapterRequestDeviceCallback, ?*anyopaque) callconv(.C) void;
     pub const Reference = *const fn(Adapter) callconv(.C) void;
     pub const Release = *const fn(Adapter) callconv(.C) void;
 };
 
 extern fn wgpuAdapterEnumerateFeatures(adapter: *Adapter, features: ?[*]FeatureName) usize;
 extern fn wgpuAdapterGetLimits(adapter: *Adapter, limits: *SupportedLimits) WGPUBool;
-extern fn wgpuAdapterGetProperties(adapter: *Adapter, properties: *AdapterProperties) void;
+extern fn wgpuAdapterGetInfo(adapter: *Adapter, info: *AdapterInfo) void;
 extern fn wgpuAdapterHasFeature(adapter: *Adapter, feature: FeatureName) WGPUBool;
-extern fn wgpuAdapterRequestDevice(adapter: *Adapter, descriptor: ?*const DeviceDescriptor, callback: RequestDeviceCallback, userdata: ?*anyopaque) void;
+extern fn wgpuAdapterRequestDevice(adapter: *Adapter, descriptor: ?*const DeviceDescriptor, callback: AdapterRequestDeviceCallback, userdata: ?*anyopaque) void;
 extern fn wgpuAdapterReference(adapter: *Adapter) void;
 extern fn wgpuAdapterRelease(adapter: *Adapter) void;
 
@@ -101,8 +113,8 @@ pub const Adapter = opaque{
     pub inline fn getLimits(self: *Adapter, limits: *SupportedLimits) bool {
         return wgpuAdapterGetLimits(self, limits) != 0;
     }
-    pub inline fn getProperties(self: *Adapter, properties: *AdapterProperties) void {
-        wgpuAdapterGetProperties(self, properties);
+    pub inline fn getInfo(self: *Adapter, info: *AdapterInfo) void {
+        wgpuAdapterGetInfo(self, info);
     }
     pub inline fn hasFeature(self: *Adapter, feature: FeatureName) bool {
         return wgpuAdapterHasFeature(self, feature) != 0;
@@ -121,7 +133,7 @@ pub const Adapter = opaque{
         wgpuAdapterRequestDevice(self, descriptor, defaultDeviceCallback, @ptrCast(&response));
         return response;
     }
-    pub inline fn requestDevice(self: *Adapter, descriptor: ?*const DeviceDescriptor, callback: RequestDeviceCallback, userdata: ?*anyopaque) void {
+    pub inline fn requestDevice(self: *Adapter, descriptor: ?*const DeviceDescriptor, callback: AdapterRequestDeviceCallback, userdata: ?*anyopaque) void {
         wgpuAdapterRequestDevice(self, descriptor, callback, userdata);
     }
     pub inline fn reference(self: *Adapter) void {

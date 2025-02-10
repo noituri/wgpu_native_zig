@@ -162,6 +162,13 @@ b.getInstallStep().dependOn(&install_dll.step);
 
 ## TODO
 * Test this on other machines with different OS/CPU (currently only tested on x86_64-linux-gnu and x86_64-windows-msvc; zig version 0.13.0-dev.351+64ef45eb0)
+* Cleanup/organization: 
+  * If types are only tied to a specific opaque struct, they should be decls inside that struct.
+    * For example, `ShaderModuleGetCompilationInfoCallback` should be `ShaderModule.GetCompilationInfoCallback`, since that callback type isn't used anywhere outside of the context of `ShaderModule`.
+  * The associated Procs struct should probably be a decl of the opaque struct as well.
+  * There are many things that seem to be in the wrong file.
+    * For example a lot of what is in `pipeline.zig` is actually only used by `Device`, and should probably be in `device.zig` instead.
+  * Since pointers to opaque structs are made explicit, it would be more consistent if pointers to callback functions are explicit as well.
 * Port [wgpu-native-examples](https://github.com/samdauwe/webgpu-native-examples) using wrapper code, as a basic form of documentation.
 * Custom-build `wgpu-native`; provided all the necessary tools/dependencies are present.
 * Bindgen using [the webgpu-headers yaml](https://github.com/webgpu-native/webgpu-headers/blob/main/webgpu.yml)?

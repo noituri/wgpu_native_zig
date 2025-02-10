@@ -65,7 +65,7 @@ pub const BufferMapAsyncStatus = enum(u32) {
     size_out_of_range         = 0x00000008,
 };
 
-pub const BufferMapCallback = *const fn(status: BufferMapAsyncStatus, userdata: ?*anyopaque) callconv(.C) void;
+pub const BufferMapAsyncCallback = *const fn(status: BufferMapAsyncStatus, userdata: ?*anyopaque) callconv(.C) void;
 
 pub const BufferDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
@@ -82,7 +82,7 @@ pub const BufferProcs = struct {
     pub const GetMappedRange = *const fn(*Buffer, usize, usize) callconv(.C) ?*anyopaque;
     pub const GetSize = *const fn(*Buffer) callconv(.C) u64;
     pub const GetUsage = *const fn(*Buffer) callconv(.C) BufferUsageFlags;
-    pub const MapAsync = *const fn(*Buffer, MapModeFlags, usize, usize, BufferMapCallback, ?*anyopaque) callconv(.C) void;
+    pub const MapAsync = *const fn(*Buffer, MapModeFlags, usize, usize, BufferMapAsyncCallback, ?*anyopaque) callconv(.C) void;
     pub const SetLabel = *const fn(*Buffer, ?[*:0]const u8) callconv(.C) void;
     pub const Unmap = *const fn(*Buffer) callconv(.C) void;
     pub const Reference = *const fn(*Buffer) callconv(.C) void;
@@ -95,7 +95,7 @@ extern fn wgpuBufferGetMapState(buffer: *Buffer) BufferMapState;
 extern fn wgpuBufferGetMappedRange(buffer: *Buffer, offset: usize, size: usize) ?*anyopaque;
 extern fn wgpuBufferGetSize(buffer: *Buffer) u64;
 extern fn wgpuBufferGetUsage(buffer: *Buffer) BufferUsageFlags;
-extern fn wgpuBufferMapAsync(buffer: *Buffer, mode: MapModeFlags, offset: usize, size: usize, callback: BufferMapCallback, userdata: ?*anyopaque) void;
+extern fn wgpuBufferMapAsync(buffer: *Buffer, mode: MapModeFlags, offset: usize, size: usize, callback: BufferMapAsyncCallback, userdata: ?*anyopaque) void;
 extern fn wgpuBufferSetLabel(buffer: *Buffer, label: ?[*:0]const u8) void;
 extern fn wgpuBufferUnmap(buffer: *Buffer) void;
 extern fn wgpuBufferReference(buffer: *Buffer) void;
@@ -126,7 +126,7 @@ pub const Buffer = opaque {
     // TODO: Not sure if it makes sense to try to write a sync wrapper for this.
     //       This is probably the sort of thing that should use a native async syntax,
     //       if/when Zig ever gets async back: https://github.com/ziglang/zig/issues/6025
-    pub inline fn mapAsync(self: *Buffer, mode: MapModeFlags, offset: usize, size: usize, callback: BufferMapCallback, userdata: ?*anyopaque) void {
+    pub inline fn mapAsync(self: *Buffer, mode: MapModeFlags, offset: usize, size: usize, callback: BufferMapAsyncCallback, userdata: ?*anyopaque) void {
         wgpuBufferMapAsync(self, mode, offset, size, callback, userdata);
     }
 

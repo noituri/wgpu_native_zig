@@ -107,6 +107,15 @@ pub const TextureFormat = enum(u32) {
     astc12x10_unorm_srgb    = 0x0000005D,
     astc12x12_unorm         = 0x0000005E,
     astc12x12_unorm_srgb    = 0x0000005F,
+
+    // wgpu-native texture formats
+    r16_unorm               = 0x00030001,
+    r16_snorm               = 0x00030002,
+    rg16_unorm              = 0x00030003,
+    rg16_snorm              = 0x00030004,
+    rgba16_unorm            = 0x00030005,
+    rgba16_snorm            = 0x00030006,
+    nv12                    = 0x00030007,
 };
 
 pub const TextureUsageFlags = WGPUFlags;
