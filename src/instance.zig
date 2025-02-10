@@ -73,6 +73,7 @@ pub const InstanceDescriptor = extern struct {
 
 pub const InstanceProcs = struct {
     pub const CreateInstance = *const fn(?*const InstanceDescriptor) callconv(.C) ?*Instance;
+    pub const CreateSurface = *const fn(*Instance, *const SurfaceDescriptor) ?*Surface;
     pub const ProcessEvents = *const fn(*Instance) callconv(.C) void;
     pub const RequestAdapter = *const fn(*Instance, ?*const RequestAdapterOptions, RequestAdapterCallback, ?*anyopaque) callconv(.C) void;
     pub const InstanceReference = *const fn(*Instance) callconv(.C) void;
