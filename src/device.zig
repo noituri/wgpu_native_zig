@@ -100,7 +100,7 @@ pub const ErrorFilter = enum(u32) {
 
 pub const UncapturedErrorCallbackInfo = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    callback: ErrorCallback,
+    callback: ?ErrorCallback = null,
     userdata: ?*anyopaque = null,
 };
 
@@ -113,7 +113,7 @@ pub const DeviceDescriptor = extern struct {
     default_queue: QueueDescriptor = QueueDescriptor{},
     device_lost_callback: DeviceLostCallback = defaultDeviceLostCallback,
     device_lost_user_data: ?*anyopaque = null,
-    uncaptured_error_callback_info: UncapturedErrorCallbackInfo,
+    uncaptured_error_callback_info: UncapturedErrorCallbackInfo = UncapturedErrorCallbackInfo{},
 
     pub inline fn withTracePath(self: DeviceDescriptor, trace_path: [*:0]const u8) DeviceDescriptor {
         var dd = self;
