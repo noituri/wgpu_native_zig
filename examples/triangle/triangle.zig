@@ -120,12 +120,16 @@ pub fn main() !void {
             .color_attachment_count = color_attachments.len,
             .color_attachments = color_attachments.ptr,
         }).?;
-        defer next_texture.release();
-        defer render_pass.release();
 
         render_pass.setPipeline(pipeline);
         render_pass.draw(3, 1, 0, 0);
         render_pass.end();
+
+        // The render pass has to be released after .end() or otherwise we'll crash on queue.submit
+        // https://github.com/gfx-rs/wgpu-native/issues/412#issuecomment-2311719154
+        render_pass.release();
+
+        defer next_texture.release();
 
         const img_copy_src = wgpu.ImageCopyTexture {
             .origin = wgpu.Origin3D {},

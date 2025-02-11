@@ -93,7 +93,9 @@ const WGPUBuildContext = struct {
         // Standard optimization options allow the person running `zig build` to select
         // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
         // set a preferred release mode, allowing the user to decide how to optimize.
-        const optimize = b.standardOptimizeOption(.{});
+        const optimize = b.standardOptimizeOption(.{
+            .preferred_optimize_mode = .Debug,
+        });
 
         const target_res = target.result;
         const os_str = @tagName(target_res.os.tag);
@@ -121,11 +123,15 @@ const WGPUBuildContext = struct {
 
         const translate_step = b.addTranslateC(.{
             // wgpu.h imports webgpu.h, so we get the contents of both files, as well as a bunch of libc garbage.
-            .root_source_file = wgpu_dep.path("wgpu.h"),
+            .root_source_file = wgpu_dep.path("include/wgpu/wgpu.h"),
 
             .target = target,
             .optimize = optimize,
         });
+
+        // TODO: Zig 0.14 has a way to do this with a LazyPath, so not quite as messy.
+        translate_step.addIncludeDir(wgpu_dep.path("include/webgpu").getPath2(b, &translate_step.step));
+
         const wgpu_c_mod = translate_step.addModule("wgpu-c");
         wgpu_c_mod.resolved_target = target;
         wgpu_c_mod.link_libcpp = true;
@@ -151,37 +157,37 @@ const WGPUBuildContext = struct {
                         // Also this should really be a fail step, but I'd need Zig 0.14 for that, and there are other things that currently break in 0.14.
                         @panic("Static linking on Windows currently only supported for MSVC");
                     }
-                    libwgpu_path = wgpu_dep.path("wgpu_native.lib");
+                    libwgpu_path = wgpu_dep.path("lib/wgpu_native.lib");
 
 
                     link_windows_system_libraries(std.Build.Module, wgpu_mod);
                     link_windows_system_libraries(std.Build.Module, wgpu_c_mod);
                 } else {
-                    libwgpu_path = wgpu_dep.path("wgpu_native.dll.lib");
+                    libwgpu_path = wgpu_dep.path("lib/wgpu_native.dll.lib");
 
                     // Unfortunately, it seems only the local tests can access the dll this way.
                     // For dependees, it copies to the zig cache, which you can use for testing if you do some weird stuff with the install steps,
                     // but it never copies to the output folder. So not helpful if you need to distribute a binary with the dll alongside it.
-                    const dll_install_file = b.addInstallLibFile(wgpu_dep.path("wgpu_native.dll"), "wgpu_native.dll");
+                    const dll_install_file = b.addInstallLibFile(wgpu_dep.path("lib/wgpu_native.dll"), "wgpu_native.dll");
                     b.getInstallStep().dependOn(&dll_install_file.step);
 
                     // For dependees that need the dll file, this seems to be the only reliable way to propagate it through.
                     // In Zig 0.14 there seems to be some method for exposing LazyPaths to dependees, which might be a bit cleaner.
                     const writeFiles = b.addNamedWriteFiles("lib");
-                    _ = writeFiles.addCopyFile(wgpu_dep.path("wgpu_native.dll"), "wgpu_native.dll");
+                    _ = writeFiles.addCopyFile(wgpu_dep.path("lib/wgpu_native.dll"), "wgpu_native.dll");
                 }
             },
 
             // This only tries to account for linux/macos since we're using pre-compiled wgpu-native;
             // need to think harder about this if I get custom builds working.
             else => if (link_mode == .static) {
-                libwgpu_path = wgpu_dep.path("libwgpu_native.a");
+                libwgpu_path = wgpu_dep.path("lib/libwgpu_native.a");
             } else {
-                const so_install_file = b.addInstallLibFile(wgpu_dep.path("libwgpu_native.so"), "libwgpu_native.so");
+                const so_install_file = b.addInstallLibFile(wgpu_dep.path("lib/libwgpu_native.so"), "libwgpu_native.so");
                 b.getInstallStep().dependOn(&so_install_file.step);
 
                 const writeFiles = b.addNamedWriteFiles("lib");
-                _ = writeFiles.addCopyFile(wgpu_dep.path("libwgpu_native.so"), "libwgpu_native.so");
+                _ = writeFiles.addCopyFile(wgpu_dep.path("lib/libwgpu_native.so"), "libwgpu_native.so");
             },
         }
 
@@ -207,7 +213,7 @@ const WGPUBuildContext = struct {
 
 fn dynamic_link(context: *const WGPUBuildContext, c: *std.Build.Step.Compile, cmd: *std.Build.Step.Run) void {
         if (!context.is_windows) {
-            c.addLibraryPath(context.wgpu_dep.path(""));
+            c.addLibraryPath(context.wgpu_dep.path("lib"));
             c.linkSystemLibrary2("wgpu_native", .{});
         }
         cmd.addPathDir(context.install_lib_dir);
