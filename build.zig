@@ -93,9 +93,7 @@ const WGPUBuildContext = struct {
         // Standard optimization options allow the person running `zig build` to select
         // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
         // set a preferred release mode, allowing the user to decide how to optimize.
-        const optimize = b.standardOptimizeOption(.{
-            .preferred_optimize_mode = .Debug,
-        });
+        const optimize = b.standardOptimizeOption(.{});
 
         const target_res = target.result;
         const os_str = @tagName(target_res.os.tag);
