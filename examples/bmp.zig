@@ -4,11 +4,10 @@ pub fn write24BitBMP(file_name: []const u8, comptime width: u32, comptime height
     const file = try std.fs.cwd().createFile(file_name, .{});
     defer file.close();
 
-    // BMP's values should be in little-endian format, use bitWriter to make sure they are.
-    var bs = std.io.bitWriter(.little, file.writer());
+    var writer = file.writer();
 
     // ID
-    _ = try bs.write(&[2]u8{'B', 'M'});
+    _ = try writer.write(&[2]u8{'B', 'M'});
 
     const colors_per_line = width * 3;
     const bytes_per_line = switch(colors_per_line & 0x00000003) {
@@ -16,25 +15,25 @@ pub fn write24BitBMP(file_name: []const u8, comptime width: u32, comptime height
         else => (colors_per_line | 0x00000003) + 1,
     };
     const file_size = 54 + (bytes_per_line * height);
-    try bs.writeBits(file_size, 32);
+    try writer.writeInt(u32, file_size, .little);
 
     // reserved
-    try bs.writeBits(@as(u32, 0), 32);
+    try writer.writeInt(u32, 0, .little);
     // data offset
-    try bs.writeBits(@as(u32, 54), 32);
+    try writer.writeInt(u32, 54, .little);
     // info size
-    try bs.writeBits(@as(u32, 40), 32);
+    try writer.writeInt(u32, 40, .little);
     // image width
-    try bs.writeBits(width, 32);
+    try writer.writeInt(u32, width, .little);
     // image height
-    try bs.writeBits(height, 32);
+    try writer.writeInt(u32, height, .little);
     // Planes
-    try bs.writeBits(@as(u16, 1), 16);
+    try writer.writeInt(u16, 1, .little);
     // bits per pixel
-    try bs.writeBits(@as(u16, 24), 16);
+    try writer.writeInt(u16, 24, .little);
     // Six 32-bit words, all set to zero:
     // compression type, compressed image size, x pixels/meter, y pixels/meter, colors used, important colors
-    try bs.writeBits(@as(u192, 0), 192);
+    try writer.writeByteNTimes(0, 4 * 6);
 
     var line_buffer = [_]u8{0} ** bytes_per_line;
     const bgra_pixels_per_line = width * 4;
@@ -48,6 +47,6 @@ pub fn write24BitBMP(file_name: []const u8, comptime width: u32, comptime height
             line_buffer[bgr_pixel_offset + 1] = bgra_data[bgra_pixel_offset + 1];
             line_buffer[bgr_pixel_offset + 2] = bgra_data[bgra_pixel_offset + 2]; 
         }
-        _ = try bs.write(&line_buffer);
+        _ = try writer.write(&line_buffer);
     }
 }
