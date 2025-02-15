@@ -7,7 +7,7 @@
     // This field is optional.
     // This is currently advisory only; Zig does not yet do anything
     // with this value.
-    .minimum_zig_version = "0.13.0-dev.351+64ef45eb0",
+    .minimum_zig_version = "0.14.0-dev.2577+271452d22",
 
     // This field is optional.
     // Each dependency must either provide a `url` and `hash`, or a `path`.
@@ -83,24 +83,34 @@
             .hash = "1220fe8168bcc47892ef649c2a525635ec9fd932ac2998d5503d38cc552c4cd89698",
             .lazy = true,
         },
-        .wgpu_windows_x86_debug = .{
+        .wgpu_windows_x86_msvc_debug = .{
             .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-windows-i686-msvc-debug.zip",
             .hash = "12203fa82a10a766113436fb5cd1f4b06fde94513ba7d3d64ad7379165d36f1c1227",
             .lazy = true,
         },
-        .wgpu_windows_x86_release = .{
+        .wgpu_windows_x86_msvc_release = .{
             .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-windows-i686-msvc-release.zip",
             .hash = "122013d802ceafb603ef5d8a2c9e4476a91c4942b5ee0d61eb2774f55f2a610571de",
             .lazy = true,
         },
-        .wgpu_windows_x86_64_debug = .{
+        .wgpu_windows_x86_64_msvc_debug = .{
             .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-windows-x86_64-msvc-debug.zip",
             .hash = "1220ae3fe30c92e29984348977a8f4c38fb0438df5bd6f232d281e7a8ae679d30b0a",
             .lazy = true,
         },
-        .wgpu_windows_x86_64_release = .{
+        .wgpu_windows_x86_64_msvc_release = .{
             .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-windows-x86_64-msvc-release.zip",
             .hash = "122023484ded962d6afd920586c51eb3a950a6ead9afd7fbf327b36f71436d82bfaa",
+            .lazy = true,
+        },
+        .wgpu_windows_x86_64_gnu_debug = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-windows-x86_64-gnu-debug.zip",
+            .hash = "1220903e2fc9fdad1431d44f985507b1cf933bfd87bc1bf9fc30900d9cb0fdad08a2",
+            .lazy = true,
+        },
+        .wgpu_windows_x86_64_gnu_release = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-windows-x86_64-gnu-release.zip",
+            .hash = "1220245eaf64beab185bdd1b52cb7cedd8d0b7f1d545e41f67325dd32e562fee0380",
             .lazy = true,
         },
     },

@@ -32,10 +32,12 @@ Then, in `build.zig` add:
 ```
 
 ### Building on Windows
-For Windows, static linking is currently only supported if using MSVC (this will soon change), so specify that in your build target:
+Windows x86_64 has two options for ABI: GNU and MSVC. For i686, only the MSVC option is available.
+If you need to specify the build target, you can do that with:
 ```zig
 const target = b.standardTargetOptions(.{
     .default_target = .{
+        // If not specified, defaults to the GNU abi
         .abi = .msvc,
     }
 });
@@ -52,7 +54,6 @@ const wgpu_native_dep = b.dependency("wgpu_native_zig", .{
 ```
 An example of using `wgpu-native-zig` with static linking on Windows can be found at [wgpu-native-zig-windows-test](https://github.com/bronter/wgpu-native-zig-windows-test).
 
-If using dynamic linking, MSVC may not be required.
 ### Dynamic linking
 Dynamic linking can be made to work, though it is a bit messy to use.
 When you initialize your `wgpu_native_dep`, add the option for dynamic linking like so:
