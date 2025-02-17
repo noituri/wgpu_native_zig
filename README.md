@@ -16,6 +16,8 @@ In your `build.zig.zon` add:
         // ...other dependencies
         .wgpu_native_zig = .{
             .url="https://github.com/bronter/wgpu-native-zig/archive/<commit_hash>.tar.gz",
+            // Alternately, you can use a tagged release like so (using 1.0.0 as an example):
+            // .url = "https://github.com/bronter/wgpu-native-zig/archive/refs/tags/v1.0.0.tar.gz`
             .hash="<dependency hash>"
         }
     }
