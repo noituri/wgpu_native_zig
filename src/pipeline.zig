@@ -102,7 +102,8 @@ pub const CreatePipelineAsyncStatus = enum(u32) {
     unknown          = 0x00000005,
 };
 
-pub const CreateComputePipelineAsyncCallback = *const fn(
+// TODO: This should probably be in device.zig, as well as its RenderPipeline counterpart
+pub const DeviceCreateComputePipelineAsyncCallback = *const fn(
     status: CreatePipelineAsyncStatus,
     pipeline: ?*ComputePipeline,
     message: ?[*:0]const u8,
@@ -361,7 +362,7 @@ pub const ColorWriteMask = struct {
     pub const green = @as(ColorWriteMaskFlags, 0x00000002);
     pub const blue  = @as(ColorWriteMaskFlags, 0x00000004);
     pub const alpha = @as(ColorWriteMaskFlags, 0x00000008);
-    pub const all   = @as(ColorWriteMaskFlags, 0x0000000F);
+    pub const all        = ColorWriteMask.none | ColorWriteMask.red | ColorWriteMask.green | ColorWriteMask.blue | ColorWriteMask.alpha;
 };
 
 pub const ColorTargetState = extern struct {
@@ -419,7 +420,7 @@ pub const RenderPipeline = opaque {
     }
 };
 
-pub const CreateRenderPipelineAsyncCallback = *const fn(
+pub const DeviceCreateRenderPipelineAsyncCallback = *const fn(
     status: CreatePipelineAsyncStatus,
     pipeline: ?*RenderPipeline,
     message: ?[*:0]const u8,

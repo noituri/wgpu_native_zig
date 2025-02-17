@@ -89,12 +89,14 @@ fn compute_collatz() ![4]u32 {
     const compute_pass_encoder = command_encoder.beginComputePass(&wgpu.ComputePassDescriptor {
         .label = "compute_pass",
     }).?;
-    defer compute_pass_encoder.release();
 
     compute_pass_encoder.setPipeline(compute_pipeline);
     compute_pass_encoder.setBindGroup(0, bind_group, 0, null);
     compute_pass_encoder.dispatchWorkgroups(numbers_length, 1, 1);
     compute_pass_encoder.end();
+
+    // Must be released here: https://github.com/gfx-rs/wgpu-native/issues/412#issuecomment-2311719154
+    compute_pass_encoder.release();
 
     command_encoder.copyBufferToBuffer(storage_buffer, 0, staging_buffer, 0, numbers_size);
 

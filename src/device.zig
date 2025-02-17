@@ -35,12 +35,12 @@ const CommandEncoder = _command_encoder.CommandEncoder;
 const _pipeline = @import("pipeline.zig");
 const ComputePipelineDescriptor = _pipeline.ComputePipelineDescriptor;
 const ComputePipeline = _pipeline.ComputePipeline;
-const CreateComputePipelineAsyncCallback = _pipeline.CreateComputePipelineAsyncCallback;
+const DeviceCreateComputePipelineAsyncCallback = _pipeline.DeviceCreateComputePipelineAsyncCallback;
 const PipelineLayoutDescriptor = _pipeline.PipelineLayoutDescriptor;
 const PipelineLayout = _pipeline.PipelineLayout;
 const RenderPipelineDescriptor = _pipeline.RenderPipelineDescriptor;
 const RenderPipeline = _pipeline.RenderPipeline;
-const CreateRenderPipelineAsyncCallback = _pipeline.CreateRenderPipelineAsyncCallback;
+const DeviceCreateRenderPipelineAsyncCallback = _pipeline.DeviceCreateRenderPipelineAsyncCallback;
 
 const _query_set = @import("query_set.zig");
 const QuerySetDescriptor = _query_set.QuerySetDescriptor;
@@ -63,8 +63,8 @@ const TextureDescriptor = _texture.TextureDescriptor;
 const Texture = _texture.Texture;
 
 pub const DeviceLostReason = enum(u32) {
-    @"undefined" = 0x00000000,
-    destroyed    = 0x00000001,
+    unknown    = 0x00000001,
+    destroyed  = 0x00000002,
 };
 
 pub const DeviceLostCallback = *const fn(reason: DeviceLostReason, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void;
@@ -80,38 +80,6 @@ pub const DeviceExtras = extern struct {
 pub fn defaultDeviceLostCallback(reason: DeviceLostReason, message: ?[*:0]const u8, _: ?*anyopaque) callconv(.C) void {
     std.log.err("Device lost: reason={s} message=\"{s}\"\n", .{ @tagName(reason), message orelse "" });
 }
-
-pub const DeviceDescriptor = extern struct {
-    next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
-    required_feature_count: usize = 0,
-    required_features: ?[*]const FeatureName = null,
-    required_limits: ?*const RequiredLimits,
-    default_queue: QueueDescriptor = QueueDescriptor{},
-    device_lost_callback: DeviceLostCallback = defaultDeviceLostCallback,
-    device_lost_user_data: ?*anyopaque = null,
-
-    pub inline fn withTracePath(self: DeviceDescriptor, trace_path: [*:0]const u8) DeviceDescriptor {
-        var dd = self;
-        dd.next_in_chain = @ptrCast(&DeviceExtras {
-            .trace_path = trace_path,
-        });
-        return dd;
-    }
-};
-
-pub const RequestDeviceStatus = enum(u32) {
-    success  = 0x00000000,
-    @"error" = 0x00000001,
-    unknown  = 0x00000002,
-};
-
-pub const RequestDeviceCallback = *const fn(status: RequestDeviceStatus, device: ?*Device, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void;
-pub const RequestDeviceResponse = struct {
-    status: RequestDeviceStatus,
-    message: ?[*:0]const u8,
-    device: ?*Device,
-};
 
 pub const ErrorType = enum(u32) {
     no_error      = 0x00000000,
@@ -130,18 +98,61 @@ pub const ErrorFilter = enum(u32) {
     internal      = 0x00000002,
 };
 
+pub const UncapturedErrorCallbackInfo = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    callback: ?ErrorCallback = null,
+    userdata: ?*anyopaque = null,
+};
+
+pub const DeviceDescriptor = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+    label: ?[*:0]const u8 = null,
+    required_feature_count: usize = 0,
+    required_features: ?[*]const FeatureName = null,
+    required_limits: ?*const RequiredLimits,
+    default_queue: QueueDescriptor = QueueDescriptor{},
+    device_lost_callback: DeviceLostCallback = defaultDeviceLostCallback,
+    device_lost_user_data: ?*anyopaque = null,
+    uncaptured_error_callback_info: UncapturedErrorCallbackInfo = UncapturedErrorCallbackInfo{},
+
+    pub inline fn withTracePath(self: DeviceDescriptor, trace_path: [*:0]const u8) DeviceDescriptor {
+        var dd = self;
+        dd.next_in_chain = @ptrCast(&DeviceExtras {
+            .trace_path = trace_path,
+        });
+        return dd;
+    }
+};
+
+pub const RequestDeviceStatus = enum(u32) {
+    success  = 0x00000000,
+    @"error" = 0x00000001,
+    unknown  = 0x00000002,
+};
+
+// TODO: This probably belongs in adapter.zig
+pub const AdapterRequestDeviceCallback = *const fn(status: RequestDeviceStatus, device: ?*Device, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void;
+pub const RequestDeviceResponse = struct {
+    status: RequestDeviceStatus,
+    message: ?[*:0]const u8,
+    device: ?*Device,
+};
+
+// Generic function return type for wgpuGetProcAddress
+// pub const Proc = *const fn() callconv(.C) void;
+
 pub const DeviceProcs = struct {
     pub const CreateBindGroup = *const fn(*Device, *const BindGroupDescriptor) callconv(.C) ?*BindGroup;
     pub const CreateBindGroupLayout = *const fn(*Device, *const BindGroupLayoutDescriptor) callconv(.C) ?*BindGroupLayout;
     pub const CreateBuffer = *const fn(*Device, *const BufferDescriptor) callconv(.C) ?*Buffer;
     pub const CreateCommandEncoder = *const fn(*Device, *const CommandEncoderDescriptor) callconv(.C) ?*CommandEncoder;
     pub const CreateComputePipeline = *const fn(*Device, *const ComputePipelineDescriptor) callconv(.C) ?*ComputePipeline;
-    pub const CreateComputePipelineAsync = *const fn(*Device, *const ComputePipelineDescriptor, CreateComputePipelineAsyncCallback, ?*anyopaque) callconv(.C) void;
+    pub const CreateComputePipelineAsync = *const fn(*Device, *const ComputePipelineDescriptor, DeviceCreateComputePipelineAsyncCallback, ?*anyopaque) callconv(.C) void;
     pub const CreatePipelineLayout = *const fn(*Device, *const PipelineLayoutDescriptor) callconv(.C) ?*PipelineLayout;
     pub const CreateQuerySet = *const fn(*Device, *const QuerySetDescriptor) callconv(.C) ?*QuerySet;
     pub const CreateRenderBundleEncoder = *const fn(*Device, *const RenderBundleEncoderDescriptor) callconv(.C) ?*RenderBundleEncoder;
     pub const CreateRenderPipeline = *const fn(*Device, *const RenderPipelineDescriptor) callconv(.C) ?*RenderPipeline;
-    pub const CreateRenderPipelineAsync = *const fn(*Device, *const RenderPipelineDescriptor, CreateRenderPipelineAsyncCallback, ?*anyopaque) callconv(.C) void;
+    pub const CreateRenderPipelineAsync = *const fn(*Device, *const RenderPipelineDescriptor, DeviceCreateRenderPipelineAsyncCallback, ?*anyopaque) callconv(.C) void;
     pub const CreateSampler = *const fn(*Device, *const SamplerDescriptor) callconv(.C) ?*Sampler;
     pub const CreateShaderModule = *const fn(*Device, *const ShaderModuleDescriptor) callconv(.C) ?*ShaderModule;
     pub const CreateTexture = *const fn(*Device, *const TextureDescriptor) callconv(.C) ?*Texture;
@@ -153,7 +164,6 @@ pub const DeviceProcs = struct {
     pub const PopErrorScope = *const fn(*Device, ErrorCallback, ?*anyopaque) callconv(.C) void;
     pub const PushErrorScope = *const fn(*Device, ErrorFilter) callconv(.C) void;
     pub const SetLabel = *const fn(*Device, ?[*:0]const u8) callconv(.C) void;
-    pub const SetUncapturedErrorCallback = *const fn(*Device, ErrorCallback, ?*anyopaque) callconv(.C) void;
     pub const Reference = *const fn(*Device) callconv(.C) void;
     pub const Release = *const fn(*Device) callconv(.C) void;
 
@@ -166,12 +176,12 @@ extern fn wgpuDeviceCreateBindGroupLayout(device: *Device, descriptor: *const Bi
 extern fn wgpuDeviceCreateBuffer(device: *Device, descriptor: *const BufferDescriptor) ?*Buffer;
 extern fn wgpuDeviceCreateCommandEncoder(device: *Device, descriptor: *const CommandEncoderDescriptor) ?*CommandEncoder;
 extern fn wgpuDeviceCreateComputePipeline(device: *Device, descriptor: *const ComputePipelineDescriptor) ?*ComputePipeline;
-extern fn wgpuDeviceCreateComputePipelineAsync(device: *Device, descriptor: *const ComputePipelineDescriptor, callback: CreateComputePipelineAsyncCallback, userdata: ?*anyopaque) void;
+extern fn wgpuDeviceCreateComputePipelineAsync(device: *Device, descriptor: *const ComputePipelineDescriptor, callback: DeviceCreateComputePipelineAsyncCallback, userdata: ?*anyopaque) void;
 extern fn wgpuDeviceCreatePipelineLayout(device: *Device, descriptor: *const PipelineLayoutDescriptor) ?*PipelineLayout;
 extern fn wgpuDeviceCreateQuerySet(device: *Device, descriptor: *const QuerySetDescriptor) ?*QuerySet;
 extern fn wgpuDeviceCreateRenderBundleEncoder(device: *Device, descriptor: *const RenderBundleEncoderDescriptor) ?*RenderBundleEncoder;
 extern fn wgpuDeviceCreateRenderPipeline(device: *Device, descriptor: *const RenderPipelineDescriptor) ?*RenderPipeline;
-extern fn wgpuDeviceCreateRenderPipelineAsync(device: *Device, descriptor: *const RenderPipelineDescriptor, callback: CreateRenderPipelineAsyncCallback, userdata: ?*anyopaque) void;
+extern fn wgpuDeviceCreateRenderPipelineAsync(device: *Device, descriptor: *const RenderPipelineDescriptor, callback: DeviceCreateRenderPipelineAsyncCallback, userdata: ?*anyopaque) void;
 extern fn wgpuDeviceCreateSampler(device: *Device, descriptor: *const SamplerDescriptor) ?*Sampler;
 extern fn wgpuDeviceCreateShaderModule(device: *Device, descriptor: *const ShaderModuleDescriptor) ?*ShaderModule;
 extern fn wgpuDeviceCreateTexture(device: *Device, descriptor: *const TextureDescriptor) ?*Texture;
@@ -183,12 +193,22 @@ extern fn wgpuDeviceHasFeature(device: *Device, feature: FeatureName) WGPUBool;
 extern fn wgpuDevicePopErrorScope(device: *Device, callback: ErrorCallback, userdata: ?*anyopaque) void;
 extern fn wgpuDevicePushErrorScope(device: *Device, filter: ErrorFilter) void;
 extern fn wgpuDeviceSetLabel(device: *Device, label: ?[*:0]const u8) void;
-extern fn wgpuDeviceSetUncapturedErrorCallback(device: *Device, callback: ErrorCallback, userdata: ?*anyopaque) void;
 extern fn wgpuDeviceReference(device: *Device) void;
 extern fn wgpuDeviceRelease(device: *Device) void;
 
 // wgpu-native
 extern fn wgpuDevicePoll(device: *Device, wait: WGPUBool, wrapped_submission_index: ?*const WrappedSubmissionIndex) WGPUBool;
+
+// Supposedly getProcAddress is a global function, but it doesn't seem like it should work without being tied to a Device?
+// Could be it's one of those functions that's meant to be called with null the first time, TODO: look into that.
+// 
+// Regardless, apparently the reason it exists is because different devices have different drivers and therefore different procs,
+// so you need to get the version of the proc that is meant for that particular device.
+// 
+// Although this function appears in webgpu.h, it is currently unimplemented in wgpu-native,
+// (https://github.com/gfx-rs/wgpu-native/blob/trunk/src/unimplemented.rs)
+// so I'm leaving it here in case it gets implemented eventually, but commented out until/unless that happens.
+// extern fn wgpuGetProcAddress(device: *Device, proc_name: ?[*:0]const u8) ?Proc;
 
 pub const Device = opaque {
     pub inline fn createBindGroup(self: *Device, descriptor: *const BindGroupDescriptor) ?*BindGroup {
@@ -206,7 +226,7 @@ pub const Device = opaque {
     pub inline fn createComputePipeline(self: *Device, descriptor: *const ComputePipelineDescriptor) ?*ComputePipeline {
         return wgpuDeviceCreateComputePipeline(self, descriptor);
     }
-    pub inline fn createComputePipelineAsync(self: *Device, descriptor: *const ComputePipelineDescriptor, callback: CreateComputePipelineAsyncCallback, userdata: ?*anyopaque) void {
+    pub inline fn createComputePipelineAsync(self: *Device, descriptor: *const ComputePipelineDescriptor, callback: DeviceCreateComputePipelineAsyncCallback, userdata: ?*anyopaque) void {
         wgpuDeviceCreateComputePipelineAsync(self, descriptor, callback, userdata);
     }
     pub inline fn createPipelineLayout(self: *Device, descriptor: *const PipelineLayoutDescriptor) ?*PipelineLayout {
@@ -221,7 +241,7 @@ pub const Device = opaque {
     pub inline fn createRenderPipeline(self: *Device, descriptor: *const RenderPipelineDescriptor) ?*RenderPipeline {
         return wgpuDeviceCreateRenderPipeline(self, descriptor);
     }
-    pub inline fn createRenderPipelineAsync(self: *Device, descriptor: *const RenderPipelineDescriptor, callback: CreateRenderPipelineAsyncCallback, userdata: ?*anyopaque) void {
+    pub inline fn createRenderPipelineAsync(self: *Device, descriptor: *const RenderPipelineDescriptor, callback: DeviceCreateRenderPipelineAsyncCallback, userdata: ?*anyopaque) void {
         wgpuDeviceCreateRenderPipelineAsync(self, descriptor, callback, userdata);
     }
     pub inline fn createSampler(self: *Device, descriptor: *const SamplerDescriptor) ?*Sampler {
@@ -259,9 +279,6 @@ pub const Device = opaque {
     pub inline fn setLabel(self: *Device, label: ?[*:0]const u8) void {
         wgpuDeviceSetLabel(self, label);
     }
-    pub inline fn setUncapturedErrorCallback(self: *Device, callback: ErrorCallback, userdata: ?*anyopaque) void {
-        wgpuDeviceSetUncapturedErrorCallback(self, callback, userdata);
-    }
     pub inline fn reference(self: *Device) void {
         wgpuDeviceReference(self);
     }
@@ -273,6 +290,10 @@ pub const Device = opaque {
     pub inline fn poll(self: *Device, wait: bool, wrapped_submission_index: ?*const WrappedSubmissionIndex) bool {
         return wgpuDevicePoll(self, @intFromBool(wait), wrapped_submission_index) != 0;
     }
+
+    // pub inline fn getProcAddress(self: *Device, proc_name: ?[*:0] const u8) ?Proc {
+    //     return wgpuGetProcAddress(self, proc_name);
+    // }
 };
 
 // TODO: Test methods of Device (as long as they can be tested headlessly: see https://eliemichel.github.io/LearnWebGPU/advanced-techniques/headless.html)

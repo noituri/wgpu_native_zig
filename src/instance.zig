@@ -5,7 +5,7 @@ const SType = _chained_struct.SType;
 const _adapter = @import("adapter.zig");
 const Adapter = _adapter.Adapter;
 const RequestAdapterOptions = _adapter.RequestAdapterOptions;
-const RequestAdapterCallback = _adapter.RequestAdapterCallback;
+const InstanceRequestAdapterCallback = _adapter.InstanceRequestAdapterCallback;
 const RequestAdapterStatus = _adapter.RequestAdapterStatus;
 const RequestAdapterResponse = _adapter.RequestAdapterResponse;
 const BackendType = _adapter.BackendType;
@@ -13,7 +13,10 @@ const BackendType = _adapter.BackendType;
 const _surface = @import("surface.zig");
 const Surface = _surface.Surface;
 const SurfaceDescriptor = _surface.SurfaceDescriptor;
-const WGPUFlags = @import("misc.zig").WGPUFlags;
+
+const _misc = @import("misc.zig");
+const WGPUFlags = _misc.WGPUFlags;
+const WGPUBool = _misc.WGPUBool;
 
 pub const InstanceBackendFlags = WGPUFlags;
 pub const InstanceBackend = struct {
@@ -71,11 +74,20 @@ pub const InstanceDescriptor = extern struct {
     }
 };
 
+pub const WGSLFeatureName = enum(u32) {
+    @"undefined"                            = 0x00000000,
+    readonly_and_readwrite_storage_textures = 0x00000001,
+    packed4x8_integer_dot_product           = 0x00000002,
+    unrestricted_pointer_parameters         = 0x00000003,
+    pointer_composite_access                = 0x00000004,
+};
+
 pub const InstanceProcs = struct {
     pub const CreateInstance = *const fn(?*const InstanceDescriptor) callconv(.C) ?*Instance;
     pub const CreateSurface = *const fn(*Instance, *const SurfaceDescriptor) ?*Surface;
+    pub const HasWGSLLanguageFeature = *const fn(*Instance, WGSLFeatureName) WGPUBool;
     pub const ProcessEvents = *const fn(*Instance) callconv(.C) void;
-    pub const RequestAdapter = *const fn(*Instance, ?*const RequestAdapterOptions, RequestAdapterCallback, ?*anyopaque) callconv(.C) void;
+    pub const RequestAdapter = *const fn(*Instance, ?*const RequestAdapterOptions, InstanceRequestAdapterCallback, ?*anyopaque) callconv(.C) void;
     pub const InstanceReference = *const fn(*Instance) callconv(.C) void;
     pub const InstanceRelease = *const fn(*Instance) callconv(.C) void;
 
@@ -86,8 +98,9 @@ pub const InstanceProcs = struct {
 
 extern fn wgpuCreateInstance(descriptor: ?*const InstanceDescriptor) ?*Instance;
 extern fn wgpuInstanceCreateSurface(instance: *Instance, descriptor: *const SurfaceDescriptor) ?*Surface;
+extern fn wgpuInstanceHasWGSLLanguageFeature(instance: *Instance, feature: WGSLFeatureName) WGPUBool;
 extern fn wgpuInstanceProcessEvents(instance: *Instance) void;
-extern fn wgpuInstanceRequestAdapter(instance: *Instance, options: ?*const RequestAdapterOptions, callback: RequestAdapterCallback, userdata: ?*anyopaque) void;
+extern fn wgpuInstanceRequestAdapter(instance: *Instance, options: ?*const RequestAdapterOptions, callback: InstanceRequestAdapterCallback, userdata: ?*anyopaque) void;
 extern fn wgpuInstanceReference(instance: *Instance) void;
 extern fn wgpuInstanceRelease(instance: *Instance) void;
 
@@ -145,6 +158,10 @@ pub const Instance = opaque {
         return wgpuInstanceCreateSurface(self, descriptor);
     }
 
+    pub inline fn hasWGSLLanguageFeature(self: *Instance, feature: WGSLFeatureName) bool {
+        return wgpuInstanceHasWGSLLanguageFeature(self, feature) != 0;
+    }
+
     pub inline fn processEvents(self: *Instance) void {
         wgpuInstanceProcessEvents(self);
     }
@@ -164,7 +181,7 @@ pub const Instance = opaque {
         return response;
     }
 
-    pub inline fn requestAdapter(self: *Instance, options: ?*const RequestAdapterOptions, callback: RequestAdapterCallback, userdata: ?*anyopaque) void {
+    pub inline fn requestAdapter(self: *Instance, options: ?*const RequestAdapterOptions, callback: InstanceRequestAdapterCallback, userdata: ?*anyopaque) void {
         wgpuInstanceRequestAdapter(self, options, callback, userdata);
     }
 

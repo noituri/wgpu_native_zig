@@ -25,6 +25,7 @@ const RenderBundle = @import("render_bundle.zig").RenderBundle;
 
 const ShaderStageFlags = @import("shader.zig").ShaderStageFlags;
 
+pub const WGPU_DEPTH_SLICE_UNDEFINED = @as(u32, 0xffffffff);
 pub const WGPU_QUERY_SET_INDEX_UNDEFINED = @as(u32, 0xffffffff);
 
 pub const TimestampWrites = extern struct {
@@ -146,6 +147,7 @@ pub const Color = extern struct {
 pub const ColorAttachment = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     view: ?*TextureView,
+    depth_slice: u32 = WGPU_DEPTH_SLICE_UNDEFINED,
     resolve_target: ?*TextureView = null,
     loap_op: LoadOp = LoadOp.clear,
     store_op: StoreOp = StoreOp.store,

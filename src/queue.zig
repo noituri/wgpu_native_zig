@@ -25,10 +25,10 @@ pub const WorkDoneStatus = enum(u32) {
     device_lost = 0x00000003,
 };
 
-pub const WorkDoneCallback = *const fn(status: WorkDoneStatus, userdata: ?*anyopaque) callconv(.C) void;
+pub const QueueOnSubmittedWorkDoneCallback = *const fn(status: WorkDoneStatus, userdata: ?*anyopaque) callconv(.C) void;
 
 pub const QueueProcs = struct {
-    pub const OnSubmittedWorkDone = *const fn(*Queue, WorkDoneCallback, ?*anyopaque) callconv(.C) void;
+    pub const OnSubmittedWorkDone = *const fn(*Queue, QueueOnSubmittedWorkDoneCallback, ?*anyopaque) callconv(.C) void;
     pub const SetLabel = *const fn(*Queue, ?[*:0]const u8) callconv(.C) void;
     pub const Submit = *const fn(*Queue, usize, [*]const *const CommandBuffer) callconv(.C) void;
     pub const WriteBuffer = *const fn(*Queue, Buffer, u64, *const anyopaque, usize) callconv(.C) void;
@@ -40,7 +40,7 @@ pub const QueueProcs = struct {
     // pub const SubmitForIndex = *const fn(*Queue, usize, [*]const *const CommandBuffer) callconv(.C) SubmissionIndex;
 };
 
-extern fn wgpuQueueOnSubmittedWorkDone(queue: *Queue, callback: WorkDoneCallback, userdata: ?*anyopaque) void;
+extern fn wgpuQueueOnSubmittedWorkDone(queue: *Queue, callback: QueueOnSubmittedWorkDoneCallback, userdata: ?*anyopaque) void;
 extern fn wgpuQueueSetLabel(queue: *Queue, label: ?[*:0]const u8) void;
 extern fn wgpuQueueSubmit(queue: *Queue, command_count: usize, commands: [*]const *const CommandBuffer) void;
 extern fn wgpuQueueWriteBuffer(queue: *Queue, buffer: *Buffer, buffer_offset: u64, data: *const anyopaque, size: usize) void;
@@ -52,7 +52,7 @@ extern fn wgpuQueueRelease(queue: *Queue) void;
 extern fn wgpuQueueSubmitForIndex(queue: *Queue, command_count: usize, commands: [*]const *const CommandBuffer) SubmissionIndex;
 
 pub const Queue = opaque {
-    pub inline fn onSubmittedWorkDone(self: *Queue, callback: WorkDoneCallback, userdata: ?*anyopaque) void {
+    pub inline fn onSubmittedWorkDone(self: *Queue, callback: QueueOnSubmittedWorkDoneCallback, userdata: ?*anyopaque) void {
         wgpuQueueOnSubmittedWorkDone(self, callback, userdata);
     }
     pub inline fn setLabel(self: *Queue, label: ?[*:0]const u8) void {

@@ -187,11 +187,6 @@ pub const SurfaceConfigurationExtras = extern struct {
         .s_type = SType.surface_configuration_extras,
     },
 
-    // In wgpu.h, this is a WGPUBool, but that makes very little sense since:
-    // 1. This number describes the "Desired maximum number of frames that the presentation engine should queue in advance".
-    // 2. The docs for wgpu (in Rust) say that "Typical values range from 3 to 1, but higher values are possible".
-    //    If the value was >1 it could not be losslessly converted to Zig's bool type and back.
-    // Therefore, I'm going to declare it as a u32 instead since that's the underlying type for WGPUBool.
     desired_maximum_frame_latency: u32,
 };
 
@@ -219,15 +214,16 @@ pub const SurfaceConfiguration = extern struct {
 pub const SurfaceCapabilitiesProcs = struct {
     pub const FreeMembers = *const fn(*SurfaceCapabilities) callconv(.C) void;
 };
-extern fn wgpuSurfaceCapabilitiesFreeMembers(capabilities: *SurfaceCapabilities) void;
+extern fn wgpuSurfaceCapabilitiesFreeMembers(surface_capabilities: *SurfaceCapabilities) void;
 pub const SurfaceCapabilities = extern struct {
     next_in_chain: ?*ChainedStructOut = null,
+    usages: TextureUsageFlags,
     format_count: usize,
-    formats: [*]TextureFormat,
+    formats: [*]const TextureFormat,
     present_mode_count: usize,
-    present_modes: [*]PresentMode,
+    present_modes: [*]const PresentMode,
     alpha_mode_count: usize,
-    alpha_modes: [*]CompositeAlphaMode,
+    alpha_modes: [*]const CompositeAlphaMode,
 
     pub inline fn FreeMembers(self: *SurfaceCapabilities) void {
         wgpuSurfaceCapabilitiesFreeMembers(self);
@@ -253,8 +249,8 @@ pub const SurfaceProcs = struct {
     pub const Configure = *const fn(*Surface, *const SurfaceConfiguration) callconv(.C) void;
     pub const GetCapabilities = *const fn(*Surface, *Adapter, *SurfaceCapabilities) callconv(.C) void;
     pub const GetCurrentTexture = *const fn(*Surface, *SurfaceTexture) callconv(.C) void;
-    pub const GetPreferredFormat = *const fn(*Surface, *Adapter) callconv(.C) TextureFormat;
     pub const Present = *const fn(*Surface) callconv(.C) void;
+    pub const SetLabel = *const fn(*Surface, ?[*:0]const u8) void;
     pub const Unconfigure = *const fn(*Surface) callconv(.C) void;
     pub const Reference = *const fn(*Surface) callconv(.C) void;
     pub const Release = *const fn(*Surface) callconv(.C) void;
@@ -263,8 +259,8 @@ pub const SurfaceProcs = struct {
 extern fn wgpuSurfaceConfigure(surface: *Surface, config: *const SurfaceConfiguration) void;
 extern fn wgpuSurfaceGetCapabilities(surface: *Surface, adapter: *Adapter, capabilities: *SurfaceCapabilities) void;
 extern fn wgpuSurfaceGetCurrentTexture(surface: *Surface, surface_texture: *SurfaceTexture) void;
-extern fn wgpuSurfaceGetPreferredFormat(surface: *Surface, adapter: *Adapter) TextureFormat;
 extern fn wgpuSurfacePresent(surface: *Surface) void;
+extern fn wgpuSurfaceSetLabel(surface: *Surface, label: ?[*:0]const u8) void;
 extern fn wgpuSurfaceUnconfigure(surface: *Surface) void;
 extern fn wgpuSurfaceReference(surface: *Surface) void;
 extern fn wgpuSurfaceRelease(surface: *Surface) void;
@@ -279,11 +275,11 @@ pub const Surface = opaque {
     pub inline fn getCurrentTexture(self: *Surface, surface_texture: *SurfaceTexture) void {
         wgpuSurfaceGetCurrentTexture(self, surface_texture);
     }
-    pub inline fn getPreferredFormat(self: *Surface, adapter: *Adapter) TextureFormat {
-        return wgpuSurfaceGetPreferredFormat(self, adapter);
-    }
     pub inline fn present(self: *Surface) void {
         wgpuSurfacePresent(self);
+    }
+    pub inline fn setLabel(self: *Surface, label: ?[*:0]const u8) void {
+        wgpuSurfaceSetLabel(self, label);
     }
     pub inline fn unconfigure(self: *Surface) void {
         wgpuSurfaceUnconfigure(self);

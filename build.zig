@@ -28,7 +28,6 @@ const target_whitelist = [_] TargetQuery {
     TargetQuery {
         .cpu_arch = .x86_64,
         .os_tag = .windows,
-        .abi = .msvc,
     },
 };
 
@@ -54,16 +53,34 @@ fn match_target_whitelist(target: std.Target) bool {
     return found;
 }
 
-fn link_windows_system_libraries(comptime T: type, mod: *T) void {
+fn link_windows_system_libraries(comptime T: type, mod: *T, is_gnu: bool) void {
     const linkSystemLibrary = switch (T) {
         std.Build.Module => std.Build.Module.linkSystemLibrary,
         std.Build.Step.Compile => std.Build.Step.Compile.linkSystemLibrary2,
         else => @compileError("Provided type must either be std.Build.Module or std.Build.Step.Compile"),
     };
-    linkSystemLibrary(mod, "D3DCompiler", .{});
+
+    if (is_gnu) {
+        // For gnu, the linker needs the d3dcompiler dll since it can't find a suitable static lib
+        // (I'd guess it tries to search for something like "libd3dcompiler.a" instead of "d3dcompiler.lib").
+        linkSystemLibrary(mod, "d3dcompiler_47", .{});
+
+    } else {
+        linkSystemLibrary(mod, "d3dcompiler", .{});
+
+        // GetClientRect is unresolved unless we link this for msvc
+        linkSystemLibrary(mod, "user32", .{});
+    }
     linkSystemLibrary(mod, "opengl32", .{});
-    linkSystemLibrary(mod, "user32", .{});
     linkSystemLibrary(mod, "gdi32", .{});
+
+    // COM-related
+    linkSystemLibrary(mod, "OleAut32", .{});
+    linkSystemLibrary(mod, "Ole32", .{});
+
+    // Apparetly these four are needed because of rust stdlib
+    // https://github.com/gfx-rs/wgpu-native/issues/263
+    // Not sure why I don't get link errors for ntdll stuff despite that issue, or why I DO get link errors for gdi32.
     linkSystemLibrary(mod, "ws2_32", .{});
     linkSystemLibrary(mod, "advapi32", .{});
     linkSystemLibrary(mod, "userenv", .{});
@@ -106,7 +123,14 @@ const WGPUBuildContext = struct {
             .Debug => "debug",
             else => "release",
         };
-        const target_name_slices = [_] [:0]const u8 {"wgpu_", os_str, "_", arch_str, "_", mode_str};
+        const abi_str = switch (target_res.os.tag) {
+            .windows => switch (target_res.abi) {
+                .msvc => "_msvc",
+                else => "_gnu",
+            },
+            else => "",
+        };
+        const target_name_slices = [_] [:0]const u8 {"wgpu_", os_str, "_", arch_str, abi_str, "_", mode_str};
         const maybe_target_name = std.mem.concatWithSentinel(b.allocator, u8, &target_name_slices, 0);
         const target_name = maybe_target_name catch "wgpu_linux_x86_64_debug";
 
@@ -121,11 +145,14 @@ const WGPUBuildContext = struct {
 
         const translate_step = b.addTranslateC(.{
             // wgpu.h imports webgpu.h, so we get the contents of both files, as well as a bunch of libc garbage.
-            .root_source_file = wgpu_dep.path("wgpu.h"),
+            .root_source_file = wgpu_dep.path("include/wgpu/wgpu.h"),
 
             .target = target,
             .optimize = optimize,
         });
+
+        translate_step.addIncludePath(wgpu_dep.path("include/webgpu"));
+
         const wgpu_c_mod = translate_step.addModule("wgpu-c");
         wgpu_c_mod.resolved_target = target;
         wgpu_c_mod.link_libcpp = true;
@@ -133,55 +160,70 @@ const WGPUBuildContext = struct {
         var libwgpu_path: ?std.Build.LazyPath = null;
         var is_windows: bool = false;
 
-        // TODO: When we upgrade wgpu-native, we'll need to at least switch on both os and abi, since the x86_64 build for Windows now supports both gnu and msvc.
-        // There are also a number of new os and cpu architecture options, so this might need to be broken out into a separate function.
+        // TODO: This seems like it could be made smaller, lots of repetitive code here.
         switch(target_res.os.tag) {
             .windows => {
                 is_windows = true;
+                if (target_res.abi == .msvc) {
+                    // I feel like libcpp should work, but it definitely does not on msvc. Fortunately libc does.
+                    wgpu_mod.link_libcpp = false;
+                    wgpu_c_mod.link_libcpp = false;
+                    wgpu_mod.link_libc = true;
+                    wgpu_c_mod.link_libc = true;
 
-                // I feel like libcpp should work, but it definitely does not on msvc. Fortunately libc does.
-                wgpu_mod.link_libcpp = false;
-                wgpu_c_mod.link_libcpp = false;
-                wgpu_mod.link_libc = true;
-                wgpu_c_mod.link_libc = true;
+                    if (link_mode == .static) {
+                        libwgpu_path = wgpu_dep.path("lib/wgpu_native.lib");
 
-                if (link_mode == .static) {
-                    if (target_res.abi != .msvc) {
-                        // TODO: This should not be neccessary after we upgrade wgpu-native.
-                        // Also this should really be a fail step, but I'd need Zig 0.14 for that, and there are other things that currently break in 0.14.
-                        @panic("Static linking on Windows currently only supported for MSVC");
+                        link_windows_system_libraries(std.Build.Module, wgpu_mod, false);
+                        link_windows_system_libraries(std.Build.Module, wgpu_c_mod, false);
+                    } else {
+                        libwgpu_path = wgpu_dep.path("lib/wgpu_native.dll.lib");
+
+                        // Unfortunately, it seems only the local tests can access the dll this way.
+                        // For dependees, it copies to the zig cache, which you can use for testing if you do some weird stuff with the install steps,
+                        // but it never copies to the output folder. So not helpful if you need to distribute a binary with the dll alongside it.
+                        const dll_install_file = b.addInstallLibFile(wgpu_dep.path("lib/wgpu_native.dll"), "wgpu_native.dll");
+                        b.getInstallStep().dependOn(&dll_install_file.step);
+
+                        // For dependees that need the dll file, this seems to be the only reliable way to propagate it through.
+                        // In Zig 0.14 there seems to be some method for exposing LazyPaths to dependees, which might be a bit cleaner.
+                        const writeFiles = b.addNamedWriteFiles("lib");
+                        _ = writeFiles.addCopyFile(wgpu_dep.path("lib/wgpu_native.dll"), "wgpu_native.dll");
                     }
-                    libwgpu_path = wgpu_dep.path("wgpu_native.lib");
-
-
-                    link_windows_system_libraries(std.Build.Module, wgpu_mod);
-                    link_windows_system_libraries(std.Build.Module, wgpu_c_mod);
                 } else {
-                    libwgpu_path = wgpu_dep.path("wgpu_native.dll.lib");
+                    if (link_mode == .static) {
+                        libwgpu_path = wgpu_dep.path("lib/libwgpu_native.a");
 
-                    // Unfortunately, it seems only the local tests can access the dll this way.
-                    // For dependees, it copies to the zig cache, which you can use for testing if you do some weird stuff with the install steps,
-                    // but it never copies to the output folder. So not helpful if you need to distribute a binary with the dll alongside it.
-                    const dll_install_file = b.addInstallLibFile(wgpu_dep.path("wgpu_native.dll"), "wgpu_native.dll");
-                    b.getInstallStep().dependOn(&dll_install_file.step);
+                        link_windows_system_libraries(std.Build.Module, wgpu_mod, true);
+                        link_windows_system_libraries(std.Build.Module, wgpu_c_mod, true);
+                    } else {
+                        libwgpu_path = wgpu_dep.path("lib/libwgpu_native.dll.a");
 
-                    // For dependees that need the dll file, this seems to be the only reliable way to propagate it through.
-                    // In Zig 0.14 there seems to be some method for exposing LazyPaths to dependees, which might be a bit cleaner.
-                    const writeFiles = b.addNamedWriteFiles("lib");
-                    _ = writeFiles.addCopyFile(wgpu_dep.path("wgpu_native.dll"), "wgpu_native.dll");
+                        const dll_install_file = b.addInstallLibFile(wgpu_dep.path("lib/wgpu_native.dll"), "wgpu_native.dll");
+                        b.getInstallStep().dependOn(&dll_install_file.step);
+
+                        const writeFiles = b.addNamedWriteFiles("lib");
+                        _ = writeFiles.addCopyFile(wgpu_dep.path("lib/wgpu_native.dll"), "wgpu_native.dll");
+                    }
                 }
             },
 
             // This only tries to account for linux/macos since we're using pre-compiled wgpu-native;
             // need to think harder about this if I get custom builds working.
             else => if (link_mode == .static) {
-                libwgpu_path = wgpu_dep.path("libwgpu_native.a");
+                libwgpu_path = wgpu_dep.path("lib/libwgpu_native.a");
+            } else if (target_res.os.tag == .macos) { // TODO: This is just guesswork, need to test it somehow, but I don't have a mac.
+                const dylib_install_file = b.addInstallLibFile(wgpu_dep.path("lib/libwgpu_native.dylib"), "libwgpu_native.dylib");
+                b.getInstallStep().dependOn(&dylib_install_file.step);
+
+                const writeFiles = b.addNamedWriteFiles("lib");
+                _ = writeFiles.addCopyFile(wgpu_dep.path("lib/libwgpu_native.dylib"), "libwgpu_native.dylib");
             } else {
-                const so_install_file = b.addInstallLibFile(wgpu_dep.path("libwgpu_native.so"), "libwgpu_native.so");
+                const so_install_file = b.addInstallLibFile(wgpu_dep.path("lib/libwgpu_native.so"), "libwgpu_native.so");
                 b.getInstallStep().dependOn(&so_install_file.step);
 
                 const writeFiles = b.addNamedWriteFiles("lib");
-                _ = writeFiles.addCopyFile(wgpu_dep.path("libwgpu_native.so"), "libwgpu_native.so");
+                _ = writeFiles.addCopyFile(wgpu_dep.path("lib/libwgpu_native.so"), "libwgpu_native.so");
             },
         }
 
@@ -207,7 +249,7 @@ const WGPUBuildContext = struct {
 
 fn dynamic_link(context: *const WGPUBuildContext, c: *std.Build.Step.Compile, cmd: *std.Build.Step.Run) void {
         if (!context.is_windows) {
-            c.addLibraryPath(context.wgpu_dep.path(""));
+            c.addLibraryPath(context.wgpu_dep.path("lib"));
             c.linkSystemLibrary2("wgpu_native", .{});
         }
         cmd.addPathDir(context.install_lib_dir);
@@ -235,7 +277,7 @@ fn triangle_example(b: *std.Build, context: *const WGPUBuildContext) void {
     if (context.link_mode == .dynamic) {
         dynamic_link(context, triangle_example_exe, run_triangle_cmd);
 
-        run_triangle_step.dependOn(b.getInstallStep());
+        run_triangle_cmd.step.dependOn(b.getInstallStep());
     }
 }
 
@@ -277,7 +319,14 @@ fn unit_tests(b: *std.Build, context: *const WGPUBuildContext) void {
         if (context.link_mode == .dynamic) {
             dynamic_link(context, t, run_test);
         } else if (context.is_windows) {
-            link_windows_system_libraries(std.Build.Step.Compile, t);
+            if (context.target.result.abi == .gnu) {
+                link_windows_system_libraries(std.Build.Step.Compile, t, true);
+
+                // TODO: Find out why this is only required here; seems suspicious
+                t.linkSystemLibrary2("unwind", .{});
+            } else {
+                link_windows_system_libraries(std.Build.Step.Compile, t, false);
+            }
         }
 
         unit_test_step.dependOn(&run_test.step);
@@ -310,7 +359,8 @@ fn compute_tests(b: *std.Build, context: *const WGPUBuildContext) void {
         dynamic_link(context, compute_test, run_compute_test);
         dynamic_link(context, compute_test_c, run_compute_test_c);
 
-        compute_test_step.dependOn(b.getInstallStep());
+        run_compute_test.step.dependOn(b.getInstallStep());
+        run_compute_test_c.step.dependOn(b.getInstallStep());
     }
     compute_test_step.dependOn(&run_compute_test.step);
     compute_test_step.dependOn(&run_compute_test_c.step);

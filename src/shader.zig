@@ -150,22 +150,22 @@ pub const CompilationInfo = extern struct {
     messages: [*]const CompilationMessage,
 };
 
-pub const CompilationInfoCallback = *const fn(status: CompilationInfoRequestStatus, compilation_info: ?*const CompilationInfo, userdata: ?*anyopaque) callconv(.C) void;
+pub const ShaderModuleGetCompilationInfoCallback = *const fn(status: CompilationInfoRequestStatus, compilation_info: ?*const CompilationInfo, userdata: ?*anyopaque) callconv(.C) void;
 
 pub const ShaderModuleProcs = struct {
-    pub const GetCompilationInfo = *const fn(*ShaderModule, CompilationInfoCallback, ?*anyopaque) callconv(.C) void;
+    pub const GetCompilationInfo = *const fn(*ShaderModule, ShaderModuleGetCompilationInfoCallback, ?*anyopaque) callconv(.C) void;
     pub const SetLabel = *const fn(*ShaderModule, ?[*:0]const u8) callconv(.C) void;
     pub const Reference = *const fn(*ShaderModule) callconv(.C) void;
     pub const Release = *const fn(*ShaderModule) callconv(.C) void;
 };
 
-extern fn wgpuShaderModuleGetCompilationInfo(shader_module: *ShaderModule, callback: CompilationInfoCallback, userdata: ?*anyopaque) void;
+extern fn wgpuShaderModuleGetCompilationInfo(shader_module: *ShaderModule, callback: ShaderModuleGetCompilationInfoCallback, userdata: ?*anyopaque) void;
 extern fn wgpuShaderModuleSetLabel(shader_module: *ShaderModule, label: ?[*:0]const u8) void;
 extern fn wgpuShaderModuleReference(shader_module: *ShaderModule) void;
 extern fn wgpuShaderModuleRelease(shader_module: *ShaderModule) void;
 
 pub const ShaderModule = opaque {
-    pub inline fn getCompilationInfo(self: *ShaderModule, callback: CompilationInfoCallback, userdata: ?*anyopaque) void {
+    pub inline fn getCompilationInfo(self: *ShaderModule, callback: ShaderModuleGetCompilationInfoCallback, userdata: ?*anyopaque) void {
         wgpuShaderModuleGetCompilationInfo(self, callback, userdata);
     }
     pub inline fn setLabel(self: *ShaderModule, label: ?[*:0]const u8) void {
