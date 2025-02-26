@@ -68,6 +68,10 @@ const WGPUBuildContext = struct {
             else => "release",
         };
         const abi_str = switch (target_res.os.tag) {
+            .ios => switch (target_res.abi) {
+                .simulator => "_simulator",
+                else => "",
+            },
             .windows => switch (target_res.abi) {
                 .msvc => "_msvc",
                 else => "_gnu",
@@ -168,7 +172,7 @@ const WGPUBuildContext = struct {
             // need to think harder about this if I get custom builds working.
             else => if (link_mode == .static) {
                 libwgpu_path = wgpu_dep.path("lib/libwgpu_native.a");
-            } else if (target_res.os.tag == .macos) { // TODO: This is just guesswork, need to test it somehow, but I don't have a mac.
+            } else if (target_res.os.tag == .macos or target_res.os.tag == .ios) { // TODO: This is just guesswork, need to test it somehow, but I don't have a mac.
                 const dylib_install_file = b.addInstallLibFile(wgpu_dep.path("lib/libwgpu_native.dylib"), "libwgpu_native.dylib");
                 b.getInstallStep().dependOn(&dylib_install_file.step);
 
