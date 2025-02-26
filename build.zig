@@ -1,58 +1,5 @@
 const std = @import("std");
 
-const TargetQuery = std.Target.Query;
-
-// All the targets for which a pre-compiled build of wgpu-native is currently (as of July 9, 2024) available
-const target_whitelist = [_] TargetQuery {
-    TargetQuery {
-        .cpu_arch = .aarch64,
-        .os_tag = .linux,
-    },
-    TargetQuery {
-        .cpu_arch = .aarch64,
-        .os_tag = .macos,
-    },
-    TargetQuery {
-        .cpu_arch = .x86_64,
-        .os_tag = .linux,
-    },
-    TargetQuery {
-        .cpu_arch = .x86_64,
-        .os_tag = .macos,
-    },
-    TargetQuery {
-        .cpu_arch = .x86,
-        .os_tag = .windows,
-        .abi = .msvc,
-    },
-    TargetQuery {
-        .cpu_arch = .x86_64,
-        .os_tag = .windows,
-    },
-};
-
-// The whitelist function in standardTargetOptionsQueryOnly matches *exact* targets,
-// so unless you get extremely specific it will give false negatives and none of the targets will match when one of them should.
-// This is a way to get around that while still not allowing just any target.
-fn match_target_whitelist(target: std.Target) bool {
-    var found = false;
-    for (target_whitelist) |query| {
-        if (target.os.tag == query.os_tag and target.cpu.arch == query.cpu_arch) {
-            if (query.abi != null) {
-                if (query.abi == target.abi) {
-                    found = true;
-                    break;
-                }
-            } else {
-                found = true;
-                break;
-            }
-        }
-    }
-
-    return found;
-}
-
 fn link_windows_system_libraries(comptime T: type, mod: *T, is_gnu: bool) void {
     const linkSystemLibrary = switch (T) {
         std.Build.Module => std.Build.Module.linkSystemLibrary,
@@ -115,10 +62,7 @@ const WGPUBuildContext = struct {
         const target_res = target.result;
         const os_str = @tagName(target_res.os.tag);
         const arch_str = @tagName(target_res.cpu.arch);
-        if (!match_target_whitelist(target_res)) {
-            // TODO: Fail step here
-            std.log.err("Target {s}-{s}-{s} does match any supported target", .{arch_str, os_str, @tagName(target_res.abi)});
-        }
+
         const mode_str = switch (optimize) {
             .Debug => "debug",
             else => "release",
@@ -132,7 +76,19 @@ const WGPUBuildContext = struct {
         };
         const target_name_slices = [_] [:0]const u8 {"wgpu_", os_str, "_", arch_str, abi_str, "_", mode_str};
         const maybe_target_name = std.mem.concatWithSentinel(b.allocator, u8, &target_name_slices, 0);
-        const target_name = maybe_target_name catch "wgpu_linux_x86_64_debug";
+        const target_name = maybe_target_name catch |err| {
+            std.debug.panic("Failed to format target name: {s}", .{@errorName(err)});
+        };
+
+        // Check if we have a dependency matching our selected target.
+        for (b.available_deps) |dep| {
+            const name, _ = dep;
+            if (std.mem.eql(u8, name, target_name)) {
+                break;
+            }
+        } else {
+            std.debug.panic("Could not find dependency matching target {s}", .{target_name});
+        }
 
         const wgpu_mod = b.addModule("wgpu", .{
             .root_source_file = b.path("src/root.zig"),
