@@ -34,7 +34,7 @@ Then, in `build.zig` add:
 ```
 
 ### Building on Windows
-Windows x86_64 has two options for ABI: GNU and MSVC. For i686, only the MSVC option is available.
+Windows x86_64 has two options for ABI: GNU and MSVC. For i686 and aarch64, only the MSVC option is available.
 If you need to specify the build target, you can do that with:
 ```zig
 const target = b.standardTargetOptions(.{
