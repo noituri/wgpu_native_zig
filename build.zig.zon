@@ -43,6 +43,76 @@
         //    // actually used.
         //    .lazy = false,
         //},
+        .wgpu_android_aarch64_debug = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-android-aarch64-debug.zip",
+            .hash = "122085ae3a8c05a19968d1f88e44f7a9fcc83a3d2d02efff536a88b96df0d25a648a",
+            .lazy = true,
+        },
+        .wgpu_android_aarch64_release = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-android-aarch64-release.zip",
+            .hash = "1220c004252209ba437d04ac93a8509cb5dad210d91c84d323c7a3f3643fd411872f",
+            .lazy = true,
+        },
+        .wgpu_android_armv7_debug = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-android-armv7-debug.zip",
+            .hash = "122019e969a2e11feb05dc96b052d51403de07d5f7fb234c1d871f624a9d7d7c7771",
+            .lazy = true,
+        },
+        .wgpu_android_armv7_release = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-android-armv7-release.zip",
+            .hash = "12206f2a718084089debb37f016f7c387d5f0a33b3976c5d26be80d6a95de2259956",
+            .lazy = true,
+        },
+        .wgpu_android_x86_debug = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-android-i686-debug.zip",
+            .hash = "1220091bcc1982e667fd8831c37782f14b4a9ab1b89e1767d0c0e6a6ff8874d37f4f",
+            .lazy = true,
+        },
+        .wgpu_android_x86_release = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-android-i686-release.zip",
+            .hash = "1220cd84e045916216133469d8896560e833d3d3e3a2f5514b13097378dfb1e5ce3e",
+            .lazy = true,
+        },
+        .wgpu_android_x86_64_debug = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-android-x86_64-debug.zip",
+            .hash = "1220d05219b23eac1dad954bdaccc1f292b8cdae68e19c814472cf7981ec686f7194",
+            .lazy = true,
+        },
+        .wgpu_android_x86_64_release = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-android-x86_64-release.zip",
+            .hash = "1220d3870c08b71dd1b8238e0c7c2c22fc03cb19ce10adee732ff4ba463931a46a3e",
+            .lazy = true,
+        },
+        .wgpu_ios_aarch64_debug = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-ios-aarch64-debug.zip",
+            .hash = "122007d75b5a618b8a1f45c9a04655a1ccfe2dcfd33f73771f68d040661fecce5d08",
+            .lazy = true,
+        },
+        .wgpu_ios_aarch64_release = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-ios-aarch64-release.zip",
+            .hash = "1220e55d26c9add2f41cefc6afcc93eb9374184a18356b11675540933bbde86227c8",
+            .lazy = true,
+        },
+        .wgpu_ios_aarch64_simulator_debug = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-ios-aarch64-simulator-debug.zip",
+            .hash = "122017ff202e3bb0809ca02f906e608d6700bb54450972d6fc980d909fe3c7cd9f23",
+            .lazy = true,
+        },
+        .wgpu_ios_aarch64_simulator_release = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-ios-aarch64-simulator-release.zip",
+            .hash = "122015f2caa7ec0e83c509ff28921b7449bec7803749b352528f5b8f2b0199bf51f9",
+            .lazy = true,
+        },
+        .wgpu_ios_x86_64_simulator_debug = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-ios-x86_64-simulator-debug.zip",
+            .hash = "122024db687d6a23de3e0e69e38ec9e84f88e977ba1a063615550be07fe59974ef3f",
+            .lazy = true,
+        },
+        .wgpu_ios_x86_64_simulator_release = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-ios-x86_64-simulator-release.zip",
+            .hash = "12204597029cca3c9bfa1bab7e4a15fa7819c1bfef6526d402be8148a8ff624f65ad",
+            .lazy = true,
+        },
         .wgpu_linux_aarch64_debug = .{
             .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-linux-aarch64-debug.zip",
             .hash = "1220ff6a097baacff09442f6f4a19f9db62cf55a266dc9a35045a6df94fe3dc910bb",
@@ -81,6 +151,16 @@
         .wgpu_macos_x86_64_release = .{
             .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-macos-x86_64-release.zip",
             .hash = "1220fe8168bcc47892ef649c2a525635ec9fd932ac2998d5503d38cc552c4cd89698",
+            .lazy = true,
+        },
+        .wgpu_windows_aarch64_msvc_debug = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-windows-aarch64-msvc-debug.zip",
+            .hash = "12202f9c5b8787c6ffe60794858ccc06274e4ba8ef7b66722329749659c6fe88100a",
+            .lazy = true,
+        },
+        .wgpu_windows_aarch64_msvc_release = .{
+            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v22.1.0.5/wgpu-windows-aarch64-msvc-release.zip",
+            .hash = "12209d7911f485b11d3e216ba3fff9e1b1ad417b8bc6fc049dc567f6d4013dda149b",
             .lazy = true,
         },
         .wgpu_windows_x86_msvc_debug = .{
