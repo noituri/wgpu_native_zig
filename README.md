@@ -1,4 +1,4 @@
-# wgpu-native-zig
+# wgpu_native_zig
 Zig bindings for [wgpu-native](https://github.com/gfx-rs/wgpu-native)
 
 This package exposes two modules: `wgpu-c` and `wgpu`.
@@ -8,16 +8,21 @@ This package exposes two modules: `wgpu-c` and `wgpu`.
 `wgpu` is a module full of pure Zig bindings for `libwgpu_native`, it does not import any C code and instead relies on `extern fn` declarations to hook up to `wgpu-native`.
 
 ## Adding this package to your build
-In your `build.zig.zon` add:
+Add the package to your dependencies, either with:
+```sh
+zig fetch --save https://github.com/bronter/wgpu_native_zig/archive/refs/tags/v2.1.1.tar.gz
+```
+or by manually adding to your `build.zig.zon`:
 ```zig
 .{
     // ...other stuff
     .dependencies = .{
         // ...other dependencies
         .wgpu_native_zig = .{
-            .url="https://github.com/bronter/wgpu-native-zig/archive/<commit_hash>.tar.gz",
-            // Alternately, you can use a tagged release like so (using 1.0.0 as an example):
-            // .url = "https://github.com/bronter/wgpu-native-zig/archive/refs/tags/v1.0.0.tar.gz`
+            // You can either use a commit hash:
+            .url="https://github.com/bronter/wgpu_native_zig/archive/<commit_hash>.tar.gz",
+            // or a tagged release:
+            // .url = "https://github.com/bronter/wgpu_native_zig/archive/refs/tags/v2.1.1.tar.gz`
             .hash="<dependency hash>"
         }
     }
