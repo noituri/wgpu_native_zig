@@ -220,14 +220,17 @@ fn triangle_example(b: *std.Build, context: *const WGPUBuildContext) void {
         .root_source_file = b.path("examples/bmp.zig"),
     });
 
-    const triangle_example_exe = b.addExecutable(.{
-        .name = "triangle-example",
+    const triangle_example_exe_mod = b.createModule(.{
         .root_source_file = b.path("examples/triangle/triangle.zig"),
         .target = context.target,
         .optimize = context.optimize,
     });
-    triangle_example_exe.root_module.addImport("wgpu", context.wgpu_mod);
-    triangle_example_exe.root_module.addImport("bmp", bmp_mod);
+    triangle_example_exe_mod.addImport("wgpu", context.wgpu_mod);
+    triangle_example_exe_mod.addImport("bmp", bmp_mod);
+    const triangle_example_exe = b.addExecutable(.{
+        .name = "triangle-example",
+        .root_module = triangle_example_exe_mod,
+    });
 
     const run_triangle_cmd = b.addRunArtifact(triangle_example_exe);
 
@@ -259,11 +262,15 @@ fn unit_tests(b: *std.Build, context: *const WGPUBuildContext) void {
     };
 
     for (test_files, test_names) |test_file, test_name| {
-        const t = b.addTest(.{
-            .name = test_name,
+        // TODO: Seems weird to have a mod for each unit test, should probably revisit this.
+        const test_mod = b.createModule(.{
             .root_source_file = b.path(test_file),
             .target = context.target,
             .optimize = context.optimize,
+        });
+        const t = b.addTest(.{
+            .name = test_name,
+            .root_module = test_mod,
         });
         if (context.libwgpu_path != null) {
             t.addObjectFile(context.libwgpu_path.?);
@@ -294,23 +301,29 @@ fn unit_tests(b: *std.Build, context: *const WGPUBuildContext) void {
 }
 
 fn compute_tests(b: *std.Build, context: *const WGPUBuildContext) void {
-    const compute_test = b.addTest(.{
-        .name = "compute-test",
+    const compute_test_mod = b.createModule(.{
         .root_source_file = b.path("tests/compute.zig"),
         .target = context.target,
         .optimize = context.optimize,
     });
-    compute_test.root_module.addImport("wgpu", context.wgpu_mod);
+    compute_test_mod.addImport("wgpu", context.wgpu_mod);
+    const compute_test = b.addTest(.{
+        .name = "compute-test",
+        .root_module = compute_test_mod,
+    });
 
     const run_compute_test = b.addRunArtifact(compute_test);
 
-    const compute_test_c = b.addTest(.{
-        .name = "compute-test-c",
+    const compute_test_c_mod = b.createModule(.{
         .root_source_file = b.path("tests/compute_c.zig"),
         .target = context.target,
         .optimize = context.optimize,
     });
-    compute_test_c.root_module.addImport("wgpu-c", context.wgpu_c_mod);
+    compute_test_c_mod.addImport("wgpu-c", context.wgpu_c_mod);
+    const compute_test_c = b.addTest(.{
+        .name = "compute-test-c",
+        .root_module = compute_test_c_mod,
+    });
 
     const run_compute_test_c = b.addRunArtifact(compute_test_c);
 

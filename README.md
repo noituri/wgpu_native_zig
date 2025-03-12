@@ -169,7 +169,7 @@ b.getInstallStep().dependOn(&install_dll.step);
   * This pretty much means, it is replaced with `bool` in the parameters and return values of methods, but not in structs or the parameters/return values of procs (which are supposed to be function pointers to things returned by `wgpuGetProcAddress`).
 
 ## TODO
-* Test this on other machines with different OS/CPU. Currently only tested on x86_64-linux-gnu and x86_64-windows (msvc and gnu); zig version 0.14.0-dev.2577+271452d22.
+* Test this on other machines with different OS/CPU. Currently only tested on x86_64-linux-gnu and x86_64-windows (msvc and gnu); zig version 0.14.0.
 * Cleanup/organization: 
   * If types are only tied to a specific opaque struct, they should be decls inside that struct.
     * For example, `ShaderModuleGetCompilationInfoCallback` should be `ShaderModule.GetCompilationInfoCallback`, since that callback type isn't used anywhere outside of the context of `ShaderModule`.
