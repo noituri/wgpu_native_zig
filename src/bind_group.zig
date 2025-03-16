@@ -79,9 +79,9 @@ pub const BindGroupEntryExtras = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.bind_group_entry_extras,
     },
-    buffers: ?[*]const Buffer,
+    buffers: ?[*]const *Buffer,
     buffer_count: usize = 0,
-    samplers: ?[*]const Sampler,
+    samplers: ?[*]const *Sampler,
     sampler_count: usize = 0,
     texture_views: ?[*]const TextureView,
     texture_view_count: usize = 0,

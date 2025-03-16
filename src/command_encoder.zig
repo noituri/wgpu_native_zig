@@ -149,7 +149,7 @@ pub const ColorAttachment = extern struct {
     view: ?*TextureView,
     depth_slice: u32 = WGPU_DEPTH_SLICE_UNDEFINED,
     resolve_target: ?*TextureView = null,
-    loap_op: LoadOp = LoadOp.clear,
+    load_op: LoadOp = LoadOp.clear,
     store_op: StoreOp = StoreOp.store,
     clear_value: Color = Color {},
 };
