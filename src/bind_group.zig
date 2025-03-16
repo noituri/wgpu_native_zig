@@ -1,4 +1,3 @@
-// zig fmt: off
 const _chained_struct = @import("chained_struct.zig");
 const ChainedStruct = _chained_struct.ChainedStruct;
 const SType = _chained_struct.SType;
