@@ -1,3 +1,4 @@
+// zig fmt: off
 const _chained_struct = @import("chained_struct.zig");
 const ChainedStruct = _chained_struct.ChainedStruct;
 const SType = _chained_struct.SType;
@@ -34,7 +35,7 @@ pub const PipelineLayoutDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
     bind_group_layout_count: usize,
-    bind_group_layouts: [*]const BindGroupLayout,
+    bind_group_layouts: [*]const *BindGroupLayout,
 
     pub inline fn withPushConstantRanges(
         self: PipelineLayoutDescriptor,
