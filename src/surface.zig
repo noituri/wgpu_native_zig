@@ -212,9 +212,9 @@ pub const SurfaceConfiguration = extern struct {
 };
 
 pub const SurfaceCapabilitiesProcs = struct {
-    pub const FreeMembers = *const fn(*SurfaceCapabilities) callconv(.C) void;
+    pub const FreeMembers = *const fn(SurfaceCapabilities) callconv(.C) void;
 };
-extern fn wgpuSurfaceCapabilitiesFreeMembers(surface_capabilities: *SurfaceCapabilities) void;
+extern fn wgpuSurfaceCapabilitiesFreeMembers(surface_capabilities: SurfaceCapabilities) void;
 pub const SurfaceCapabilities = extern struct {
     next_in_chain: ?*ChainedStructOut = null,
     usages: TextureUsageFlags,
@@ -225,7 +225,7 @@ pub const SurfaceCapabilities = extern struct {
     alpha_mode_count: usize,
     alpha_modes: [*]const CompositeAlphaMode,
 
-    pub inline fn FreeMembers(self: *SurfaceCapabilities) void {
+    pub inline fn freeMembers(self: SurfaceCapabilities) void {
         wgpuSurfaceCapabilitiesFreeMembers(self);
     }
 };
