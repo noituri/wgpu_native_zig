@@ -50,7 +50,7 @@ pub const FeatureName = enum(u32) {
     subgroup_barrier                                              = 0x00030023,
     timestamp_query_inside_encoders                               = 0x00030024,
     timestamp_query_inside_passes                                 = 0x00030025,
-    feature_force32                                               = 0x7FFFFFFF
+    feature_force32                                               = 0x7FFFFFFF,
 };
 
 pub const IndexFormat = enum(u32) {
