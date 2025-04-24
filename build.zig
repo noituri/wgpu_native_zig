@@ -34,12 +34,25 @@ fn link_windows_system_libraries(comptime T: type, mod: *T, is_gnu: bool) void {
     linkSystemLibrary(mod, "bcrypt", .{});
 }
 
+fn link_mac_frameworks(comptime T: type, mod: *T) void {
+    const linkSystemLibrary = switch (T) {
+        std.Build.Module => std.Build.Module.linkFramework,
+        std.Build.Step.Compile => std.Build.Step.Compile.linkFramework,
+        else => @compileError("Provided type must either be std.Build.Module or std.Build.Step.Compile"),
+    };
+
+    linkSystemLibrary(mod, "Foundation");
+    linkSystemLibrary(mod, "QuartzCore");
+    linkSystemLibrary(mod, "Metal");
+}
+
 
 const WGPUBuildContext = struct {
     link_mode: std.builtin.LinkMode,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     is_windows: bool,
+    is_mac: bool,
     wgpu_dep: *std.Build.Dependency,
     libwgpu_path: ?std.Build.LazyPath,
     install_lib_dir: []const u8,
@@ -119,6 +132,7 @@ const WGPUBuildContext = struct {
 
         var libwgpu_path: ?std.Build.LazyPath = null;
         var is_windows: bool = false;
+        var is_mac: bool = target_res.os.tag == .macos or target_res.os.tag == .ios;
 
         // TODO: This seems like it could be made smaller, lots of repetitive code here.
         switch(target_res.os.tag) {
@@ -173,6 +187,7 @@ const WGPUBuildContext = struct {
             else => if (link_mode == .static) {
                 libwgpu_path = wgpu_dep.path("lib/libwgpu_native.a");
             } else if (target_res.os.tag == .macos or target_res.os.tag == .ios) { // TODO: This is just guesswork, need to test it somehow, but I don't have a mac.
+                is_mac = true;
                 const dylib_install_file = b.addInstallLibFile(wgpu_dep.path("lib/libwgpu_native.dylib"), "libwgpu_native.dylib");
                 b.getInstallStep().dependOn(&dylib_install_file.step);
 
@@ -198,6 +213,7 @@ const WGPUBuildContext = struct {
             .target = target,
             .optimize = optimize,
             .is_windows = is_windows,
+            .is_mac = is_mac,
             .wgpu_dep = wgpu_dep,
             .libwgpu_path = libwgpu_path,
             .install_lib_dir = b.getInstallPath(.lib, ""),
@@ -285,6 +301,10 @@ fn unit_tests(b: *std.Build, context: *const WGPUBuildContext) void {
 
         if (context.link_mode == .dynamic) {
             dynamic_link(context, t, run_test);
+
+            if (context.is_mac) {
+                link_mac_frameworks(std.Build.Step.Compile, t);
+            }
         } else if (context.is_windows) {
             if (context.target.result.abi == .gnu) {
                 link_windows_system_libraries(std.Build.Step.Compile, t, true);
@@ -294,6 +314,8 @@ fn unit_tests(b: *std.Build, context: *const WGPUBuildContext) void {
             } else {
                 link_windows_system_libraries(std.Build.Step.Compile, t, false);
             }
+        } else if (context.is_mac) {
+            link_mac_frameworks(std.Build.Step.Compile, t);
         }
 
         unit_test_step.dependOn(&run_test.step);
@@ -334,6 +356,9 @@ fn compute_tests(b: *std.Build, context: *const WGPUBuildContext) void {
 
         run_compute_test.step.dependOn(b.getInstallStep());
         run_compute_test_c.step.dependOn(b.getInstallStep());
+    } else if (context.is_mac) {
+        link_mac_frameworks(std.Build.Step.Compile, compute_test);
+        link_mac_frameworks(std.Build.Step.Compile, compute_test_c);
     }
     compute_test_step.dependOn(&run_compute_test.step);
     compute_test_step.dependOn(&run_compute_test_c.step);
