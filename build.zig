@@ -33,16 +33,10 @@ fn link_windows_system_libraries(comptime T: type, mod: *T, is_gnu: bool) void {
     linkSystemLibrary(mod, "bcrypt", .{});
 }
 
-fn link_mac_frameworks(comptime T: type, mod: *T) void {
-    const linkFramework = switch (T) {
-        std.Build.Module => std.Build.Module.linkFramework,
-        std.Build.Step.Compile => std.Build.Step.Compile.linkFramework,
-        else => @compileError("Provided type must either be std.Build.Module or std.Build.Step.Compile"),
-    };
-
-    linkFramework(mod, "Foundation");
-    linkFramework(mod, "QuartzCore");
-    linkFramework(mod, "Metal");
+fn link_mac_frameworks(mod: *std.Build.Step.Compile) void {
+    mod.linkFramework("Foundation");
+    mod.linkFramework("QuartzCore");
+    mod.linkFramework("Metal");
 }
 
 const WGPUBuildContext = struct {
@@ -297,7 +291,7 @@ fn unit_tests(b: *std.Build, context: *const WGPUBuildContext) void {
         const run_test = b.addRunArtifact(t);
 
         if (context.is_mac) {
-            link_mac_frameworks(std.Build.Step.Compile, t);
+            link_mac_frameworks(t);
         }
 
         if (context.link_mode == .dynamic) {
@@ -354,8 +348,8 @@ fn compute_tests(b: *std.Build, context: *const WGPUBuildContext) void {
     }
 
     if (context.is_mac) {
-        link_mac_frameworks(std.Build.Step.Compile, compute_test);
-        link_mac_frameworks(std.Build.Step.Compile, compute_test_c);
+        link_mac_frameworks(compute_test);
+        link_mac_frameworks(compute_test_c);
     }
 
     compute_test_step.dependOn(&run_compute_test.step);
