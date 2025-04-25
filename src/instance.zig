@@ -89,7 +89,7 @@ pub const InstanceProcs = struct {
     pub const HasWGSLLanguageFeature = *const fn(*Instance, WGSLFeatureName) WGPUBool;
     pub const ProcessEvents = *const fn(*Instance) callconv(.C) void;
     pub const RequestAdapter = *const fn(*Instance, ?*const RequestAdapterOptions, InstanceRequestAdapterCallback, ?*anyopaque) callconv(.C) void;
-    pub const InstanceReference = *const fn(*Instance) callconv(.C) void;
+    pub const InstanceAddRef = *const fn(*Instance) callconv(.C) void;
     pub const InstanceRelease = *const fn(*Instance) callconv(.C) void;
 
     // wgpu-native procs?
@@ -102,7 +102,7 @@ extern fn wgpuInstanceCreateSurface(instance: *Instance, descriptor: *const Surf
 extern fn wgpuInstanceHasWGSLLanguageFeature(instance: *Instance, feature: WGSLFeatureName) WGPUBool;
 extern fn wgpuInstanceProcessEvents(instance: *Instance) void;
 extern fn wgpuInstanceRequestAdapter(instance: *Instance, options: ?*const RequestAdapterOptions, callback: InstanceRequestAdapterCallback, userdata: ?*anyopaque) void;
-extern fn wgpuInstanceReference(instance: *Instance) void;
+extern fn wgpuInstanceAddRef(instance: *Instance) void;
 extern fn wgpuInstanceRelease(instance: *Instance) void;
 
 pub const RegistryReport = extern struct {
@@ -182,11 +182,11 @@ pub const Instance = opaque {
         wgpuInstanceRequestAdapter(self, options, callback, userdata);
     }
 
-    // Dunno what this does, but it appears in webgpu.h so I guess it's important?
-    pub inline fn reference(self: *Instance) void {
-        // TODO: Find out WTF wgpuInstanceReference does.
-        wgpuInstanceReference(self);
+    pub inline fn addRef(self: *Instance) void {
+        // TODO: Find out WTF wgpuInstanceAddRef does.
+        wgpuInstanceAddRef(self);
     }
+
 
     pub inline fn release(self: *Instance) void {
         wgpuInstanceRelease(self);

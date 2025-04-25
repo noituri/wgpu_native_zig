@@ -57,7 +57,7 @@ const ComputePassEncoderProcs = struct {
     pub const SetBindGroup = *const fn(*ComputePassEncoder, u32, *BindGroup, usize, ?[*]const u32) callconv(.C) void;
     pub const SetLabel = *const fn(*ComputePassEncoder, ?[*:0]const u8) callconv(.C) void;
     pub const SetPipeline = *const fn(*ComputePassEncoder, *ComputePipeline) callconv(.C) void;
-    pub const Reference = *const fn(*ComputePassEncoder) callconv(.C) void;
+    pub const AddRef = *const fn(*ComputePassEncoder) callconv(.C) void;
     pub const Release = *const fn(*ComputePassEncoder) callconv(.C) void;
 
     // wgpu-native procs?
@@ -76,7 +76,7 @@ extern fn wgpuComputePassEncoderPushDebugGroup(compute_pass_encoder: *ComputePas
 extern fn wgpuComputePassEncoderSetBindGroup(compute_pass_encoder: *ComputePassEncoder, group_index: u32, group: *BindGroup, dynamic_offset_count: usize, dynamic_offsets: ?[*]const u32) void;
 extern fn wgpuComputePassEncoderSetLabel(compute_pass_encoder: *ComputePassEncoder, label: ?[*:0]const u8) void;
 extern fn wgpuComputePassEncoderSetPipeline(compute_pass_encoder: *ComputePassEncoder, pipeline: *ComputePipeline) void;
-extern fn wgpuComputePassEncoderReference(compute_pass_encoder: *ComputePassEncoder) void;
+extern fn wgpuComputePassEncoderAddRef(compute_pass_encoder: *ComputePassEncoder) void;
 extern fn wgpuComputePassEncoderRelease(compute_pass_encoder: *ComputePassEncoder) void;
 
 // wgpu-native
@@ -113,8 +113,8 @@ pub const ComputePassEncoder = opaque {
     pub inline fn setPipeline(self: *ComputePassEncoder, pipeline: *ComputePipeline) void {
         wgpuComputePassEncoderSetPipeline(self, pipeline);
     }
-    pub inline fn reference(self: *ComputePassEncoder) void {
-        wgpuComputePassEncoderReference(self);
+    pub inline fn addRef(self: *ComputePassEncoder) void {
+        wgpuComputePassEncoderAddRef(self);
     }
     pub inline fn release(self: *ComputePassEncoder) void {
         wgpuComputePassEncoderRelease(self);
@@ -225,7 +225,7 @@ pub const RenderPassEncoderProcs = struct {
     pub const SetStencilReference = *const fn(*RenderPassEncoder, u32) callconv(.C) void;
     pub const SetVertexBuffer = *const fn(*RenderPassEncoder, u32, *Buffer, u64, u64) callconv(.C) void;
     pub const SetViewport = *const fn(*RenderPassEncoder, f32, f32, f32, f32, f32, f32) callconv(.C) void;
-    pub const Reference = *const fn(*RenderPassEncoder) callconv(.C) void;
+    pub const AddRef = *const fn(*RenderPassEncoder) callconv(.C) void;
     pub const Release = *const fn(*RenderPassEncoder) callconv(.C) void;
 
     // wgpu-native procs?
@@ -259,7 +259,7 @@ extern fn wgpuRenderPassEncoderSetScissorRect(render_pass_encoder: *RenderPassEn
 extern fn wgpuRenderPassEncoderSetStencilReference(render_pass_encoder: *RenderPassEncoder, stencil_reference: u32) void;
 extern fn wgpuRenderPassEncoderSetVertexBuffer(render_pass_encoder: *RenderPassEncoder, slot: u32, buffer: *Buffer, offset: u64, size: u64) void;
 extern fn wgpuRenderPassEncoderSetViewport(render_pass_encoder: *RenderPassEncoder, x: f32, y: f32, width: f32, height: f32, min_depth: f32, max_depth: f32) void;
-extern fn wgpuRenderPassEncoderReference(render_pass_encoder: *RenderPassEncoder) void;
+extern fn wgpuRenderPassEncoderAddRef(render_pass_encoder: *RenderPassEncoder) void;
 extern fn wgpuRenderPassEncoderRelease(render_pass_encoder: *RenderPassEncoder) void;
 
 // wgpu-native
@@ -333,8 +333,8 @@ pub const RenderPassEncoder = opaque {
     pub inline fn setViewport(self: *RenderPassEncoder, x: f32, y: f32, width: f32, height: f32, min_depth: f32, max_depth: f32) void {
         wgpuRenderPassEncoderSetViewport(self, x, y, width, height, min_depth, max_depth);
     }
-    pub inline fn reference(self: *RenderPassEncoder) void {
-        wgpuRenderPassEncoderReference(self);
+    pub inline fn addRef(self: *RenderPassEncoder) void {
+        wgpuRenderPassEncoderAddRef(self);
     }
     pub inline fn release(self: *RenderPassEncoder) void {
         wgpuRenderPassEncoderRelease(self);
@@ -374,20 +374,20 @@ pub const CommandBufferDescriptor = extern struct {
 
 pub const CommandBufferProcs = struct {
     pub const SetLabel = *const fn(*CommandBuffer, ?[*:0]const u8) callconv(.C) void;
-    pub const Reference = *const fn(*CommandBuffer) callconv(.C) void;
+    pub const AddRef = *const fn(*CommandBuffer) callconv(.C) void;
     pub const Release = *const fn(*CommandBuffer) callconv(.C) void;
 };
 
 extern fn wgpuCommandBufferSetLabel(command_buffer: *CommandBuffer, label: ?[*:0]const u8) void;
-extern fn wgpuCommandBufferReference(command_buffer: *CommandBuffer) void;
+extern fn wgpuCommandBufferAddRef(command_buffer: *CommandBuffer) void;
 extern fn wgpuCommandBufferRelease(command_buffer: *CommandBuffer) void;
 
 pub const CommandBuffer = opaque {
     pub inline fn setLabel(self: *CommandBuffer, label: ?[*:0]const u8) void {
         wgpuCommandBufferSetLabel(self, label);
     }
-    pub inline fn reference(self: *CommandBuffer) void {
-        wgpuCommandBufferReference(self);
+    pub inline fn addRef(self: *CommandBuffer) void {
+        wgpuCommandBufferAddRef(self);
     }
     pub inline fn release(self: *CommandBuffer) void {
         wgpuCommandBufferRelease(self);
@@ -409,7 +409,7 @@ pub const CommandEncoderProcs = struct {
     pub const ResolveQuerySet = *const fn(*CommandEncoder, *QuerySet, u32, u32, *Buffer, u64) callconv(.C) void;
     pub const SetLabel = *const fn(*CommandEncoder, ?[*:0]const u8) callconv(.C) void;
     pub const WriteTimestamp = *const fn(*CommandEncoder, *QuerySet, u32) callconv(.C) void;
-    pub const Reference = *const fn(*CommandEncoder) callconv(.C) void;
+    pub const AddRef = *const fn(*CommandEncoder) callconv(.C) void;
     pub const Release = *const fn(*CommandEncoder) callconv(.C) void;
 };
 
@@ -427,7 +427,7 @@ extern fn wgpuCommandEncoderPushDebugGroup(command_encoder: *CommandEncoder, gro
 extern fn wgpuCommandEncoderResolveQuerySet(command_encoder: *CommandEncoder, query_set: *QuerySet, first_query: u32, query_count: u32, destination: *Buffer, destination_offset: u64) void;
 extern fn wgpuCommandEncoderSetLabel(command_encoder: *CommandEncoder, label: ?[*:0]const u8) void;
 extern fn wgpuCommandEncoderWriteTimestamp(command_encoder: *CommandEncoder, query_set: *QuerySet, query_index: u32) void;
-extern fn wgpuCommandEncoderReference(command_encoder: *CommandEncoder) void;
+extern fn wgpuCommandEncoderAddRef(command_encoder: *CommandEncoder) void;
 extern fn wgpuCommandEncoderRelease(command_encoder: *CommandEncoder) void;
 
 pub const CommandEncoder = opaque {
@@ -473,8 +473,8 @@ pub const CommandEncoder = opaque {
     pub inline fn writeTimestamp(self: *CommandEncoder, query_set: *QuerySet, query_index: u32) void {
         wgpuCommandEncoderWriteTimestamp(self, query_set, query_index);
     }
-    pub inline fn reference(self: *CommandEncoder) void {
-        wgpuCommandEncoderReference(self);
+    pub inline fn addRef(self: *CommandEncoder) void {
+        wgpuCommandEncoderAddRef(self);
     }
     pub inline fn release(self: *CommandEncoder) void {
         wgpuCommandEncoderRelease(self);
