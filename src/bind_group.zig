@@ -113,17 +113,20 @@ pub const BindGroupDescriptor = extern struct {
 
 pub const BindGroupProcs = struct {
     pub const SetLabel = *const fn(*BindGroup, ?[*:0]const u8) callconv(.C) void;
-    pub const Reference = *const fn(*BindGroup) callconv(.C) void;
+    pub const AddRef = *const fn(*BindGroup) callconv(.C) void;
     pub const Release = *const fn(*BindGroup) callconv(.C) void;
 };
 
 extern fn wgpuBindGroupSetLabel(bind_group: *BindGroup, label: ?[*:0]const u8) void;
-extern fn wgpuBindGroupReference(bind_group: *BindGroup) void;
+extern fn wgpuBindGroupAddRef(bind_group: *BindGroup) void;
 extern fn wgpuBindGroupRelease(bind_group: *BindGroup) void;
 
 pub const BindGroup = opaque {
     pub inline fn setLabel(self: *BindGroup, label: ?[*:0]const u8) void {
         wgpuBindGroupSetLabel(self, label);
+    }
+    pub inline fn addRef(self: *BindGroup) void {
+        wgpuBindGroupAddRef(self);
     }
     pub inline fn release(self: *BindGroup) void {
         wgpuBindGroupRelease(self);
