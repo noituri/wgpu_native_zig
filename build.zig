@@ -11,7 +11,6 @@ fn link_windows_system_libraries(comptime T: type, mod: *T, is_gnu: bool) void {
         // For gnu, the linker needs the d3dcompiler dll since it can't find a suitable static lib
         // (I'd guess it tries to search for something like "libd3dcompiler.a" instead of "d3dcompiler.lib").
         linkSystemLibrary(mod, "d3dcompiler_47", .{});
-
     } else {
         linkSystemLibrary(mod, "d3dcompiler", .{});
 
@@ -34,12 +33,18 @@ fn link_windows_system_libraries(comptime T: type, mod: *T, is_gnu: bool) void {
     linkSystemLibrary(mod, "bcrypt", .{});
 }
 
+fn link_mac_frameworks(mod: *std.Build.Step.Compile) void {
+    mod.linkFramework("Foundation");
+    mod.linkFramework("QuartzCore");
+    mod.linkFramework("Metal");
+}
 
 const WGPUBuildContext = struct {
     link_mode: std.builtin.LinkMode,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     is_windows: bool,
+    is_mac: bool,
     wgpu_dep: *std.Build.Dependency,
     libwgpu_path: ?std.Build.LazyPath,
     install_lib_dir: []const u8,
@@ -78,7 +83,7 @@ const WGPUBuildContext = struct {
             },
             else => "",
         };
-        const target_name_slices = [_] [:0]const u8 {"wgpu_", os_str, "_", arch_str, abi_str, "_", mode_str};
+        const target_name_slices = [_][:0]const u8{ "wgpu_", os_str, "_", arch_str, abi_str, "_", mode_str };
         const maybe_target_name = std.mem.concatWithSentinel(b.allocator, u8, &target_name_slices, 0);
         const target_name = maybe_target_name catch |err| {
             std.debug.panic("Failed to format target name: {s}", .{@errorName(err)});
@@ -119,9 +124,10 @@ const WGPUBuildContext = struct {
 
         var libwgpu_path: ?std.Build.LazyPath = null;
         var is_windows: bool = false;
+        var is_mac: bool = target_res.os.tag == .macos or target_res.os.tag == .ios;
 
         // TODO: This seems like it could be made smaller, lots of repetitive code here.
-        switch(target_res.os.tag) {
+        switch (target_res.os.tag) {
             .windows => {
                 is_windows = true;
                 if (target_res.abi == .msvc) {
@@ -173,6 +179,7 @@ const WGPUBuildContext = struct {
             else => if (link_mode == .static) {
                 libwgpu_path = wgpu_dep.path("lib/libwgpu_native.a");
             } else if (target_res.os.tag == .macos or target_res.os.tag == .ios) { // TODO: This is just guesswork, need to test it somehow, but I don't have a mac.
+                is_mac = true;
                 const dylib_install_file = b.addInstallLibFile(wgpu_dep.path("lib/libwgpu_native.dylib"), "libwgpu_native.dylib");
                 b.getInstallStep().dependOn(&dylib_install_file.step);
 
@@ -192,12 +199,12 @@ const WGPUBuildContext = struct {
             wgpu_c_mod.addObjectFile(libwgpu_path.?);
         }
 
-
-        return WGPUBuildContext {
+        return WGPUBuildContext{
             .link_mode = link_mode,
             .target = target,
             .optimize = optimize,
             .is_windows = is_windows,
+            .is_mac = is_mac,
             .wgpu_dep = wgpu_dep,
             .libwgpu_path = libwgpu_path,
             .install_lib_dir = b.getInstallPath(.lib, ""),
@@ -208,11 +215,11 @@ const WGPUBuildContext = struct {
 };
 
 fn dynamic_link(context: *const WGPUBuildContext, c: *std.Build.Step.Compile, cmd: *std.Build.Step.Run) void {
-        if (!context.is_windows) {
-            c.addLibraryPath(context.wgpu_dep.path("lib"));
-            c.linkSystemLibrary2("wgpu_native", .{});
-        }
-        cmd.addPathDir(context.install_lib_dir);
+    if (!context.is_windows) {
+        c.addLibraryPath(context.wgpu_dep.path("lib"));
+        c.linkSystemLibrary2("wgpu_native", .{});
+    }
+    cmd.addPathDir(context.install_lib_dir);
 }
 
 fn triangle_example(b: *std.Build, context: *const WGPUBuildContext) void {
@@ -250,12 +257,12 @@ fn unit_tests(b: *std.Build, context: *const WGPUBuildContext) void {
         unit_test_step.dependOn(b.getInstallStep());
     }
 
-    const test_files = [_] [:0]const u8 {
+    const test_files = [_][:0]const u8{
         "src/instance.zig",
         "src/adapter.zig",
         "src/pipeline.zig",
     };
-    comptime var test_names: [test_files.len] [:0]const u8 = test_files;
+    comptime var test_names: [test_files.len][:0]const u8 = test_files;
     comptime for (test_files, 0..) |test_file, idx| {
         const test_name = test_file[4..(test_file.len - 4)] ++ "-test";
         test_names[idx] = test_name;
@@ -282,6 +289,10 @@ fn unit_tests(b: *std.Build, context: *const WGPUBuildContext) void {
         }
 
         const run_test = b.addRunArtifact(t);
+
+        if (context.is_mac) {
+            link_mac_frameworks(t);
+        }
 
         if (context.link_mode == .dynamic) {
             dynamic_link(context, t, run_test);
@@ -335,6 +346,12 @@ fn compute_tests(b: *std.Build, context: *const WGPUBuildContext) void {
         run_compute_test.step.dependOn(b.getInstallStep());
         run_compute_test_c.step.dependOn(b.getInstallStep());
     }
+
+    if (context.is_mac) {
+        link_mac_frameworks(compute_test);
+        link_mac_frameworks(compute_test_c);
+    }
+
     compute_test_step.dependOn(&run_compute_test.step);
     compute_test_step.dependOn(&run_compute_test_c.step);
 }

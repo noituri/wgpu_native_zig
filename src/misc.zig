@@ -45,6 +45,12 @@ pub const FeatureName = enum(u32) {
     shader_i16                                                    = 0x0003001E,
     shader_primitive_index                                        = 0x0003001F,
     shader_early_depth_test                                       = 0x00030020,
+    subgroup                                                      = 0x00030021,
+    subgroup_vertex                                               = 0x00030022,
+    subgroup_barrier                                              = 0x00030023,
+    timestamp_query_inside_encoders                               = 0x00030024,
+    timestamp_query_inside_passes                                 = 0x00030025,
+    feature_force32                                               = 0x7FFFFFFF,
 };
 
 pub const IndexFormat = enum(u32) {
