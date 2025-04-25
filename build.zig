@@ -110,13 +110,11 @@ const WGPUBuildContext = struct {
 
         const translate_step = b.addTranslateC(.{
             // wgpu.h imports webgpu.h, so we get the contents of both files, as well as a bunch of libc garbage.
-            .root_source_file = wgpu_dep.path("include/wgpu/wgpu.h"),
+            .root_source_file = wgpu_dep.path("include/webgpu/wgpu.h"),
 
             .target = target,
             .optimize = optimize,
         });
-
-        translate_step.addIncludePath(wgpu_dep.path("include/webgpu"));
 
         const wgpu_c_mod = translate_step.addModule("wgpu-c");
         wgpu_c_mod.resolved_target = target;
