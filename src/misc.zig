@@ -111,7 +111,7 @@ pub const StringView = extern struct {
     }
 
     pub fn toSlice(self: StringView) ?[]const u8 {
-        const data = self.data.?;
+        const data = self.data orelse return null;
 
         // test if null-terminated string
         if (self.length == WGPU_STRLEN) {
@@ -151,4 +151,13 @@ test "slice can be constructed from null-terminated StringView" {
     };
 
     try std.testing.expectEqualSlices(u8, "test", sv.toSlice().?);
+}
+
+test "StringView.toSlice returns null if data is null" {
+    const sv = StringView {
+        .data = null,
+        .length = WGPU_STRLEN,
+    };
+
+    try std.testing.expectEqual(null, sv.toSlice());
 }
