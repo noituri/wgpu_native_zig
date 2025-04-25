@@ -2,9 +2,9 @@ const std = @import("std");
 
 // AFAIK these aren't defined in Zig's stdlib like they are for libc,
 // but it's pretty trivial to construct them.
-pub const U32_MAX = ~@as(u32, 0);
-pub const U64_MAX = ~@as(u64, 0);
-pub const USIZE_MAX = ~@as(usize, 0);
+pub const U32_MAX: u32 = std.math.maxInt(u32);
+pub const U64_MAX: u64 = std.math.maxInt(u64);
+pub const USIZE_MAX: usize = std.math.maxInt(usize);
 
 pub const WGPU_WHOLE_SIZE = U64_MAX;
 
