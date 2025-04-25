@@ -17,26 +17,27 @@ const SurfaceDescriptor = _surface.SurfaceDescriptor;
 const _misc = @import("misc.zig");
 const WGPUFlags = _misc.WGPUFlags;
 const WGPUBool = _misc.WGPUBool;
+const StringView = _misc.StringView;
 
-pub const InstanceBackendFlags = WGPUFlags;
-pub const InstanceBackend = struct {
-    pub const all            = @as(InstanceBackendFlags, 0x00000000);
-    pub const vulkan         = @as(InstanceBackendFlags, 0x00000001);
-    pub const gl             = @as(InstanceBackendFlags, 0x00000002);
-    pub const metal          = @as(InstanceBackendFlags, 0x00000004);
-    pub const dx12           = @as(InstanceBackendFlags, 0x00000008);
-    pub const dx11           = @as(InstanceBackendFlags, 0x00000010);
-    pub const browser_webgpu = @as(InstanceBackendFlags, 0x00000020);
+pub const InstanceBackend = WGPUFlags;
+pub const InstanceBackends = struct {
+    pub const all            = @as(InstanceBackend, 0x00000000);
+    pub const vulkan         = @as(InstanceBackend, 0x00000001);
+    pub const gl             = @as(InstanceBackend, 0x00000002);
+    pub const metal          = @as(InstanceBackend, 0x00000004);
+    pub const dx12           = @as(InstanceBackend, 0x00000008);
+    pub const dx11           = @as(InstanceBackend, 0x00000010);
+    pub const browser_webgpu = @as(InstanceBackend, 0x00000020);
     pub const primary        = vulkan | metal | dx12 | browser_webgpu;
     pub const secondary      = gl | dx11;
 };
 
-pub const InstanceFlags = WGPUFlags;
-pub const InstanceFlag = struct {
-    pub const default            = @as(InstanceFlags, 0x00000000);
-    pub const debug              = @as(InstanceFlags, 0x00000001);
-    pub const validation         = @as(InstanceFlags, 0x00000002);
-    pub const discard_hal_labels = @as(InstanceFlags, 0x00000004);
+pub const InstanceFlag = WGPUFlags;
+pub const InstanceFlags = struct {
+    pub const default            = @as(InstanceFlag, 0x00000000);
+    pub const debug              = @as(InstanceFlag, 0x00000001);
+    pub const validation         = @as(InstanceFlag, 0x00000002);
+    pub const discard_hal_labels = @as(InstanceFlag, 0x00000004);
 };
 
 pub const Dx12Compiler = enum(u32) {
@@ -56,12 +57,12 @@ pub const InstanceExtras = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.instance_extras,
     },
-    backends: InstanceBackendFlags,
-    flags: InstanceFlags,
+    backends: InstanceBackend,
+    flags: InstanceFlag,
     dx12_shader_compiler: Dx12Compiler,
     gles3_minor_version: Gles3MinorVersion,
-    dxil_path: ?[*:0]const u8 = null,
-    dxc_path: ?[*:0]const u8 = null,
+    dxil_path: StringView = StringView {},
+    dxc_path: StringView = StringView {},
 };
 
 pub const InstanceDescriptor = extern struct {
@@ -108,7 +109,6 @@ pub const RegistryReport = extern struct {
     num_allocated: usize,
     num_kept_from_user: usize,
     num_released_from_user: usize,
-    num_error: usize,
     element_size: usize,
 };
 
@@ -124,6 +124,7 @@ pub const HubReport = extern struct {
     render_bundles: RegistryReport,
     render_pipelines: RegistryReport,
     compute_pipelines: RegistryReport,
+    pipeline_caches: RegistryReport,
     query_sets: RegistryReport,
     buffers: RegistryReport,
     textures: RegistryReport,
@@ -133,16 +134,12 @@ pub const HubReport = extern struct {
 
 pub const GlobalReport = extern struct {
     surfaces: RegistryReport,
-    backend_type: BackendType,
-    vulkan: HubReport,
-    metal: HubReport,
-    dx12: HubReport,
-    gl: HubReport,
+    hub: HubReport,
 };
 
 pub const EnumerateAdapterOptions = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    backends: InstanceBackendFlags,
+    backends: InstanceBackend,
 };
 
 // wgpu-native

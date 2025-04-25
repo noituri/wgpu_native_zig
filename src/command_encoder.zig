@@ -23,7 +23,7 @@ const RenderPipeline = _pipeline.RenderPipeline;
 
 const RenderBundle = @import("render_bundle.zig").RenderBundle;
 
-const ShaderStageFlags = @import("shader.zig").ShaderStageFlags;
+const ShaderStage = @import("shader.zig").ShaderStage;
 
 pub const WGPU_DEPTH_SLICE_UNDEFINED = @as(u32, 0xffffffff);
 pub const WGPU_QUERY_SET_INDEX_UNDEFINED = @as(u32, 0xffffffff);
@@ -61,8 +61,10 @@ const ComputePassEncoderProcs = struct {
     pub const Release = *const fn(*ComputePassEncoder) callconv(.C) void;
 
     // wgpu-native procs?
+    // pub const SetPushConstants = *const fn(*ComputePassEncoder, u32, u32, *const anyopaque) callconv(.C) void;
     // pub const BeginPipelineStatisticsQuery = *const fn(*ComputePassEncoder, *QuerySet, u32) callconv(.C) void;
     // pub const EndPipelineStatisticsQuery = *const fn(*ComputePassEncoder) callconv(.C) void;
+    // pub const WriteTimestamp = *const fn(*ComputePassEncoder, *QuerySet, u32) callconv(.C) void;
 };
 
 extern fn wgpuComputePassEncoderDispatchWorkgroups(compute_pass_encoder: *ComputePassEncoder, workgroup_count_x: u32, workgroup_count_y: u32, workgroup_count_z: u32) void;
@@ -78,8 +80,10 @@ extern fn wgpuComputePassEncoderReference(compute_pass_encoder: *ComputePassEnco
 extern fn wgpuComputePassEncoderRelease(compute_pass_encoder: *ComputePassEncoder) void;
 
 // wgpu-native
+extern fn wgpuComputePassEncoderSetPushConstants(compute_pass_encoder: *ComputePassEncoder, offset: u32, size_bytes: u32, data: *const anyopaque) void;
 extern fn wgpuComputePassEncoderBeginPipelineStatisticsQuery(compute_pass_encoder: *ComputePassEncoder, query_set: *QuerySet, query_index: u32) void;
 extern fn wgpuComputePassEncoderEndPipelineStatisticsQuery(compute_pass_encoder: *ComputePassEncoder) void;
+extern fn wgpuComputePassEncoderWriteTimestamp(compute_pass_encoder: *ComputePassEncoder, query_set: *QuerySet, query_index: u32) void;
 
 pub const ComputePassEncoder = opaque {
     pub inline fn dispatchWorkgroups(self: *ComputePassEncoder, workgroup_count_x: u32, workgroup_count_y: u32, workgroup_count_z: u32) void {
@@ -117,11 +121,17 @@ pub const ComputePassEncoder = opaque {
     }
 
     // wgpu-native
+    pub inline fn setPushConstants(self: *ComputePassEncoder, offset: u32, size_bytes: u32, data: *const anyopaque) void {
+        wgpuComputePassEncoderSetPushConstants(self, offset, size_bytes, data);
+    }
     pub inline fn beginPipelineStatisticsQuery(self: *ComputePassEncoder, query_set: *QuerySet, query_index: u32) void {
         wgpuComputePassEncoderBeginPipelineStatisticsQuery(self, query_set, query_index);
     }
     pub inline fn endPipelineStatisticsQuery(self: *ComputePassEncoder) void {
         wgpuComputePassEncoderEndPipelineStatisticsQuery(self);
+    }
+    pub inline fn writeTimestamp(self: *ComputePassEncoder, query_set: *QuerySet, query_index: u32) void {
+        wgpuComputePassEncoderWriteTimestamp(self, query_set, query_index);
     }
 };
 
@@ -219,13 +229,14 @@ pub const RenderPassEncoderProcs = struct {
     pub const Release = *const fn(*RenderPassEncoder) callconv(.C) void;
 
     // wgpu-native procs?
-    // pub const SetPushConstants = *const fn(*RenderPassEncoder, ShaderStageFlags, u32, u32, *const anyopaque) callconv(.C) void;
+    // pub const SetPushConstants = *const fn(*RenderPassEncoder, ShaderStage, u32, u32, *const anyopaque) callconv(.C) void;
     // pub const MultiDrawIndirect = *const fn(*RenderPassEncoder, *Buffer, u64, u32) callconv(.C) void;
     // pub const MultiDrawIndexedIndirect = *const fn(*RenderPassEncoder, *Buffer, u64, u32) callconv(.C) void;
     // pub const MultiDrawIndirectCount = *const fn(*RenderPassEncoder, *Buffer, u64, *Buffer, u64, u32) callconv(.C) void;
     // pub const MultiDrawIndexedIndirectCount = *const fn(*RenderPassEncoder, *Buffer, u64, *Buffer, u64, u32) callconv(.C) void;
     // pub const BeginPipelineStatisticsQuery = *const fn(*RenderPassEncoder, *QuerySet, u32) callconv(.C) void;
     // pub const EndPipelineStatisticsQuery = *const fn(*RenderPassEncoder) callconv(.C) void;
+    // pub const WriteTimestamp = *const fn(*RenderPassEncoder, *QuerySet, u32) callconv(.C) void;
 };
 
 extern fn wgpuRenderPassEncoderBeginOcclusionQuery(render_pass_encoder: *RenderPassEncoder, query_index: u32) void;
@@ -252,13 +263,14 @@ extern fn wgpuRenderPassEncoderReference(render_pass_encoder: *RenderPassEncoder
 extern fn wgpuRenderPassEncoderRelease(render_pass_encoder: *RenderPassEncoder) void;
 
 // wgpu-native
-extern fn wgpuRenderPassEncoderSetPushConstants(render_pass_encoder: *RenderPassEncoder, stages: ShaderStageFlags, offset: u32, size_bytes: u32, data: *const anyopaque) void;
+extern fn wgpuRenderPassEncoderSetPushConstants(render_pass_encoder: *RenderPassEncoder, stages: ShaderStage, offset: u32, size_bytes: u32, data: *const anyopaque) void;
 extern fn wgpuRenderPassEncoderMultiDrawIndirect(render_pass_encoder: *RenderPassEncoder, buffer: *Buffer, offset: u64, count: u32) void;
 extern fn wgpuRenderPassEncoderMultiDrawIndexedIndirect(render_pass_encoder: *RenderPassEncoder, buffer: *Buffer, offset: u64, count: u32) void;
 extern fn wgpuRenderPassEncoderMultiDrawIndirectCount(render_pass_encoder: *RenderPassEncoder, buffer: *Buffer, offset: u64, count_buffer: *Buffer, count_buffer_offset: u64, max_count: u32) void;
 extern fn wgpuRenderPassEncoderMultiDrawIndexedIndirectCount(render_pass_encoder: *RenderPassEncoder, buffer: *Buffer, offset: u64, count_buffer: *Buffer, count_buffer_offset: u64, max_count: u32) void;
 extern fn wgpuRenderPassEncoderBeginPipelineStatisticsQuery(render_pass_encoder: *RenderPassEncoder, query_set: *QuerySet, query_index: u32) void;
 extern fn wgpuRenderPassEncoderEndPipelineStatisticsQuery(render_pass_encoder: *RenderPassEncoder) void;
+extern fn wgpuRenderPassEncoderWriteTimestamp(render_pass_encoder: *RenderPassEncoder, query_set: *QuerySet, query_index: u32) void;
 
 pub const RenderPassEncoder = opaque {
     pub inline fn beginOcclusionQuery(self: *RenderPassEncoder, query_index: u32) void {
@@ -329,7 +341,7 @@ pub const RenderPassEncoder = opaque {
     }
 
     // wgpu-native
-    pub inline fn setPushConstants(self: *RenderPassEncoder, stages: ShaderStageFlags, offset: u32, size_bytes: u32, data: *const anyopaque) void {
+    pub inline fn setPushConstants(self: *RenderPassEncoder, stages: ShaderStage, offset: u32, size_bytes: u32, data: *const anyopaque) void {
         wgpuRenderPassEncoderSetPushConstants(self, stages, offset, size_bytes, data);
     }
     pub inline fn multiDrawIndirect(self: *RenderPassEncoder, buffer: *Buffer, offset: u64, count: u32) void {
@@ -349,6 +361,9 @@ pub const RenderPassEncoder = opaque {
     }
     pub inline fn endPipelineStatisticsQuery(self: *RenderPassEncoder) void {
         wgpuRenderPassEncoderEndPipelineStatisticsQuery(self);
+    }
+    pub inline fn writeTimestamp(self: *RenderPassEncoder, query_set: *QuerySet, query_index: u32) void {
+        wgpuRenderPassEncoderWriteTimestamp(self, query_set, query_index);
     }
 };
 

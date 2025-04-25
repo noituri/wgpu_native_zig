@@ -14,10 +14,9 @@ pub const SType = enum(u32) {
 
     // wgpu-native extras (wgpu.h)
     device_extras                                 = 0x00030001,
-    required_limits_extras                        = 0x00030002,
+    native_limits                                 = 0x00030002,
     pipeline_layout_extras                        = 0x00030003,
     shader_module_glsl_descriptor                 = 0x00030004,
-    supported_limits_extras                       = 0x00030005,
     instance_extras                               = 0x00030006,
     bind_group_entry_extras                       = 0x00030007,
     bind_group_layout_entry_extras                = 0x00030008,

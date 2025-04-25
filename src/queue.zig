@@ -8,10 +8,6 @@ const TextureDataLayout = _texture.TextureDataLayout;
 const Extent3D = _texture.Extent3D;
 
 pub const SubmissionIndex = u64;
-pub const WrappedSubmissionIndex = extern struct {
-    queue: *Queue,
-    submission_index: SubmissionIndex,
-};
 
 pub const QueueDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,

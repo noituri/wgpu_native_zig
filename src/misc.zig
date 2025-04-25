@@ -37,6 +37,7 @@ pub const FeatureName = enum(u32) {
     mappable_primary_buffers                                      = 0x0003000E,
     buffer_binding_array                                          = 0x0003000F,
     uniform_buffer_and_storage_texture_array_non_uniform_indexing = 0x00030010,
+    spirv_shader_passthrough                                      = 0x00030017,
     vertex_attribute_64bit                                        = 0x00030019,
     texture_format_nv12                                           = 0x0003001A,
     ray_tracing_acceleration_structure                            = 0x0003001B,
@@ -50,7 +51,6 @@ pub const FeatureName = enum(u32) {
     subgroup_barrier                                              = 0x00030023,
     timestamp_query_inside_encoders                               = 0x00030024,
     timestamp_query_inside_passes                                 = 0x00030025,
-    feature_force32                                               = 0x7FFFFFFF,
 };
 
 pub const IndexFormat = enum(u32) {
@@ -75,3 +75,41 @@ extern fn wgpuGetVersion() u32;
 pub inline fn getVersion() u32 {
     return wgpuGetVersion();
 }
+
+// Max of usize
+pub const WGPU_STRLEN = ~@as(usize, 0);
+
+// Nullable value defining a pointer+length view into a UTF-8 encoded string.
+//
+// Values passed into the API may use the special length value WGPU_STRLEN
+// to indicate a null-terminated string.
+// Non-null values passed out of the API (for example as callback arguments)
+// always provide an explicit length and **may or may not be null-terminated**.
+//
+// Some inputs to the API accept null values. Those which do not accept null
+// values "default" to the empty string when null values are passed.
+//
+// Values are encoded as follows:
+// - `.{ .data = null, .length = WGPU_STRLEN }`: the null value.
+// - `.{ .data = <non_null_pointer>, .length = WGPU_STRLEN }`: a null-terminated string view.
+// - `.{ .data = <any>, .length = 0 }`: the empty string.
+// - `.{ .data = null, .length = <non_zero_length> }`: not allowed (null dereference).
+// - `.{ .data = <non_null_pointer>, .length = <non_zero_length> }`: an explictly-sized string view with
+//   size `non_zero_length` (in bytes).
+//
+pub const StringView = extern struct {
+    data: ?[*]const u8 = null,
+    length: usize = WGPU_STRLEN,
+
+    pub inline fn fromSlice(slice: []const u8) StringView {
+        return StringView {
+            .data = slice.ptr,
+            .length = slice.len,
+        };
+    }
+
+    pub fn toSlice(self: StringView) ?[]const u8 {
+        const data = self.data.?;
+        return data[0..self.length];
+    }
+};

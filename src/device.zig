@@ -7,6 +7,7 @@ const SType = _chained_struct.SType;
 const _misc = @import("misc.zig");
 const WGPUBool = _misc.WGPUBool;
 const FeatureName = _misc.FeatureName;
+const StringView = _misc.StringView;
 
 const _limits = @import("limits.zig");
 const Limits = _limits.Limits;
@@ -26,7 +27,7 @@ const Buffer = _buffer.Buffer;
 const _queue = @import("queue.zig");
 const QueueDescriptor = _queue.QueueDescriptor;
 const Queue = _queue.Queue;
-const WrappedSubmissionIndex = _queue.WrappedSubmissionIndex;
+const SubmissionIndex = _queue.SubmissionIndex;
 
 const _command_encoder = @import("command_encoder.zig");
 const CommandEncoderDescriptor = _command_encoder.CommandEncoderDescriptor;
@@ -56,6 +57,7 @@ const Sampler = _sampler.Sampler;
 
 const _shader = @import("shader.zig");
 const ShaderModuleDescriptor = _shader.ShaderModuleDescriptor;
+const ShaderModuleDescriptorSpirV =_shader.ShaderModuleDescriptorSpirV;
 const ShaderModule = _shader.ShaderModule;
 
 const _texture = @import("texture.zig");
@@ -73,8 +75,7 @@ pub const DeviceExtras = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.device_extras,
     },
-    // Gonna assume this isn't optional, because why else would you use DeviceExtras?
-    trace_path: [*:0]const u8,
+    trace_path: StringView,
 };
 
 pub fn defaultDeviceLostCallback(reason: DeviceLostReason, message: ?[*:0]const u8, _: ?*anyopaque) callconv(.C) void {
@@ -115,10 +116,10 @@ pub const DeviceDescriptor = extern struct {
     device_lost_user_data: ?*anyopaque = null,
     uncaptured_error_callback_info: UncapturedErrorCallbackInfo = UncapturedErrorCallbackInfo{},
 
-    pub inline fn withTracePath(self: DeviceDescriptor, trace_path: [*:0]const u8) DeviceDescriptor {
+    pub inline fn withTracePath(self: DeviceDescriptor, trace_path: []const u8) DeviceDescriptor {
         var dd = self;
         dd.next_in_chain = @ptrCast(&DeviceExtras {
-            .trace_path = trace_path,
+            .trace_path = StringView.fromSlice(trace_path),
         });
         return dd;
     }
@@ -168,7 +169,8 @@ pub const DeviceProcs = struct {
     pub const Release = *const fn(*Device) callconv(.C) void;
 
     // wgpu-native procs?
-    // pub const Poll = *const fn(*Device, WGPUBool, ?*const WrappedSubmissionIndex) callconv(.C) WGPUBool;
+    // pub const Poll = *const fn(*Device, WGPUBool, ?*const SubmissionIndex) callconv(.C) WGPUBool;
+    // pub const CreateShaderModuleSpirV = *const fn(*Device, *const ShaderModuleDescriptorSpirV) callconv(.C) ?*ShaderModule;
 };
 
 extern fn wgpuDeviceCreateBindGroup(device: *Device, descriptor: *const BindGroupDescriptor) ?*BindGroup;
@@ -197,7 +199,8 @@ extern fn wgpuDeviceReference(device: *Device) void;
 extern fn wgpuDeviceRelease(device: *Device) void;
 
 // wgpu-native
-extern fn wgpuDevicePoll(device: *Device, wait: WGPUBool, wrapped_submission_index: ?*const WrappedSubmissionIndex) WGPUBool;
+extern fn wgpuDevicePoll(device: *Device, wait: WGPUBool, submission_index: ?*const SubmissionIndex) WGPUBool;
+extern fn wgpuDeviceCreateShaderModuleSpirV(device: *Device, descriptor: *const ShaderModuleDescriptorSpirV) ?*ShaderModule;
 
 // Supposedly getProcAddress is a global function, but it doesn't seem like it should work without being tied to a Device?
 // Could be it's one of those functions that's meant to be called with null the first time, TODO: look into that.
@@ -287,8 +290,11 @@ pub const Device = opaque {
     }
 
     // wgpu-native
-    pub inline fn poll(self: *Device, wait: bool, wrapped_submission_index: ?*const WrappedSubmissionIndex) bool {
+    pub inline fn poll(self: *Device, wait: bool, wrapped_submission_index: ?*const SubmissionIndex) bool {
         return wgpuDevicePoll(self, @intFromBool(wait), wrapped_submission_index) != 0;
+    }
+    pub inline fn createShaderModuleSpirV(self: *Device, descriptor: *const ShaderModuleDescriptorSpirV) ?*ShaderModule {
+        return wgpuDeviceCreateShaderModuleSpirV(self, descriptor);
     }
 
     // pub inline fn getProcAddress(self: *Device, proc_name: ?[*:0] const u8) ?Proc {

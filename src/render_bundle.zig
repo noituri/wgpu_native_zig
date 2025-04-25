@@ -7,6 +7,7 @@ const TextureFormat = @import("texture.zig").TextureFormat;
 const Buffer = @import("buffer.zig").Buffer;
 const BindGroup = @import("bind_group.zig").BindGroup;
 const RenderPipeline = @import("pipeline.zig").RenderPipeline;
+const ShaderStage = @import("shader.zig").ShaderStage;
 
 pub const RenderBundleEncoderDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
@@ -35,6 +36,9 @@ pub const RenderBundleEncoderProcs = struct {
     pub const SetVertexBuffer = *const fn(*RenderBundleEncoder, u32, *Buffer, u64, u64) callconv(.C) void;
     pub const Reference = *const fn(*RenderBundleEncoder) callconv(.C) void;
     pub const Release = *const fn(*RenderBundleEncoder) callconv(.C) void;
+
+    // wgpu-native procs?
+    // pub const SetPushConstants = *const fn(*RenderBundleEncoder, ShaderStage, u32, u32, *const anyopaque) callconv(.C) void;
 };
 
 extern fn wgpuRenderBundleEncoderDraw(render_bundle_encoder: *RenderBundleEncoder, vertex_count: u32, instance_count: u32, first_vertex: u32, first_instance: u32) void;
@@ -52,6 +56,9 @@ extern fn wgpuRenderBundleEncoderSetPipeline(render_bundle_encoder: *RenderBundl
 extern fn wgpuRenderBundleEncoderSetVertexBuffer(render_bundle_encoder: *RenderBundleEncoder, slot: u32, buffer: *Buffer, offset: u64, size: u64) void;
 extern fn wgpuRenderBundleEncoderReference(render_bundle_encoder: *RenderBundleEncoder) void;
 extern fn wgpuRenderBundleEncoderRelease(render_bundle_encoder: *RenderBundleEncoder) void;
+
+// wgpu-native
+extern fn wgpuRenderBundleEncoderSetPushConstants(render_bundle_encoder: *RenderBundleEncoder, stages: ShaderStage, offset: u32, size_bytes: u32, data: *const anyopaque) void;
 
 // TODO: This is very similar to CommandEncoder; should it go in the same file? There's a lot of duplicated import code.
 pub const RenderBundleEncoder = opaque {
@@ -99,6 +106,11 @@ pub const RenderBundleEncoder = opaque {
     }
     pub inline fn release(self: *RenderBundleEncoder) void {
         wgpuRenderBundleEncoderRelease(self);
+    }
+
+    // wgpu-native
+    pub inline fn setPushConstants(self: *RenderBundleEncoder, stages: ShaderStage, offset: u32, size_bytes: u32, data: *const anyopaque) void {
+        wgpuRenderBundleEncoderSetPushConstants(self, stages, offset, size_bytes, data);
     }
 };
 

@@ -4,7 +4,7 @@ const SType = _chained_struct.SType;
 
 const _shader = @import("shader.zig");
 const ShaderModule = _shader.ShaderModule;
-const ShaderStageFlags = _shader.ShaderStageFlags;
+const ShaderStage = _shader.ShaderStage;
 
 const BindGroupLayout = @import("bind_group.zig").BindGroupLayout;
 
@@ -17,7 +17,7 @@ const WGPUFlags = _misc.WGPUFlags;
 const TextureFormat = @import("texture.zig").TextureFormat;
 
 pub const PushConstantRange = extern struct {
-    stages: ShaderStageFlags,
+    stages: ShaderStage,
     start: u32,
     end: u32,
 };

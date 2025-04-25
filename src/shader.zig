@@ -4,14 +4,16 @@ const SType = _chained_struct.SType;
 
 const PipelineLayout = @import("pipeline.zig").PipelineLayout;
 
-const WGPUFlags = @import("misc.zig").WGPUFlags;
+const _misc = @import("misc.zig");
+const WGPUFlags = _misc.WGPUFlags;
+const StringView = _misc.StringView;
 
-pub const ShaderStageFlags = WGPUFlags;
-pub const ShaderStage = struct {
-    pub const none     = @as(ShaderStageFlags, 0x00000000);
-    pub const vertex   = @as(ShaderStageFlags, 0x00000001);
-    pub const fragment = @as(ShaderStageFlags, 0x00000002);
-    pub const compute  = @as(ShaderStageFlags, 0x00000004);
+pub const ShaderStage = WGPUFlags;
+pub const ShaderStages = struct {
+    pub const none     = @as(ShaderStage, 0x00000000);
+    pub const vertex   = @as(ShaderStage, 0x00000001);
+    pub const fragment = @as(ShaderStage, 0x00000002);
+    pub const compute  = @as(ShaderStage, 0x00000004);
 };
 
 pub const CompilationHint = extern struct {
@@ -25,6 +27,13 @@ pub const ShaderModuleDescriptor = extern struct {
     label: ?[*:0]const u8 = null,
     hint_count: usize = 0,
     hints: [*]const CompilationHint = (&[_]CompilationHint{}).ptr,
+};
+
+// This is specific to wgpu-native (from wgpu.h), and unfortunately it is *NOT* the same thing as ShaderSourceSPIRV
+pub const ShaderModuleDescriptorSpirV = extern struct {
+    label: StringView,
+    source_size: u32,
+    source: [*]const u32,
 };
 
 pub const ShaderModuleSPIRVDescriptor = extern struct {
@@ -81,15 +90,15 @@ pub inline fn shaderModuleWGSLDescriptor(
 }
 
 pub const ShaderDefine = extern struct {
-    name: [*:0]const u8,
-    value: [*:0]const u8,
+    name: StringView,
+    value: StringView,
 };
 pub const ShaderModuleGLSLDescriptor = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.shader_module_glsl_descriptor,
     },
     stage: ShaderStage,
-    code: [*:0]const u8,
+    code: StringView,
     define_count: u32 = 0,
     defines: ?[*]ShaderDefine = null,
 };

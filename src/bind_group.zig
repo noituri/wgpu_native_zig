@@ -15,7 +15,7 @@ const TextureView = _texture.TextureView;
 const TextureBindingLayout = _texture.TextureBindingLayout;
 const StorageTextureBindingLayout = _texture.StorageTextureBindingLayout;
 
-const ShaderStageFlags = @import("shader.zig").ShaderStageFlags;
+const ShaderStage = @import("shader.zig").ShaderStage;
 
 const WGPU_WHOLE_SIZE = @import("misc.zig").WGPU_WHOLE_SIZE;
 
@@ -31,7 +31,7 @@ pub const BindGroupLayoutEntryExtras = extern struct {
 pub const BindGroupLayoutEntry = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     binding: u32,
-    visibility: ShaderStageFlags,
+    visibility: ShaderStage,
     buffer: BufferBindingLayout = .{},
     sampler: SamplerBindingLayout = .{},
     texture: TextureBindingLayout = .{},

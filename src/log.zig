@@ -1,3 +1,5 @@
+const StringView = @import("misc.zig").StringView;
+
 pub const LogLevel = enum(u32) {
     off      = 0x00000000,
     @"error" = 0x00000001,
@@ -7,7 +9,7 @@ pub const LogLevel = enum(u32) {
     trace    = 0x00000005,
 };
 
-pub const LogCallback = *const fn(level: LogLevel, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void;
+pub const LogCallback = *const fn(level: LogLevel, message: StringView, userdata: ?*anyopaque) callconv(.C) void;
 
 extern fn wgpuSetLogCallback(callback: LogCallback, userdata: ?*anyopaque) void;
 extern fn wgpuSetLogLevel(level: LogLevel) void;

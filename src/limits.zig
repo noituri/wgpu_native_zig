@@ -42,46 +42,35 @@ pub const Limits = extern struct {
 };
 
 pub const WGPUNativeLimits = extern struct {
+    chain: ChainedStructOut = ChainedStructOut {
+        .s_type = SType.native_limits,
+    },
     max_push_constant_size: u32,
     max_non_sampler_bindings: u32,
-};
-
-pub const SupportedLimitsExtras = extern struct {
-    chain: ChainedStructOut = ChainedStructOut {
-        .s_type = SType.supported_limits_extras,
-    },
-    limits: WGPUNativeLimits,
 };
 
 pub const SupportedLimits = extern struct {
     next_in_chain: ?*ChainedStructOut = null,
     limits: Limits,
 
-    pub inline fn withNativeLimits(self: SupportedLimits, native_limits: WGPUNativeLimits) SupportedLimits {
-        var sl = self;
-        sl.next_in_chain = @ptrCast(&SupportedLimitsExtras {
-            .limits = native_limits,
-        });
-        return sl;
-    }
-};
-
-pub const RequiredLimitsExtras = extern struct {
-    chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.required_limits_extras,
-    },
-    limits: WGPUNativeLimits,
+    // pub inline fn withNativeLimits(self: SupportedLimits, native_limits: WGPUNativeLimits) SupportedLimits {
+    //     var sl = self;
+    //     sl.next_in_chain = @ptrCast(&SupportedLimitsExtras {
+    //         .limits = native_limits,
+    //     });
+    //     return sl;
+    // }
 };
 
 pub const RequiredLimits = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     limits: Limits,
 
-    pub inline fn withNativeLimits(self: RequiredLimits, native_limits: WGPUNativeLimits) RequiredLimits {
-        var rl = self;
-        rl.next_in_chain = @ptrCast(&RequiredLimitsExtras {
-            .limits = native_limits,
-        });
-        return rl;
-    }
+    // pub inline fn withNativeLimits(self: RequiredLimits, native_limits: WGPUNativeLimits) RequiredLimits {
+    //     var rl = self;
+    //     rl.next_in_chain = @ptrCast(&RequiredLimitsExtras {
+    //         .limits = native_limits,
+    //     });
+    //     return rl;
+    // }
 };
