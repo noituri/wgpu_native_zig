@@ -163,9 +163,6 @@ pub const TextureView = opaque {
     pub inline fn setLabel(self: *TextureView, label: ?[*:0]const u8) void {
         wgpuTextureViewSetLabel(self, label);
     }
-    pub inline fn reference(self: *TextureView) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *TextureView) void {
         wgpuTextureViewAddRef(self);
     }
@@ -303,9 +300,6 @@ pub const Texture = opaque {
     }
     pub inline fn setLabel(self: *Texture, label: ?[*:0]const u8) void {
         wgpuTextureSetLabel(self, label);
-    }
-    pub inline fn reference(self: *Texture) void {
-        addRef(self);
     }
     pub inline fn addRef(self: *Texture) void {
         wgpuTextureAddRef(self);

@@ -136,9 +136,6 @@ pub const Adapter = opaque{
     pub inline fn requestDevice(self: *Adapter, descriptor: ?*const DeviceDescriptor, callback: AdapterRequestDeviceCallback, userdata: ?*anyopaque) void {
         wgpuAdapterRequestDevice(self, descriptor, callback, userdata);
     }
-    pub inline fn reference(self: *Adapter) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *Adapter) void {
         wgpuAdapterAddRef(self);
     }

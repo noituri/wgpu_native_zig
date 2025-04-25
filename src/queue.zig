@@ -63,9 +63,6 @@ pub const Queue = opaque {
     pub inline fn writeTexture(self: *Queue, destination: *const ImageCopyTexture, data: *const anyopaque, data_size: usize, data_layout: *const TextureDataLayout, write_size: *const Extent3D) void {
         wgpuQueueWriteTexture(self, destination, data, data_size, data_layout, write_size);
     }
-    pub inline fn reference(self: *Queue) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *Queue) void {
         wgpuQueueAddRef(self);
     }

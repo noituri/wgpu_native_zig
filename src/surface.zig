@@ -284,9 +284,6 @@ pub const Surface = opaque {
     pub inline fn unconfigure(self: *Surface) void {
         wgpuSurfaceUnconfigure(self);
     }
-    pub inline fn reference(self: *Surface) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *Surface) void {
         wgpuSurfaceAddRef(self);
     }

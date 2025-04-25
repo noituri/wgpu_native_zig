@@ -180,9 +180,6 @@ pub const ShaderModule = opaque {
     pub inline fn setLabel(self: *ShaderModule, label: ?[*:0]const u8) void {
         wgpuShaderModuleSetLabel(self, label);
     }
-    pub inline fn reference(self: *ShaderModule) void {
-        wgpuShaderModuleAddRef(self);
-    }
     pub inline fn addRef(self: *ShaderModule) void {
         wgpuShaderModuleAddRef(self);
     }

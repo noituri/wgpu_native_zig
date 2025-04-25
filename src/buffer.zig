@@ -136,9 +136,6 @@ pub const Buffer = opaque {
     pub inline fn unmap(self: *Buffer) void {
         wgpuBufferUnmap(self);
     }
-    pub inline fn reference(self: *Buffer) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *Buffer) void {
         wgpuBufferAddRef(self);
     }

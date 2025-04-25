@@ -181,11 +181,6 @@ pub const Instance = opaque {
     pub inline fn requestAdapter(self: *Instance, options: ?*const RequestAdapterOptions, callback: InstanceRequestAdapterCallback, userdata: ?*anyopaque) void {
         wgpuInstanceRequestAdapter(self, options, callback, userdata);
     }
-    // Dunno what this does, but it appears in webgpu.h so I guess it's important?
-    pub inline fn reference(self: *Instance) void {
-        // TODO: Find out WTF wgpuInstanceAddRef does.
-        addRef(self);
-    }
 
     pub inline fn addRef(self: *Instance) void {
         // TODO: Find out WTF wgpuInstanceAddRef does.

@@ -58,9 +58,6 @@ pub const Sampler = opaque {
     pub inline fn setLabel(self: *Sampler, label: ?[*:0]const u8) void {
         wgpuSamplerSetLabel(self, label);
     }
-    pub inline fn reference(self: *Sampler) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *Sampler) void {
         wgpuSamplerAddRef(self);
     }

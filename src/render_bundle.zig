@@ -101,9 +101,6 @@ pub const RenderBundleEncoder = opaque {
     pub inline fn setVertexBuffer(self: *RenderBundleEncoder, slot: u32, buffer: *Buffer, offset: u64, size: u64) void {
         wgpuRenderBundleEncoderSetVertexBuffer(self, slot, buffer, offset, size);
     }
-    pub inline fn reference(self: *RenderBundleEncoder) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *RenderBundleEncoder) void {
         wgpuRenderBundleEncoderAddRef(self);
     }
@@ -135,9 +132,6 @@ extern fn wgpuRenderBundleRelease(render_bundle: *RenderBundle) void;
 pub const RenderBundle = opaque {
     pub inline fn setLabel(self: *RenderBundle, label: ?[*:0]const u8) void {
         wgpuRenderBundleSetLabel(self, label);
-    }
-    pub inline fn reference(self: *RenderBundle) void {
-        addRef(self);
     }
     pub inline fn addRef(self: *RenderBundle) void {
         wgpuRenderBundleAddRef(self);

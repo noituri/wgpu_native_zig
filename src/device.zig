@@ -282,9 +282,6 @@ pub const Device = opaque {
     pub inline fn setLabel(self: *Device, label: ?[*:0]const u8) void {
         wgpuDeviceSetLabel(self, label);
     }
-    pub inline fn reference(self: *Device) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *Device) void {
         wgpuDeviceAddRef(self);
     }

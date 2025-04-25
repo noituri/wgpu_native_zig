@@ -75,9 +75,6 @@ pub const QuerySet = opaque {
     pub inline fn setLabel(self: *QuerySet, label: ?[*:0]const u8) void {
         wgpuQuerySetSetLabel(self, label);
     }
-    pub inline fn reference(self: *QuerySet) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *QuerySet) void {
         wgpuQuerySetAddRef(self);
     }

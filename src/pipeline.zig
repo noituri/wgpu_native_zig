@@ -64,9 +64,6 @@ pub const PipelineLayout = opaque {
     pub inline fn setLabel(self: *PipelineLayout, label: ?[*:0]const u8) void {
         wgpuPipelineLayoutSetLabel(self, label);
     }
-    pub inline fn reference(self: *PipelineLayout) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *PipelineLayout) void {
         wgpuPipelineLayoutAddRef(self);
     }
@@ -131,9 +128,6 @@ pub const ComputePipeline = opaque {
     }
     pub inline fn setLabel(self: *ComputePipeline, label: ?[*:0]const u8) void {
         wgpuComputePipelineSetLabel(self, label);
-    }
-    pub inline fn reference(self: *ComputePipeline) void {
-        addRef(self);
     }
     pub inline fn addRef(self: *ComputePipeline) void {
         wgpuComputePipelineAddRef(self);
@@ -417,9 +411,6 @@ pub const RenderPipeline = opaque {
     }
     pub inline fn setLabel(self: *RenderPipeline, label: ?[*:0]const u8) void {
         wgpuRenderPipelineSetLabel(self, label);
-    }
-    pub inline fn reference(self: *RenderPipeline) void {
-        addRef(self);
     }
     pub inline fn addRef(self: *RenderPipeline) void {
         wgpuRenderPipelineAddRef(self);

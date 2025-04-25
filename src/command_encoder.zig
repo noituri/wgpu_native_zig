@@ -113,9 +113,6 @@ pub const ComputePassEncoder = opaque {
     pub inline fn setPipeline(self: *ComputePassEncoder, pipeline: *ComputePipeline) void {
         wgpuComputePassEncoderSetPipeline(self, pipeline);
     }
-    pub inline fn reference(self: *ComputePassEncoder) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *ComputePassEncoder) void {
         wgpuComputePassEncoderAddRef(self);
     }
@@ -336,9 +333,6 @@ pub const RenderPassEncoder = opaque {
     pub inline fn setViewport(self: *RenderPassEncoder, x: f32, y: f32, width: f32, height: f32, min_depth: f32, max_depth: f32) void {
         wgpuRenderPassEncoderSetViewport(self, x, y, width, height, min_depth, max_depth);
     }
-    pub inline fn reference(self: *RenderPassEncoder) void {
-        addRef(self);
-    }
     pub inline fn addRef(self: *RenderPassEncoder) void {
         wgpuRenderPassEncoderAddRef(self);
     }
@@ -391,9 +385,6 @@ extern fn wgpuCommandBufferRelease(command_buffer: *CommandBuffer) void;
 pub const CommandBuffer = opaque {
     pub inline fn setLabel(self: *CommandBuffer, label: ?[*:0]const u8) void {
         wgpuCommandBufferSetLabel(self, label);
-    }
-    pub inline fn reference(self: *CommandBuffer) void {
-        addRef(self);
     }
     pub inline fn addRef(self: *CommandBuffer) void {
         wgpuCommandBufferAddRef(self);
@@ -481,9 +472,6 @@ pub const CommandEncoder = opaque {
     }
     pub inline fn writeTimestamp(self: *CommandEncoder, query_set: *QuerySet, query_index: u32) void {
         wgpuCommandEncoderWriteTimestamp(self, query_set, query_index);
-    }
-    pub inline fn reference(self: *CommandEncoder) void {
-        addRef(self);
     }
     pub inline fn addRef(self: *CommandEncoder) void {
         wgpuCommandEncoderAddRef(self);
