@@ -32,10 +32,10 @@ pub const BindGroupLayoutEntry = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     binding: u32,
     visibility: ShaderStageFlags,
-    buffer: BufferBindingLayout,
-    sampler: SamplerBindingLayout,
-    texture: TextureBindingLayout,
-    storage_texture: StorageTextureBindingLayout,
+    buffer: BufferBindingLayout = .{},
+    sampler: SamplerBindingLayout = .{},
+    texture: TextureBindingLayout = .{},
+    storage_texture: StorageTextureBindingLayout = .{},
 
     pub inline fn withCount(self: BindGroupLayoutEntry, count: u32) BindGroupLayoutEntry {
         var bgle = self;
