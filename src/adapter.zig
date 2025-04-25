@@ -94,7 +94,7 @@ pub const AdapterProcs = struct {
     pub const GetInfo = *const fn(Adapter, *AdapterInfo) callconv(.C) void;
     pub const HasFeature = *const fn(Adapter, FeatureName) callconv(.C) WGPUBool;
     pub const RequestDevice = *const fn(Adapter, ?*const DeviceDescriptor, AdapterRequestDeviceCallback, ?*anyopaque) callconv(.C) void;
-    pub const Reference = *const fn(Adapter) callconv(.C) void;
+    pub const AddRef = *const fn(Adapter) callconv(.C) void;
     pub const Release = *const fn(Adapter) callconv(.C) void;
 };
 
@@ -103,7 +103,7 @@ extern fn wgpuAdapterGetLimits(adapter: *Adapter, limits: *SupportedLimits) WGPU
 extern fn wgpuAdapterGetInfo(adapter: *Adapter, info: *AdapterInfo) void;
 extern fn wgpuAdapterHasFeature(adapter: *Adapter, feature: FeatureName) WGPUBool;
 extern fn wgpuAdapterRequestDevice(adapter: *Adapter, descriptor: ?*const DeviceDescriptor, callback: AdapterRequestDeviceCallback, userdata: ?*anyopaque) void;
-extern fn wgpuAdapterReference(adapter: *Adapter) void;
+extern fn wgpuAdapterAddRef(adapter: *Adapter) void;
 extern fn wgpuAdapterRelease(adapter: *Adapter) void;
 
 pub const Adapter = opaque{
@@ -137,7 +137,10 @@ pub const Adapter = opaque{
         wgpuAdapterRequestDevice(self, descriptor, callback, userdata);
     }
     pub inline fn reference(self: *Adapter) void {
-        wgpuAdapterReference(self);
+        addRef(self);
+    }
+    pub inline fn addRef(self: *Adapter) void {
+        wgpuAdapterAddRef(self);
     }
     pub inline fn release(self: *Adapter) void {
         wgpuAdapterRelease(self);

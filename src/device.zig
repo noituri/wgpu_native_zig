@@ -165,7 +165,7 @@ pub const DeviceProcs = struct {
     pub const PopErrorScope = *const fn(*Device, ErrorCallback, ?*anyopaque) callconv(.C) void;
     pub const PushErrorScope = *const fn(*Device, ErrorFilter) callconv(.C) void;
     pub const SetLabel = *const fn(*Device, ?[*:0]const u8) callconv(.C) void;
-    pub const Reference = *const fn(*Device) callconv(.C) void;
+    pub const AddRef = *const fn(*Device) callconv(.C) void;
     pub const Release = *const fn(*Device) callconv(.C) void;
 
     // wgpu-native procs?
@@ -195,7 +195,7 @@ extern fn wgpuDeviceHasFeature(device: *Device, feature: FeatureName) WGPUBool;
 extern fn wgpuDevicePopErrorScope(device: *Device, callback: ErrorCallback, userdata: ?*anyopaque) void;
 extern fn wgpuDevicePushErrorScope(device: *Device, filter: ErrorFilter) void;
 extern fn wgpuDeviceSetLabel(device: *Device, label: ?[*:0]const u8) void;
-extern fn wgpuDeviceReference(device: *Device) void;
+extern fn wgpuDeviceAddRef(device: *Device) void;
 extern fn wgpuDeviceRelease(device: *Device) void;
 
 // wgpu-native
@@ -283,7 +283,10 @@ pub const Device = opaque {
         wgpuDeviceSetLabel(self, label);
     }
     pub inline fn reference(self: *Device) void {
-        wgpuDeviceReference(self);
+        addRef(self);
+    }
+    pub inline fn addRef(self: *Device) void {
+        wgpuDeviceAddRef(self);
     }
     pub inline fn release(self: *Device) void {
         wgpuDeviceRelease(self);

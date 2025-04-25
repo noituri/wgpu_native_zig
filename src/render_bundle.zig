@@ -34,7 +34,7 @@ pub const RenderBundleEncoderProcs = struct {
     pub const SetLabel = *const fn(*RenderBundleEncoder, ?[*:0]const u8) callconv(.C) void;
     pub const SetPipeline = *const fn(*RenderBundleEncoder, *RenderPipeline) callconv(.C) void;
     pub const SetVertexBuffer = *const fn(*RenderBundleEncoder, u32, *Buffer, u64, u64) callconv(.C) void;
-    pub const Reference = *const fn(*RenderBundleEncoder) callconv(.C) void;
+    pub const AddRef = *const fn(*RenderBundleEncoder) callconv(.C) void;
     pub const Release = *const fn(*RenderBundleEncoder) callconv(.C) void;
 
     // wgpu-native procs?
@@ -54,7 +54,7 @@ extern fn wgpuRenderBundleEncoderSetIndexBuffer(render_bundle_encoder: *RenderBu
 extern fn wgpuRenderBundleEncoderSetLabel(render_bundle_encoder: *RenderBundleEncoder, label: ?[*:0]const u8) void;
 extern fn wgpuRenderBundleEncoderSetPipeline(render_bundle_encoder: *RenderBundleEncoder, pipeline: *RenderPipeline) void;
 extern fn wgpuRenderBundleEncoderSetVertexBuffer(render_bundle_encoder: *RenderBundleEncoder, slot: u32, buffer: *Buffer, offset: u64, size: u64) void;
-extern fn wgpuRenderBundleEncoderReference(render_bundle_encoder: *RenderBundleEncoder) void;
+extern fn wgpuRenderBundleEncoderAddRef(render_bundle_encoder: *RenderBundleEncoder) void;
 extern fn wgpuRenderBundleEncoderRelease(render_bundle_encoder: *RenderBundleEncoder) void;
 
 // wgpu-native
@@ -102,7 +102,10 @@ pub const RenderBundleEncoder = opaque {
         wgpuRenderBundleEncoderSetVertexBuffer(self, slot, buffer, offset, size);
     }
     pub inline fn reference(self: *RenderBundleEncoder) void {
-        wgpuRenderBundleEncoderReference(self);
+        addRef(self);
+    }
+    pub inline fn addRef(self: *RenderBundleEncoder) void {
+        wgpuRenderBundleEncoderAddRef(self);
     }
     pub inline fn release(self: *RenderBundleEncoder) void {
         wgpuRenderBundleEncoderRelease(self);
@@ -121,12 +124,12 @@ pub const RenderBundleDescriptor = extern struct {
 
 pub const RenderBundleProcs = struct {
     pub const SetLabel = *const fn(*RenderBundle, ?[*:0]const u8) callconv(.C) void;
-    pub const Reference = *const fn(*RenderBundle) callconv(.C) void;
+    pub const AddRef = *const fn(*RenderBundle) callconv(.C) void;
     pub const Release = *const fn(*RenderBundle) callconv(.C) void;
 };
 
 extern fn wgpuRenderBundleSetLabel(render_bundle: *RenderBundle, label: ?[*:0]const u8) void;
-extern fn wgpuRenderBundleReference(render_bundle: *RenderBundle) void;
+extern fn wgpuRenderBundleAddRef(render_bundle: *RenderBundle) void;
 extern fn wgpuRenderBundleRelease(render_bundle: *RenderBundle) void;
 
 pub const RenderBundle = opaque {
@@ -134,7 +137,10 @@ pub const RenderBundle = opaque {
         wgpuRenderBundleSetLabel(self, label);
     }
     pub inline fn reference(self: *RenderBundle) void {
-        wgpuRenderBundleReference(self);
+        addRef(self);
+    }
+    pub inline fn addRef(self: *RenderBundle) void {
+        wgpuRenderBundleAddRef(self);
     }
     pub inline fn release(self: *RenderBundle) void {
         wgpuRenderBundleRelease(self);

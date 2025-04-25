@@ -29,7 +29,7 @@ pub const QueueProcs = struct {
     pub const Submit = *const fn(*Queue, usize, [*]const *const CommandBuffer) callconv(.C) void;
     pub const WriteBuffer = *const fn(*Queue, Buffer, u64, *const anyopaque, usize) callconv(.C) void;
     pub const WriteTexture = *const fn(*Queue, *const ImageCopyTexture, *const anyopaque, usize, *const TextureDataLayout, *const Extent3D) callconv(.C) void;
-    pub const Reference = *const fn(*Queue) callconv(.C) void;
+    pub const AddRef = *const fn(*Queue) callconv(.C) void;
     pub const Release = *const fn(*Queue) callconv(.C) void;
 
     // wgpu-native procs?
@@ -41,7 +41,7 @@ extern fn wgpuQueueSetLabel(queue: *Queue, label: ?[*:0]const u8) void;
 extern fn wgpuQueueSubmit(queue: *Queue, command_count: usize, commands: [*]const *const CommandBuffer) void;
 extern fn wgpuQueueWriteBuffer(queue: *Queue, buffer: *Buffer, buffer_offset: u64, data: *const anyopaque, size: usize) void;
 extern fn wgpuQueueWriteTexture(queue: *Queue, destination: *const ImageCopyTexture, data: *const anyopaque, data_size: usize, data_layout: *const TextureDataLayout, write_size: *const Extent3D) void;
-extern fn wgpuQueueReference(queue: *Queue) void;
+extern fn wgpuQueueAddRef(queue: *Queue) void;
 extern fn wgpuQueueRelease(queue: *Queue) void;
 
 // wgpu-native
@@ -64,7 +64,10 @@ pub const Queue = opaque {
         wgpuQueueWriteTexture(self, destination, data, data_size, data_layout, write_size);
     }
     pub inline fn reference(self: *Queue) void {
-        wgpuQueueReference(self);
+        addRef(self);
+    }
+    pub inline fn addRef(self: *Queue) void {
+        wgpuQueueAddRef(self);
     }
     pub inline fn release(self: *Queue) void {
         wgpuQueueRelease(self);

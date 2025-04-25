@@ -55,12 +55,12 @@ pub const BindGroupLayoutDescriptor = extern struct {
 
 pub const BindGroupLayoutProcs = struct {
     pub const SetLabel = *const fn(*BindGroupLayout, ?[*:0]const u8) callconv(.C) void;
-    pub const Reference = *const fn(*BindGroupLayout) callconv(.C) void;
+    pub const AddRef = *const fn(*BindGroupLayout) callconv(.C) void;
     pub const Release = *const fn(*BindGroupLayout) callconv(.C) void;
 };
 
 extern fn wgpuBindGroupLayoutSetLabel(bind_group_layout: *BindGroupLayout, label: ?[*:0]const u8) void;
-extern fn wgpuBindGroupLayoutReference(bind_group_layout: *BindGroupLayout) void;
+extern fn wgpuBindGroupLayoutAddRef(bind_group_layout: *BindGroupLayout) void;
 extern fn wgpuBindGroupLayoutRelease(bind_group_layout: *BindGroupLayout) void;
 
 pub const BindGroupLayout = opaque {
@@ -68,7 +68,10 @@ pub const BindGroupLayout = opaque {
         wgpuBindGroupLayoutSetLabel(self, label);
     }
     pub inline fn reference(self: *BindGroupLayout) void {
-        wgpuBindGroupLayoutReference(self);
+        addRef(self);
+    }
+    pub inline fn addRef(self: *BindGroupLayout) void {
+        wgpuBindGroupLayoutAddRef(self);
     }
     pub inline fn release(self: *BindGroupLayout) void {
         wgpuBindGroupLayoutRelease(self);

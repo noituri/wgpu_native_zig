@@ -252,7 +252,7 @@ pub const SurfaceProcs = struct {
     pub const Present = *const fn(*Surface) callconv(.C) void;
     pub const SetLabel = *const fn(*Surface, ?[*:0]const u8) void;
     pub const Unconfigure = *const fn(*Surface) callconv(.C) void;
-    pub const Reference = *const fn(*Surface) callconv(.C) void;
+    pub const AddRef = *const fn(*Surface) callconv(.C) void;
     pub const Release = *const fn(*Surface) callconv(.C) void;
 };
 
@@ -262,7 +262,7 @@ extern fn wgpuSurfaceGetCurrentTexture(surface: *Surface, surface_texture: *Surf
 extern fn wgpuSurfacePresent(surface: *Surface) void;
 extern fn wgpuSurfaceSetLabel(surface: *Surface, label: ?[*:0]const u8) void;
 extern fn wgpuSurfaceUnconfigure(surface: *Surface) void;
-extern fn wgpuSurfaceReference(surface: *Surface) void;
+extern fn wgpuSurfaceAddRef(surface: *Surface) void;
 extern fn wgpuSurfaceRelease(surface: *Surface) void;
 
 pub const Surface = opaque {
@@ -285,7 +285,10 @@ pub const Surface = opaque {
         wgpuSurfaceUnconfigure(self);
     }
     pub inline fn reference(self: *Surface) void {
-        wgpuSurfaceReference(self);
+        addRef(self);
+    }
+    pub inline fn addRef(self: *Surface) void {
+        wgpuSurfaceAddRef(self);
     }
     pub inline fn release(self: *Surface) void {
         wgpuSurfaceRelease(self);

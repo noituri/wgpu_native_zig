@@ -164,13 +164,13 @@ pub const ShaderModuleGetCompilationInfoCallback = *const fn(status: Compilation
 pub const ShaderModuleProcs = struct {
     pub const GetCompilationInfo = *const fn(*ShaderModule, ShaderModuleGetCompilationInfoCallback, ?*anyopaque) callconv(.C) void;
     pub const SetLabel = *const fn(*ShaderModule, ?[*:0]const u8) callconv(.C) void;
-    pub const Reference = *const fn(*ShaderModule) callconv(.C) void;
+    pub const AddRef = *const fn(*ShaderModule) callconv(.C) void;
     pub const Release = *const fn(*ShaderModule) callconv(.C) void;
 };
 
 extern fn wgpuShaderModuleGetCompilationInfo(shader_module: *ShaderModule, callback: ShaderModuleGetCompilationInfoCallback, userdata: ?*anyopaque) void;
 extern fn wgpuShaderModuleSetLabel(shader_module: *ShaderModule, label: ?[*:0]const u8) void;
-extern fn wgpuShaderModuleReference(shader_module: *ShaderModule) void;
+extern fn wgpuShaderModuleAddRef(shader_module: *ShaderModule) void;
 extern fn wgpuShaderModuleRelease(shader_module: *ShaderModule) void;
 
 pub const ShaderModule = opaque {
@@ -181,7 +181,10 @@ pub const ShaderModule = opaque {
         wgpuShaderModuleSetLabel(self, label);
     }
     pub inline fn reference(self: *ShaderModule) void {
-        wgpuShaderModuleReference(self);
+        wgpuShaderModuleAddRef(self);
+    }
+    pub inline fn addRef(self: *ShaderModule) void {
+        wgpuShaderModuleAddRef(self);
     }
     pub inline fn release(self: *ShaderModule) void {
         wgpuShaderModuleRelease(self);

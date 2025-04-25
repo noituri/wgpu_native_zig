@@ -85,7 +85,7 @@ pub const BufferProcs = struct {
     pub const MapAsync = *const fn(*Buffer, MapModeFlags, usize, usize, BufferMapAsyncCallback, ?*anyopaque) callconv(.C) void;
     pub const SetLabel = *const fn(*Buffer, ?[*:0]const u8) callconv(.C) void;
     pub const Unmap = *const fn(*Buffer) callconv(.C) void;
-    pub const Reference = *const fn(*Buffer) callconv(.C) void;
+    pub const AddRef = *const fn(*Buffer) callconv(.C) void;
     pub const Release = *const fn(*Buffer) callconv(.C) void;
 };
 
@@ -98,7 +98,7 @@ extern fn wgpuBufferGetUsage(buffer: *Buffer) BufferUsageFlags;
 extern fn wgpuBufferMapAsync(buffer: *Buffer, mode: MapModeFlags, offset: usize, size: usize, callback: BufferMapAsyncCallback, userdata: ?*anyopaque) void;
 extern fn wgpuBufferSetLabel(buffer: *Buffer, label: ?[*:0]const u8) void;
 extern fn wgpuBufferUnmap(buffer: *Buffer) void;
-extern fn wgpuBufferReference(buffer: *Buffer) void;
+extern fn wgpuBufferAddRef(buffer: *Buffer) void;
 extern fn wgpuBufferRelease(buffer: *Buffer) void;
 
 pub const Buffer = opaque {
@@ -137,7 +137,10 @@ pub const Buffer = opaque {
         wgpuBufferUnmap(self);
     }
     pub inline fn reference(self: *Buffer) void {
-        wgpuBufferReference(self);
+        addRef(self);
+    }
+    pub inline fn addRef(self: *Buffer) void {
+        wgpuBufferAddRef(self);
     }
     pub inline fn release(self: *Buffer) void {
         wgpuBufferRelease(self);
