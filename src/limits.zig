@@ -3,8 +3,12 @@ const ChainedStructOut = _chained_struct.ChainedStructOut;
 const ChainedStruct = _chained_struct.ChainedStruct;
 const SType = _chained_struct.SType;
 
-pub const WGPU_LIMIT_U32_UNDEFINED = @as(u32, 0xffffffff);
-pub const WGPU_LIMIT_U64_UNDEFINED = @as(u64, 0xffffffffffffffff);
+const _misc = @import("misc.zig");
+const U32_MAX = _misc.U32_MAX;
+const U64_MAX = _misc.U64_MAX;
+
+pub const WGPU_LIMIT_U32_UNDEFINED = U32_MAX;
+pub const WGPU_LIMIT_U64_UNDEFINED = U64_MAX;
 
 pub const Limits = extern struct {
     max_texture_dimension_1d: u32 = WGPU_LIMIT_U32_UNDEFINED,

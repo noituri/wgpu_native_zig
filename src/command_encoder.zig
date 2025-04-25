@@ -14,6 +14,7 @@ const Extent3D = _texture.Extent3D;
 const _misc = @import("misc.zig");
 const WGPUBool = _misc.WGPUBool;
 const IndexFormat = _misc.IndexFormat;
+const U32_MAX = _misc.U32_MAX;
 
 const BindGroup = @import("bind_group.zig").BindGroup;
 
@@ -25,8 +26,8 @@ const RenderBundle = @import("render_bundle.zig").RenderBundle;
 
 const ShaderStage = @import("shader.zig").ShaderStage;
 
-pub const WGPU_DEPTH_SLICE_UNDEFINED = @as(u32, 0xffffffff);
-pub const WGPU_QUERY_SET_INDEX_UNDEFINED = @as(u32, 0xffffffff);
+pub const WGPU_DEPTH_SLICE_UNDEFINED = U32_MAX;
+pub const WGPU_QUERY_SET_INDEX_UNDEFINED = U32_MAX;
 
 pub const TimestampWrites = extern struct {
     query_set: *QuerySet,

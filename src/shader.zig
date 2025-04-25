@@ -10,10 +10,10 @@ const StringView = _misc.StringView;
 
 pub const ShaderStage = WGPUFlags;
 pub const ShaderStages = struct {
-    pub const none     = @as(ShaderStage, 0x00000000);
-    pub const vertex   = @as(ShaderStage, 0x00000001);
-    pub const fragment = @as(ShaderStage, 0x00000002);
-    pub const compute  = @as(ShaderStage, 0x00000004);
+    pub const none     = @as(ShaderStage, 0x0000000000000000);
+    pub const vertex   = @as(ShaderStage, 0x0000000000000001);
+    pub const fragment = @as(ShaderStage, 0x0000000000000002);
+    pub const compute  = @as(ShaderStage, 0x0000000000000004);
 };
 
 pub const CompilationHint = extern struct {

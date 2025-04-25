@@ -1,9 +1,15 @@
 const std = @import("std");
 
-pub const WGPU_WHOLE_SIZE = @as(u64, 0xffffffffffffffff);
+// AFAIK these aren't defined in Zig's stdlib like they are for libc,
+// but it's pretty trivial to construct them.
+pub const U32_MAX = ~@as(u32, 0);
+pub const U64_MAX = ~@as(u64, 0);
+pub const USIZE_MAX = ~@as(usize, 0);
+
+pub const WGPU_WHOLE_SIZE = U64_MAX;
 
 pub const WGPUBool = u32;
-pub const WGPUFlags = u32;
+pub const WGPUFlags = u64;
 
 // Used by both device and adapter
 // FeatureName, Limits, and SupportedLimits are clearly related
@@ -79,7 +85,7 @@ pub inline fn getVersion() u32 {
 }
 
 // Max of usize
-pub const WGPU_STRLEN = ~@as(usize, 0);
+pub const WGPU_STRLEN = USIZE_MAX;
 
 // Nullable value defining a pointer+length view into a UTF-8 encoded string.
 //

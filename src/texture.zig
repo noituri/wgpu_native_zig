@@ -3,10 +3,11 @@ const ChainedStruct = @import("chained_struct.zig").ChainedStruct;
 const _misc = @import("misc.zig");
 const WGPUFlags = _misc.WGPUFlags;
 const WGPUBool = _misc.WGPUBool;
+const U32_MAX = _misc.U32_MAX;
 
-pub const WGPU_ARRAY_LAYER_COUNT_UNDEFINED = @as(u32, 0xffffffff);
-pub const WGPU_MIP_LEVEL_COUNT_UNDEFINED = @as(u32, 0xffffffff);
-pub const WGPU_COPY_STRIDE_UNDEFINED = @as(u32, 0xffffffff);
+pub const WGPU_ARRAY_LAYER_COUNT_UNDEFINED = U32_MAX;
+pub const WGPU_MIP_LEVEL_COUNT_UNDEFINED = U32_MAX;
+pub const WGPU_COPY_STRIDE_UNDEFINED = U32_MAX;
 
 const Buffer = @import("buffer.zig").Buffer;
 
