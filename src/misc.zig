@@ -1,3 +1,5 @@
+const std = @import("std");
+
 pub const WGPU_WHOLE_SIZE = @as(u64, 0xffffffffffffffff);
 
 pub const WGPUBool = u32;
@@ -110,6 +112,43 @@ pub const StringView = extern struct {
 
     pub fn toSlice(self: StringView) ?[]const u8 {
         const data = self.data.?;
+
+        // test if null-terminated string
+        if (self.length == WGPU_STRLEN) {
+            // Returns the slice up to, but not including, the null terminator
+            // I feel like there should be a builtin for this or something, but I don't see one in the docs.
+            // Maybe there's a simpler way to do it and I'm just overthinking it.
+            return std.mem.sliceTo(@as([*:0]const u8, @ptrCast(data)), 0);
+        }
+
         return data[0..self.length];
     }
 };
+
+test "StringView can be constructed from slice" {
+    const test_slice = "test";
+    try std.testing.expectEqualDeep(StringView {
+        .data = test_slice.ptr,
+        .length = test_slice.len,
+    }, StringView.fromSlice("test"));
+}
+
+test "slice can be constructed from normal StringView" {
+    const test_slice = "test";
+    const sv = StringView {
+        .data = test_slice.ptr,
+        .length = test_slice.len,
+    };
+
+    try std.testing.expectEqualSlices(u8, "test", sv.toSlice().?);
+}
+
+test "slice can be constructed from null-terminated StringView" {
+    const test_slice = "test";
+    const sv = StringView {
+        .data = test_slice.ptr,
+        .length = WGPU_STRLEN,
+    };
+
+    try std.testing.expectEqualSlices(u8, "test", sv.toSlice().?);
+}
