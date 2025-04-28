@@ -9,6 +9,12 @@ pub const WGPU_WHOLE_SIZE = U64_MAX;
 pub const WGPUBool = u32;
 pub const WGPUFlags = u64;
 
+const OptionalBool = enum(u32) {
+    false        = 0x00000000,
+    true         = 0x00000001,
+    @"undefined" = 0x00000002,
+};
+
 // Used by both device and adapter
 // FeatureName, Limits, and SupportedLimits are clearly related
 // but idk if they should go in device.zig, adapter.zig, or their own separate file.
@@ -19,13 +25,18 @@ pub const FeatureName = enum(u32) {
     depth32_float_stencil8                                        = 0x00000002,
     timestamp_query                                               = 0x00000003,
     texture_compression_bc                                        = 0x00000004,
-    texture_compression_etc2                                      = 0x00000005,
-    texture_compression_astc                                      = 0x00000006,
-    indirect_first_instance                                       = 0x00000007,
-    shader_f16                                                    = 0x00000008,
-    rg11b10_ufloat_renderable                                     = 0x00000009,
-    bgra8_unorm_storage                                           = 0x0000000A,
-    float32_filterable                                            = 0x0000000B,
+    texture_compression_bc_sliced_3d                              = 0x00000005,
+    texture_compression_etc2                                      = 0x00000006,
+    texture_compression_astc                                      = 0x00000007,
+    texture_compression_astc_sliced_3d                            = 0x00000008,
+    indirect_first_instance                                       = 0x00000009,
+    shader_f16                                                    = 0x0000000A,
+    rg11b10_ufloat_renderable                                     = 0x0000000B,
+    bgra8_unorm_storage                                           = 0x0000000C,
+    float32_filterable                                            = 0x0000000D,
+    float32_blendable                                             = 0x0000000E,
+    clip_distances                                                = 0x0000000F,
+    dual_source_blending                                          = 0x00000010,
 
     // wgpu-native extras
     push_constants                                                = 0x00030001,
@@ -60,20 +71,20 @@ pub const FeatureName = enum(u32) {
 };
 
 pub const IndexFormat = enum(u32) {
-    @"undefined" = 0x00000000,
+    @"undefined" = 0x00000000, // Indicates no value is passed for this argument.
     uint16       = 0x00000001,
     uint32       = 0x00000002,
 };
 
 pub const CompareFunction = enum(u32) {
-    @"undefined"  = 0x00000000,
+    @"undefined"  = 0x00000000, // Indicates no value is passed for this argument
     never         = 0x00000001,
     less          = 0x00000002,
-    less_equal    = 0x00000003,
-    greater       = 0x00000004,
-    greater_equal = 0x00000005,
-    equal         = 0x00000006,
-    not_equal     = 0x00000007,
+    equal         = 0x00000003,
+    less_equal    = 0x00000004,
+    greater       = 0x00000005,
+    not_equal     = 0x00000006,
+    greater_equal = 0x00000007,
     always        = 0x00000008,
 };
 

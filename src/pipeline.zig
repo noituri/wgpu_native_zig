@@ -13,6 +13,7 @@ const WGPUBool = _misc.WGPUBool;
 const IndexFormat = _misc.IndexFormat;
 const CompareFunction = _misc.CompareFunction;
 const WGPUFlags = _misc.WGPUFlags;
+const StringView = _misc.StringView;
 
 const TextureFormat = @import("texture.zig").TextureFormat;
 
@@ -94,11 +95,10 @@ pub const ComputePipelineDescriptor = extern struct {
 };
 
 pub const CreatePipelineAsyncStatus = enum(u32) {
-    success          = 0x00000000,
-    validation_error = 0x00000001,
-    internal_error   = 0x00000002,
-    device_lost      = 0x00000003,
-    device_destroyed = 0x00000004,
+    success          = 0x00000001,
+    instance_dropped = 0x00000002,
+    validation_error = 0x00000003,
+    internal_error   = 0x00000004,
     unknown          = 0x00000005,
 };
 
@@ -209,14 +209,16 @@ pub const PrimitiveTopology = enum(u32) {
 };
 
 pub const FrontFace = enum(u32) {
-    ccw = 0x00000000,
-    cw  = 0x00000001,
+    @"undefined" = 0x00000000, // Indicates no value is passed for this argument.
+    ccw          = 0x00000001,
+    cw           = 0x00000002,
 };
 
 pub const CullMode = enum(u32) {
-    none  = 0x00000000,
-    front = 0x00000001,
-    back  = 0x00000002,
+    @"undefined" = 0x00000000, // Indicates no value is passed for this argument
+    none         = 0x00000001,
+    front        = 0x00000002,
+    back         = 0x00000003,
 };
 
 pub const PrimitiveDepthClipControl = extern struct {
@@ -291,27 +293,33 @@ pub const MultisampleState = extern struct {
 };
 
 pub const BlendOperation = enum(u32) {
-    add              = 0x00000000,
-    subtract         = 0x00000001,
-    reverse_subtract = 0x00000002,
-    min              = 0x00000003,
-    max              = 0x00000004,
+    @"undefined"     = 0x00000000, // Indicates no value is passed for this argument
+    add              = 0x00000001,
+    subtract         = 0x00000002,
+    reverse_subtract = 0x00000003,
+    min              = 0x00000004,
+    max              = 0x00000005,
 };
 
 pub const BlendFactor = enum(u32) {
-    zero                = 0x00000000,
-    one                 = 0x00000001,
-    src                 = 0x00000002,
-    one_minus_src       = 0x00000003,
-    src_alpha           = 0x00000004,
-    one_minus_src_alpha = 0x00000005,
-    dst                 = 0x00000006,
-    one_minus_dst       = 0x00000007,
-    dst_alpha           = 0x00000008,
-    one_minus_dst_alpha = 0x00000009,
-    src_alpha_saturated = 0x0000000A,
-    constant            = 0x0000000B,
-    one_minus_constant  = 0x0000000C,
+    @"undefined"          = 0x00000000, // Indicates no value is passed for this argument
+    zero                  = 0x00000001,
+    one                   = 0x00000002,
+    src                   = 0x00000003,
+    one_minus_src         = 0x00000004,
+    src_alpha             = 0x00000005,
+    one_minus_src_alpha   = 0x00000006,
+    dst                   = 0x00000007,
+    one_minus_dst         = 0x00000008,
+    dst_alpha             = 0x00000009,
+    one_minus_dst_alpha   = 0x0000000A,
+    src_alpha_saturated   = 0x0000000B,
+    constant              = 0x0000000C,
+    one_minus_constant    = 0x0000000D,
+    src_1                 = 0x0000000E,
+    one_minus_src_1       = 0x0000000F,
+    src_1_alpha           = 0x00000010,
+    one_minus_src_1_alpha = 0x00000011,
 };
 
 pub const BlendComponent = extern struct {

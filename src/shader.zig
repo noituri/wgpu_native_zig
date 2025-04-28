@@ -128,16 +128,16 @@ pub inline fn shaderModuleGLSLDescriptor(
 }
 
 pub const CompilationInfoRequestStatus = enum(u32) {
-    success     = 0x00000000,
-    @"error"    = 0x00000001,
-    device_lost = 0x00000002,
-    unknown     = 0x00000003,
+    success          = 0x00000001,
+    instance_dropped = 0x00000002,
+    @"error"         = 0x00000003,
+    unknown          = 0x00000004,
 };
 
 pub const CompilationMessageType = enum(u32) {
-    @"error" = 0x00000000,
-    warning  = 0x00000001,
-    info     = 0x00000002,
+    @"error" = 0x00000001,
+    warning  = 0x00000002,
+    info     = 0x00000003,
 };
 
 pub const CompilationMessage = extern struct {

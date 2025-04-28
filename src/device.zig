@@ -65,8 +65,10 @@ const TextureDescriptor = _texture.TextureDescriptor;
 const Texture = _texture.Texture;
 
 pub const DeviceLostReason = enum(u32) {
-    unknown    = 0x00000001,
-    destroyed  = 0x00000002,
+    unknown          = 0x00000001,
+    destroyed        = 0x00000002,
+    instance_dropped = 0x00000003,
+    failed_creation  = 0x00000004,
 };
 
 pub const DeviceLostCallback = *const fn(reason: DeviceLostReason, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void;
@@ -83,20 +85,19 @@ pub fn defaultDeviceLostCallback(reason: DeviceLostReason, message: ?[*:0]const 
 }
 
 pub const ErrorType = enum(u32) {
-    no_error      = 0x00000000,
-    validation    = 0x00000001,
-    out_of_memory = 0x00000002,
-    internal      = 0x00000003,
-    unknown       = 0x00000004,
-    device_lost   = 0x00000005,
+    no_error      = 0x00000001,
+    validation    = 0x00000002,
+    out_of_memory = 0x00000003,
+    internal      = 0x00000004,
+    unknown       = 0x00000005,
 };
 
 pub const ErrorCallback = *const fn(@"type": ErrorType, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void;
 
 pub const ErrorFilter = enum(u32) {
-    validation    = 0x00000000,
-    out_of_memory = 0x00000001,
-    internal      = 0x00000002,
+    validation    = 0x00000001,
+    out_of_memory = 0x00000002,
+    internal      = 0x00000003,
 };
 
 pub const UncapturedErrorCallbackInfo = extern struct {

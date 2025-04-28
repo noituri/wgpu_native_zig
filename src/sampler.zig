@@ -14,19 +14,22 @@ pub const SamplerBindingLayout = extern struct {
 };
 
 pub const AddressMode = enum(u32) {
-    repeat        = 0x00000000,
-    mirror_repeat = 0x00000001,
-    clamp_to_edge = 0x00000002,
+    @"undefined"  = 0x00000000, // Indicates no value is passed for this argument
+    clamp_to_edge = 0x00000001,
+    repeat        = 0x00000002,
+    mirror_repeat = 0x00000003,
 };
 
 pub const FilterMode = enum(u32) {
-    nearest = 0x00000000,
-    linear  = 0x00000001
+    @"undefined" = 0x00000000, // Indicates no value is passed for this argument.
+    nearest      = 0x00000001,
+    linear       = 0x00000002,
 };
 
 pub const MipmapFilterMode = enum(u32) {
-    nearest = 0x00000000,
-    linear  = 0x00000001,
+    @"undefined" = 0x00000000, // Indicates no value is passed for this argument.
+    nearest      = 0x00000001,
+    linear       = 0x00000002,
 };
 
 pub const SamplerDescriptor = extern struct {

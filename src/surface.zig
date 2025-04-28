@@ -167,12 +167,24 @@ pub inline fn surfaceDescriptorFromXlibWindow(descriptor: MergedSurfaceDescripto
     };
 }
 
-// CompositeAlphaMode and PresentMode only seem to be used by surface-related things, so I'm putting them here.
+// Describes how frames are composited with other contents on the screen when `::wgpuSurfacePresent` is called
 pub const CompositeAlphaMode = enum(u32) {
+    // Lets the WebGPU implementation choose the best mode (supported, and with the best performance) between `@"opaque"` or `inherit`.
     auto            = 0x00000000,
+
+    // The alpha component of the image is ignored and teated as if it is always 1.0.
     @"opaque"       = 0x00000001,
+
+    // The alpha component is respected and non-alpha components are assumed to be already multiplied with the alpha component.
+    // For example, (0.5, 0, 0, 0.5) is semi-transparent bright red.
     premultiplied   = 0x00000002,
+
+    // The alpha component is respected and non-alpha components are assumed to NOT be already multiplied with the alpha component.
+    // For example, (1.0, 0, 0, 0.5) is semi-transparent bright red.
     unpremultiplied = 0x00000003,
+
+    // The handling of the alpha component is unknown to WebGPU and should be handled by the application using system-specific APIs.
+    // This mode may be unavailable (for example on Wasm).
     inherit         = 0x00000004,
 };
 pub const PresentMode = enum(u32) {

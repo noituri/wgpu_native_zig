@@ -24,14 +24,14 @@ pub const PowerPreference = enum(u32) {
 };
 
 pub const AdapterType = enum(u32) {
-    discrete_gpu   = 0x00000000,
-    integrated_gpu = 0x00000001,
-    cpu            = 0x00000002,
-    unknown        = 0x00000003,
+    discrete_gpu   = 0x00000001,
+    integrated_gpu = 0x00000002,
+    cpu            = 0x00000003,
+    unknown        = 0x00000004,
 };
 
 pub const BackendType = enum(u32) {
-    @"undefined" = 0x00000000,
+    @"undefined" = 0x00000000, // Indicates no value is passed for this argument
     null         = 0x00000001,
     webgpu       = 0x00000002,
     d3d11        = 0x00000003,
@@ -40,6 +40,11 @@ pub const BackendType = enum(u32) {
     vulkan       = 0x00000006,
     opengl       = 0x00000007,
     opengl_es    = 0x00000008,
+};
+
+pub const FeatureLevel = enum(u32) {
+    compatibility = 0x00000001, // "Compatibility" profile which can be supported on OpenGL ES 3.1.
+    core          = 0x00000002, // "Core" profile which can be supported on Vulkan/Metal/D3D12.
 };
 
 pub const RequestAdapterOptions = extern struct {
