@@ -119,14 +119,14 @@ pub const TextureFormat = enum(u32) {
     nv12                    = 0x00030007,
 };
 
-pub const TextureUsageFlags = WGPUFlags;
-pub const TextureUsage = struct {
-    pub const none              = @as(TextureUsageFlags, 0x00000000);
-    pub const copy_src          = @as(TextureUsageFlags, 0x00000001);
-    pub const copy_dst          = @as(TextureUsageFlags, 0x00000002);
-    pub const texture_binding   = @as(TextureUsageFlags, 0x00000004);
-    pub const storage_binding   = @as(TextureUsageFlags, 0x00000008);
-    pub const render_attachment = @as(TextureUsageFlags, 0x00000010);
+pub const TextureUsage = WGPUFlags;
+pub const TextureUsages = struct {
+    pub const none              = @as(TextureUsage, 0x0000000000000000);
+    pub const copy_src          = @as(TextureUsage, 0x0000000000000001);
+    pub const copy_dst          = @as(TextureUsage, 0x0000000000000002);
+    pub const texture_binding   = @as(TextureUsage, 0x0000000000000004);
+    pub const storage_binding   = @as(TextureUsage, 0x0000000000000008);
+    pub const render_attachment = @as(TextureUsage, 0x0000000000000010);
 };
 
 // TODO: Like a lot of things in this file, this breaks from the wrapper code convention by having an unneeded prefix ("Texture")
@@ -240,7 +240,7 @@ pub const Extent3D = extern struct {
 pub const TextureDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
-    usage: TextureUsageFlags,
+    usage: TextureUsage,
     dimension: TextureDimension = TextureDimension.@"2d",
     size: Extent3D,
     format: TextureFormat,
@@ -259,7 +259,7 @@ pub const TextureProcs = struct {
     pub const GetHeight = *const fn(*Texture) callconv(.C) u32;
     pub const GetMipLevelCount = *const fn(*Texture) callconv(.C) u32;
     pub const GetSampleCount = *const fn(*Texture) callconv(.C) u32;
-    pub const GetUsage = *const fn(*Texture) callconv(.C) TextureUsageFlags;
+    pub const GetUsage = *const fn(*Texture) callconv(.C) TextureUsage;
     pub const GetWidth = *const fn(*Texture) callconv(.C) u32;
     pub const SetLabel = *const fn(*Texture, ?[*:0]const u8) callconv(.C) void;
     pub const AddRef = *const fn(*Texture) callconv(.C) void;
@@ -274,7 +274,7 @@ extern fn wgpuTextureGetFormat(texture: *Texture) TextureFormat;
 extern fn wgpuTextureGetHeight(texture: *Texture) u32;
 extern fn wgpuTextureGetMipLevelCount(texture: *Texture) u32;
 extern fn wgpuTextureGetSampleCount(texture: *Texture) u32;
-extern fn wgpuTextureGetUsage(texture: *Texture) TextureUsageFlags;
+extern fn wgpuTextureGetUsage(texture: *Texture) TextureUsage;
 extern fn wgpuTextureGetWidth(texture: *Texture) u32;
 extern fn wgpuTextureSetLabel(texture: *Texture, label: ?[*:0]const u8) void;
 extern fn wgpuTextureAddRef(texture: *Texture) void;
@@ -305,7 +305,7 @@ pub const Texture = opaque {
     pub inline fn getSampleCount(self: *Texture) u32 {
         return wgpuTextureGetSampleCount(self);
     }
-    pub inline fn getUsage(self: *Texture) TextureUsageFlags {
+    pub inline fn getUsage(self: *Texture) TextureUsage {
         return wgpuTextureGetUsage(self);
     }
     pub inline fn getWidth(self: *Texture) u32 {

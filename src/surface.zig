@@ -9,8 +9,8 @@ const Adapter = _adapter.Adapter;
 const _texture = @import("texture.zig");
 const Texture = _texture.Texture;
 const TextureFormat = _texture.TextureFormat;
-const TextureUsageFlags = _texture.TextureUsageFlags;
 const TextureUsage = _texture.TextureUsage;
+const TextureUsages = _texture.TextureUsages;
 
 const _device = @import("device.zig");
 const Device = _device.Device;
@@ -205,7 +205,7 @@ pub const SurfaceConfiguration = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     device: *Device,
     format: TextureFormat,
-    usage: TextureUsageFlags = TextureUsage.render_attachment,
+    usage: TextureUsage = TextureUsages.render_attachment,
     view_format_count: usize = 0,
     view_formats: [*]const TextureFormat = (&[_]TextureFormat{}).ptr,
     alpha_mode: CompositeAlphaMode = CompositeAlphaMode.auto,
@@ -228,7 +228,7 @@ pub const SurfaceCapabilitiesProcs = struct {
 extern fn wgpuSurfaceCapabilitiesFreeMembers(surface_capabilities: SurfaceCapabilities) void;
 pub const SurfaceCapabilities = extern struct {
     next_in_chain: ?*ChainedStructOut = null,
-    usages: TextureUsageFlags,
+    usages: TextureUsage,
     format_count: usize,
     formats: [*]const TextureFormat,
     present_mode_count: usize,

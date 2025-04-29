@@ -28,19 +28,19 @@ pub const BufferBindingLayout = extern struct {
     min_binding_size: u64 = 0,
 };
 
-pub const BufferUsageFlags = WGPUFlags;
-pub const BufferUsage = struct {
-    pub const none          = @as(BufferUsageFlags, 0x00000000);
-    pub const map_read      = @as(BufferUsageFlags, 0x00000001);
-    pub const map_write     = @as(BufferUsageFlags, 0x00000002);
-    pub const copy_src      = @as(BufferUsageFlags, 0x00000004);
-    pub const copy_dst      = @as(BufferUsageFlags, 0x00000008);
-    pub const index         = @as(BufferUsageFlags, 0x00000010);
-    pub const vertex        = @as(BufferUsageFlags, 0x00000020);
-    pub const uniform       = @as(BufferUsageFlags, 0x00000040);
-    pub const storage       = @as(BufferUsageFlags, 0x00000080);
-    pub const indirect      = @as(BufferUsageFlags, 0x00000100);
-    pub const query_resolve = @as(BufferUsageFlags, 0x00000200);
+pub const BufferUsage = WGPUFlags;
+pub const BufferUsages = struct {
+    pub const none          = @as(BufferUsage, 0x0000000000000000);
+    pub const map_read      = @as(BufferUsage, 0x0000000000000001);
+    pub const map_write     = @as(BufferUsage, 0x0000000000000002);
+    pub const copy_src      = @as(BufferUsage, 0x0000000000000004);
+    pub const copy_dst      = @as(BufferUsage, 0x0000000000000008);
+    pub const index         = @as(BufferUsage, 0x0000000000000010);
+    pub const vertex        = @as(BufferUsage, 0x0000000000000020);
+    pub const uniform       = @as(BufferUsage, 0x0000000000000040);
+    pub const storage       = @as(BufferUsage, 0x0000000000000080);
+    pub const indirect      = @as(BufferUsage, 0x0000000000000100);
+    pub const query_resolve = @as(BufferUsage, 0x0000000000000200);
 };
 
 pub const BufferMapState = enum(u32) {
@@ -51,9 +51,9 @@ pub const BufferMapState = enum(u32) {
 
 pub const MapMode = WGPUFlags;
 pub const MapModes = struct {
-    pub const none  = @as(MapMode, 0x00000000);
-    pub const read  = @as(MapMode, 0x00000001);
-    pub const write = @as(MapMode, 0x00000002);
+    pub const none  = @as(MapMode, 0x0000000000000000);
+    pub const read  = @as(MapMode, 0x0000000000000001);
+    pub const write = @as(MapMode, 0x0000000000000002);
 };
 
 pub const MapAsyncStatus = enum(u32) {
@@ -77,7 +77,7 @@ pub const BufferMapCallback = *const fn(status: MapAsyncStatus, message: StringV
 pub const BufferDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     label: ?[*:0]const u8 = null,
-    usage: BufferUsageFlags,
+    usage: BufferUsage,
     size: u64,
     mapped_at_creation: WGPUBool = @intFromBool(false),
 };
@@ -88,7 +88,7 @@ pub const BufferProcs = struct {
     pub const GetMapState = *const fn(*Buffer) callconv(.C) BufferMapState;
     pub const GetMappedRange = *const fn(*Buffer, usize, usize) callconv(.C) ?*anyopaque;
     pub const GetSize = *const fn(*Buffer) callconv(.C) u64;
-    pub const GetUsage = *const fn(*Buffer) callconv(.C) BufferUsageFlags;
+    pub const GetUsage = *const fn(*Buffer) callconv(.C) BufferUsage;
     pub const MapAsync = *const fn(*Buffer, MapMode, usize, usize, BufferMapCallbackInfo) callconv(.C) Future;
     pub const SetLabel = *const fn(*Buffer, ?[*:0]const u8) callconv(.C) void;
     pub const Unmap = *const fn(*Buffer) callconv(.C) void;
@@ -101,7 +101,7 @@ extern fn wgpuBufferGetConstMappedRange(buffer: *Buffer, offset: usize, size: us
 extern fn wgpuBufferGetMapState(buffer: *Buffer) BufferMapState;
 extern fn wgpuBufferGetMappedRange(buffer: *Buffer, offset: usize, size: usize) ?*anyopaque;
 extern fn wgpuBufferGetSize(buffer: *Buffer) u64;
-extern fn wgpuBufferGetUsage(buffer: *Buffer) BufferUsageFlags;
+extern fn wgpuBufferGetUsage(buffer: *Buffer) BufferUsage;
 extern fn wgpuBufferMapAsync(buffer: *Buffer, mode: MapMode, offset: usize, size: usize, callback_info: BufferMapCallbackInfo) Future;
 extern fn wgpuBufferSetLabel(buffer: *Buffer, label: ?[*:0]const u8) void;
 extern fn wgpuBufferUnmap(buffer: *Buffer) void;
@@ -126,7 +126,7 @@ pub const Buffer = opaque {
     pub inline fn getSize(self: *Buffer) u64 {
         return wgpuBufferGetSize(self);
     }
-    pub inline fn getUsage(self: *Buffer) BufferUsageFlags {
+    pub inline fn getUsage(self: *Buffer) BufferUsage {
         return wgpuBufferGetUsage(self);
     }
 
