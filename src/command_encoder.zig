@@ -143,7 +143,7 @@ pub const LoadOp = enum(u32) {
 };
 
 pub const StoreOp = enum(u32) {
-    @"undefined" = 0x00000000,
+    @"undefined" = 0x00000000, // Indicates no value is passed for this argument
     store        = 0x00000001,
     discard      = 0x00000002,
 };
@@ -181,7 +181,7 @@ pub const RenderPassTimestampWrites = TimestampWrites;
 
 pub const RenderPassDescriptorMaxDrawCount = extern struct {
     chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.render_pass_descriptor_max_draw_count,
+        .s_type = SType.render_pass_max_draw_count
     },
     max_draw_count: u64 = 50000000,
 };

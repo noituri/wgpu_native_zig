@@ -9,7 +9,14 @@ pub const WGPU_WHOLE_SIZE = U64_MAX;
 pub const WGPUBool = u32;
 pub const WGPUFlags = u64;
 
-const OptionalBool = enum(u32) {
+// Status code returned (synchronously) from many operations.
+// Generally indicates an invalid input like an unknown enum value or OutStructChainError.
+pub const Status = enum(u32) {
+    success  = 0x00000001,
+    @"error" = 0x00000002,
+};
+
+pub const OptionalBool = enum(u32) {
     false        = 0x00000000,
     true         = 0x00000001,
     @"undefined" = 0x00000002,

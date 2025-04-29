@@ -12,7 +12,7 @@ pub const WGPU_COPY_STRIDE_UNDEFINED = U32_MAX;
 const Buffer = @import("buffer.zig").Buffer;
 
 pub const TextureFormat = enum(u32) {
-    @"undefined"            = 0x00000000,
+    @"undefined"            = 0x00000000, // Indicates no value is passed for this argument.
     r8_unorm                = 0x00000001,
     r8_snorm                = 0x00000002,
     r8_uint                 = 0x00000003,
@@ -133,9 +133,10 @@ pub const TextureUsage = struct {
 //       in front of the name, even though "Aspect" is exclusively used in TextureAspect. I've done this because just calling
 //       it "Aspect" seems like it'd confuse people thinking it is an aspect ratio or something, but should it just be "Aspect"?
 pub const TextureAspect = enum(u32) {
-    all          = 0x00000000,
-    stencil_only = 0x00000001,
-    depth_only   = 0x00000002,
+    @"undefined" = 0x00000000, // Indicates no value is passed for this argument.
+    all          = 0x00000001,
+    stencil_only = 0x00000002,
+    depth_only   = 0x00000003,
 };
 
 pub const TextureViewDescriptor = extern struct {
@@ -174,16 +175,21 @@ pub const TextureView = opaque {
 
 // TODO: Should this maybe go in sampler.zig instead?
 pub const SampleType = enum(u32) {
-    @"undefined"       = 0x00000000,
-    float              = 0x00000001,
-    unfilterable_float = 0x00000002,
-    depth              = 0x00000003,
-    s_int              = 0x00000004,
-    u_int              = 0x00000005,
+    // Indicates that this TextureBindingLayout member of its parent BindGroupLayoutEntry is not used.
+    binding_not_used   = 0x00000000,
+
+    // Indicates no value is passed for this argument.
+    @"undefined"       = 0x00000001,
+
+    float              = 0x00000002,
+    unfilterable_float = 0x00000003,
+    depth              = 0x00000004,
+    s_int              = 0x00000005,
+    u_int              = 0x00000006,
 };
 
 pub const ViewDimension = enum(u32) {
-    @"undefined" = 0x00000000,
+    @"undefined" = 0x00000000, // Indicates no value is passed for this argument.
     @"1d"        = 0x00000001,
     @"2d"        = 0x00000002,
     @"2d_array"  = 0x00000003,
@@ -200,10 +206,15 @@ pub const TextureBindingLayout = extern struct {
 };
 
 pub const StorageTextureAccess = enum(u32) {
-    @"undefined" = 0x00000000,
-    write_only   = 0x00000001,
-    read_only    = 0x00000002,
-    read_write   = 0x00000003,
+    // Indicates that this StorageTextureBindingLayout member of its parent BindGroupLayoutEntry is not used.
+    binding_not_used = 0x00000000,
+
+    // Indicates no value is passed for this argument.
+    @"undefined"     = 0x00000001,
+
+    write_only       = 0x00000002,
+    read_only        = 0x00000003,
+    read_write       = 0x00000004,
 };
 
 pub const StorageTextureBindingLayout = extern struct {
@@ -214,9 +225,10 @@ pub const StorageTextureBindingLayout = extern struct {
 };
 
 pub const TextureDimension = enum(u32) {
-    @"1d" = 0x00000000,
-    @"2d" = 0x00000001,
-    @"3d" = 0x00000002,
+    @"undefined" = 0x00000000, // Indicates no value is passed for this argument.
+    @"1d"        = 0x00000001,
+    @"2d"        = 0x00000002,
+    @"3d"        = 0x00000003,
 };
 
 pub const Extent3D = extern struct {

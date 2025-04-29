@@ -3,8 +3,8 @@ const ChainedStruct = _chained_struct.ChainedStruct;
 const SType = _chained_struct.SType;
 
 pub const QueryType = enum(u32) {
-    occlusion           = 0x00000000,
-    timestamp           = 0x00000001,
+    occlusion           = 0x00000001,
+    timestamp           = 0x00000002,
 
     // wgpu-native pipeline statistics
     pipeline_statistics = 0x00030000,

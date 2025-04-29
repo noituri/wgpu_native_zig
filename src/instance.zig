@@ -75,8 +75,7 @@ pub const InstanceDescriptor = extern struct {
     }
 };
 
-pub const WGSLFeatureName = enum(u32) {
-    @"undefined"                            = 0x00000000,
+pub const WGSLLanguageFeatureName = enum(u32) {
     readonly_and_readwrite_storage_textures = 0x00000001,
     packed4x8_integer_dot_product           = 0x00000002,
     unrestricted_pointer_parameters         = 0x00000003,
@@ -86,7 +85,7 @@ pub const WGSLFeatureName = enum(u32) {
 pub const InstanceProcs = struct {
     pub const CreateInstance = *const fn(?*const InstanceDescriptor) callconv(.C) ?*Instance;
     pub const CreateSurface = *const fn(*Instance, *const SurfaceDescriptor) ?*Surface;
-    pub const HasWGSLLanguageFeature = *const fn(*Instance, WGSLFeatureName) WGPUBool;
+    pub const HasWGSLLanguageFeature = *const fn(*Instance, WGSLLanguageFeatureName) WGPUBool;
     pub const ProcessEvents = *const fn(*Instance) callconv(.C) void;
     pub const RequestAdapter = *const fn(*Instance, ?*const RequestAdapterOptions, InstanceRequestAdapterCallback, ?*anyopaque) callconv(.C) void;
     pub const InstanceAddRef = *const fn(*Instance) callconv(.C) void;
@@ -99,7 +98,7 @@ pub const InstanceProcs = struct {
 
 extern fn wgpuCreateInstance(descriptor: ?*const InstanceDescriptor) ?*Instance;
 extern fn wgpuInstanceCreateSurface(instance: *Instance, descriptor: *const SurfaceDescriptor) ?*Surface;
-extern fn wgpuInstanceHasWGSLLanguageFeature(instance: *Instance, feature: WGSLFeatureName) WGPUBool;
+extern fn wgpuInstanceHasWGSLLanguageFeature(instance: *Instance, feature: WGSLLanguageFeatureName) WGPUBool;
 extern fn wgpuInstanceProcessEvents(instance: *Instance) void;
 extern fn wgpuInstanceRequestAdapter(instance: *Instance, options: ?*const RequestAdapterOptions, callback: InstanceRequestAdapterCallback, userdata: ?*anyopaque) void;
 extern fn wgpuInstanceAddRef(instance: *Instance) void;
@@ -155,7 +154,7 @@ pub const Instance = opaque {
         return wgpuInstanceCreateSurface(self, descriptor);
     }
 
-    pub inline fn hasWGSLLanguageFeature(self: *Instance, feature: WGSLFeatureName) bool {
+    pub inline fn hasWGSLLanguageFeature(self: *Instance, feature: WGSLLanguageFeatureName) bool {
         return wgpuInstanceHasWGSLLanguageFeature(self, feature) != 0;
     }
 

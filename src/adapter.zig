@@ -18,7 +18,7 @@ const RequestDeviceStatus = _device.RequestDeviceStatus;
 const RequestDeviceResponse = _device.RequestDeviceResponse;
 
 pub const PowerPreference = enum(u32) {
-    @"undefined"        = 0x00000000,
+    @"undefined"        = 0x00000000, // No preference.
     low_power           = 0x00000001,
     high_performance    = 0x00000002,
 };
@@ -56,10 +56,11 @@ pub const RequestAdapterOptions = extern struct {
 };
 
 pub const RequestAdapterStatus = enum(u32) {
-    success     = 0x00000000,
-    unavailable = 0x00000001,
-    @"error"    = 0x00000002,
-    unknown     = 0x00000003,
+    success          = 0x00000001,
+    instance_dropped = 0x00000002,
+    unavailable      = 0x00000003,
+    @"error"         = 0x00000004,
+    unknown          = 0x00000005,
 };
 
 // TODO: This should maybe be relocated to instance.zig; it is only used there.

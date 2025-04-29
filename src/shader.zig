@@ -38,7 +38,7 @@ pub const ShaderModuleDescriptorSpirV = extern struct {
 
 pub const ShaderModuleSPIRVDescriptor = extern struct {
     chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.shader_module_spirv_descriptor,
+        .s_type = SType.shader_source_spirv,
     },
     code_size: u32,
     code: [*]const u32,
@@ -66,7 +66,7 @@ pub inline fn shaderModuleSPIRVDescriptor(
 
 pub const ShaderModuleWGSLDescriptor = extern struct {
     chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.shader_module_wgsl_descriptor,
+        .s_type = SType.shader_source_wgsl,
     },
     code: [*:0]const u8,
 };

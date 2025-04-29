@@ -2,10 +2,15 @@ const ChainedStruct = @import("chained_struct.zig").ChainedStruct;
 const CompareFunction = @import("misc.zig").CompareFunction;
 
 pub const SamplerBindingType = enum(u32) {
-    @"undefined"  = 0x00000000,
-    filtering     = 0x00000001,
-    non_filtering = 0x00000002,
-    comparison    = 0x00000003,
+    // Indicates that this SamplerBindingLayout member of its parent BindGroupLayoutEntry is not used.
+    binding_not_used = 0x00000000,
+
+    // Indicates no value is passed for this argument.
+    @"undefined"     = 0x00000001,
+
+    filtering        = 0x00000002,
+    non_filtering    = 0x00000003,
+    comparison       = 0x00000004,
 };
 
 pub const SamplerBindingLayout = extern struct {

@@ -24,7 +24,7 @@ pub const SurfaceDescriptor = extern struct {
 
 pub const SurfaceDescriptorFromAndroidNativeWindow = extern struct {
     chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.surface_descriptor_from_android_native_window,
+        .s_type = SType.surface_source_android_native_window,
     },
     window: *anyopaque,
 };
@@ -41,28 +41,9 @@ pub inline fn surfaceDescriptorFromAndroidNativeWindow(descriptor: MergedSurface
     };
 }
 
-pub const SurfaceDescriptorFromCanvasHTMLSelector = extern struct {
-    chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.surface_descriptor_from_canvas_html_selector,
-    },
-    selector: [*:0]const u8,
-};
-pub const MergedSurfaceDescriptorFromCanvasHTMLSelector = struct {
-    label: ?[*:0]const u8 = null,
-    selector: [*:0]const u8,
-};
-pub inline fn surfaceDescriptorFromCanvasHTMLSelector(descriptor: MergedSurfaceDescriptorFromCanvasHTMLSelector) SurfaceDescriptor {
-    return SurfaceDescriptor{
-        .next_in_chain = @ptrCast(&SurfaceDescriptorFromCanvasHTMLSelector {
-            .selector = descriptor.selector,
-        }),
-        .label = descriptor.label,
-    };
-}
-
 pub const SurfaceDescriptorFromMetalLayer = extern struct {
     chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.surface_descriptor_from_metal_layer,
+        .s_type = SType.surface_source_metal_layer,
     },
     layer: *anyopaque,
 };
@@ -81,7 +62,7 @@ pub inline fn surfaceDescriptorFromMetalLayer(descriptor: MergedSurfaceDescripto
 
 pub const SurfaceDescriptorFromWaylandSurface = extern struct {
     chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.surface_descriptor_from_wayland_surface,
+        .s_type = SType.surface_source_wayland_surface,
     },
     display: *anyopaque,
     surface: *anyopaque,
@@ -103,7 +84,7 @@ pub inline fn surfaceDescriptorFromWaylandSurface(descriptor: MergedSurfaceDescr
 
 pub const SurfaceDescriptorFromWindowsHWND = extern struct {
     chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.surface_descriptor_from_windows_hwnd,
+        .s_type = SType.surface_source_windows_hwnd,
     },
     hinstance: *anyopaque,
     hwnd: *anyopaque,
@@ -125,7 +106,7 @@ pub inline fn surfaceDescriptorFromWindowsHWND(descriptor: MergedSurfaceDescript
 
 pub const SurfaceDescriptorFromXcbWindow = extern struct {
     chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.surface_descriptor_from_xcb_window,
+        .s_type = SType.surface_source_xcb_window,
     },
     connection: *anyopaque,
     window: u32,
@@ -147,14 +128,14 @@ pub inline fn surfaceDescriptorFromXcbWindow(descriptor: MergedSurfaceDescriptor
 
 pub const SurfaceDescriptorFromXlibWindow = extern struct {
     chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.surface_descriptor_from_xlib_window,
+        .s_type = SType.surface_source_xlib_window,
     },
     display: *anyopaque,
     window: u64,
 };
 pub const MergedSurfaceDescriptorFromXlibWindow = struct {
     label: ?[*:0]const u8 = null,
-    connection: *anyopaque,
+    display: *anyopaque,
     window: u64,
 };
 pub inline fn surfaceDescriptorFromXlibWindow(descriptor: MergedSurfaceDescriptorFromXlibWindow) SurfaceDescriptor {
@@ -187,11 +168,29 @@ pub const CompositeAlphaMode = enum(u32) {
     // This mode may be unavailable (for example on Wasm).
     inherit         = 0x00000004,
 };
+
+// Describes when and in which order frames are presented on the screen when `::wgpuSurfacePresent` is called.
 pub const PresentMode = enum(u32) {
-    fifo         = 0x00000000,
-    fifo_relaxed = 0x00000001,
-    immediate    = 0x00000002,
-    mailbox      = 0x00000003,
+    // Present mode is not specified. Use the default.
+    @"undefined" = 0x00000000,
+
+    // The presentation of the image to the user waits for the next vertical blanking period to update in a first-in, first-out manner.
+    // Tearing cannot be observed and frame-loop will be limited to the display's refresh rate.
+    // This is the only mode that's always available.
+    fifo         = 0x00000001,
+
+    // The presentation of the image to the user tries to wait for the next vertical blanking period but may decide to not wait if a frame is presented late.
+    // Tearing can sometimes be observed but late-frame don't produce a full-frame stutter in the presentation.
+    // This is still a first-in, first-out mechanism so a frame-loop will be limited to the display's refresh rate.
+    fifo_relaxed = 0x00000002,
+
+    // The presentation of the image to the user is updated immediately without waiting for a vertical blank.
+    // Tearing can be observed but latency is minimized.
+    immediate    = 0x00000003,
+
+    // The presentation of the image to the user waits for the next vertical blanking period to update to the latest provided image.
+    // Tearing cannot be observed and a frame-loop is not limited to the display's refresh rate.
+    mailbox      = 0x00000004,
 };
 
 pub const SurfaceConfigurationExtras = extern struct {
@@ -242,13 +241,32 @@ pub const SurfaceCapabilities = extern struct {
     }
 };
 
+// The status enum for `::wgpuSurfaceGetCurrentTexture`.
 pub const GetCurrentTextureStatus = enum(u32) {
-    success       = 0x00000000,
-    timeout       = 0x00000001,
-    outdated      = 0x00000002,
-    lost          = 0x00000003,
-    out_of_memory = 0x00000004,
-    device_lost   = 0x00000005,
+    // Yay! Everything is good and we can render this frame.
+    success_optimal    = 0x00000001,
+
+    // Still OK - the surface can present the frame, but in a suboptimal way.
+    // The surface may need reconfiguration.
+    success_suboptimal = 0x00000002,
+
+    // Some operation timed out while trying to acquire the frame.
+    timeout            = 0x00000003,
+
+    // The surface is too different to be used, compared to when it was originally created.
+    outdated           = 0x00000004,
+
+    // The connection to whatever owns the surface was lost.
+    lost               = 0x00000005,
+
+    // The system ran out of memory.
+    out_of_memory      = 0x00000006,
+
+    // The Device configured on the Surface was lost.
+    device_lost        = 0x00000007,
+
+    // The surface is not configured, or there was an OutStructChainError.
+    @"error"           = 0x00000008,
 };
 
 pub const SurfaceTexture = extern struct {

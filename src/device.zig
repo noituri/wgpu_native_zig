@@ -127,9 +127,10 @@ pub const DeviceDescriptor = extern struct {
 };
 
 pub const RequestDeviceStatus = enum(u32) {
-    success  = 0x00000000,
-    @"error" = 0x00000001,
-    unknown  = 0x00000002,
+    success          = 0x00000001,
+    instance_dropped = 0x00000002,
+    @"error"         = 0x00000003,
+    unknown          = 0x00000004,
 };
 
 // TODO: This probably belongs in adapter.zig
@@ -142,6 +143,12 @@ pub const RequestDeviceResponse = struct {
 
 // Generic function return type for wgpuGetProcAddress
 // pub const Proc = *const fn() callconv(.C) void;
+
+pub const PopErrorScopeStatus = enum(u32) {
+    success          = 0x00000001, // The error scope stack was successfully popped and a result was reported.
+    instance_dropped = 0x00000002,
+    empty_stack      = 0x00000003, // The error scope stack could not be popped, because it was empty.
+};
 
 pub const DeviceProcs = struct {
     pub const CreateBindGroup = *const fn(*Device, *const BindGroupDescriptor) callconv(.C) ?*BindGroup;

@@ -15,10 +15,10 @@ pub const QueueDescriptor = extern struct {
 };
 
 pub const WorkDoneStatus = enum(u32) {
-    success     = 0x00000000,
-    @"error"    = 0x00000001,
-    unknown     = 0x00000002,
-    device_lost = 0x00000003,
+    success          = 0x00000001,
+    instance_dropped = 0x00000002,
+    @"error"         = 0x00000003,
+    unknown          = 0x00000004,
 };
 
 pub const QueueOnSubmittedWorkDoneCallback = *const fn(status: WorkDoneStatus, userdata: ?*anyopaque) callconv(.C) void;

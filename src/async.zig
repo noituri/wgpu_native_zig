@@ -30,6 +30,24 @@ pub const CallbackMode = enum(u32) {
     allow_spontaneous    = 0x00000003,
 };
 
+// Status returned from a call to ::wgpuInstanceWaitAny.
+pub const WaitStatus = enum(u32) {
+    // At least one Future completed successfully.
+    success                   = 0x00000001,
+
+    // No Futures completed within the timeout.
+    timed_out                 = 0x00000002,
+
+    // A Timed-Wait was performed when InstanceCapabilities.timed_wait_any_enable is false.
+    unsupported_timeout       = 0x00000003,
+
+    // The number of futures waited on in a Timed-Wait is greater than the supported InstanceCapabilities.timed_wait_any_max_count.
+    unsupported_count         = 0x00000004,
+
+    // An invalid wait was performed with Mixed-Sources.
+    unsupported_mixed_sources = 0x00000005,
+};
+
 //
 // Opaque handle to an asynchronous operation.
 //
