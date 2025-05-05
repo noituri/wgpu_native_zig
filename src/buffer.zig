@@ -66,10 +66,13 @@ pub const MapAsyncStatus = enum(u32) {
 
 pub const BufferMapCallbackInfo = extern struct {
     next_in_chain: ?*ChainedStruct = null,
-    mode: CallbackMode,
+
+    // TODO: Revisit this default if/when Instance.waitAny() is implemented.
+    mode: CallbackMode = CallbackMode.allow_process_events,
+
     callback: BufferMapCallback,
-    userdata1: ?*anyopaque,
-    userdata2: ?*anyopaque,
+    userdata1: ?*anyopaque = null,
+    userdata2: ?*anyopaque = null,
 };
 
 pub const BufferMapCallback = *const fn(status: MapAsyncStatus, message: StringView, userdata1: ?*anyopaque, userdata2: ?*anyopaque) callconv(.C) void;

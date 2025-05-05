@@ -247,7 +247,7 @@ pub const TextureDescriptor = extern struct {
     mip_level_count: u32 = 1,
     sample_count: u32 = 1,
     view_format_count: usize = 0,
-    view_formats: [*]const TextureFormat = (&[_]TextureFormat{}).ptr,
+    view_formats: [*]const TextureFormat = [_]TextureFormat {},
 };
 
 pub const TextureProcs = struct {

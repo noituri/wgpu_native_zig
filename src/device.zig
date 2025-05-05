@@ -9,6 +9,10 @@ const WGPUBool = _misc.WGPUBool;
 const FeatureName = _misc.FeatureName;
 const StringView = _misc.StringView;
 
+const _async = @import("async.zig");
+const CallbackMode = _async.CallbackMode;
+const Future = _async.Future;
+
 const _limits = @import("limits.zig");
 const Limits = _limits.Limits;
 const SupportedLimits = _limits.SupportedLimits;
@@ -36,12 +40,12 @@ const CommandEncoder = _command_encoder.CommandEncoder;
 const _pipeline = @import("pipeline.zig");
 const ComputePipelineDescriptor = _pipeline.ComputePipelineDescriptor;
 const ComputePipeline = _pipeline.ComputePipeline;
-const DeviceCreateComputePipelineAsyncCallback = _pipeline.DeviceCreateComputePipelineAsyncCallback;
+const CreateComputePipelineAsyncCallbackInfo = _pipeline.CreateComputePipelineAsyncCallbackInfo;
 const PipelineLayoutDescriptor = _pipeline.PipelineLayoutDescriptor;
 const PipelineLayout = _pipeline.PipelineLayout;
 const RenderPipelineDescriptor = _pipeline.RenderPipelineDescriptor;
 const RenderPipeline = _pipeline.RenderPipeline;
-const DeviceCreateRenderPipelineAsyncCallback = _pipeline.DeviceCreateRenderPipelineAsyncCallback;
+const CreateRenderPipelineAsyncCallbackInfo = _pipeline.CreateRenderPipelineAsyncCallbackInfo;
 
 const _query_set = @import("query_set.zig");
 const QuerySetDescriptor = _query_set.QuerySetDescriptor;
@@ -71,7 +75,33 @@ pub const DeviceLostReason = enum(u32) {
     failed_creation  = 0x00000004,
 };
 
-pub const DeviceLostCallback = *const fn(reason: DeviceLostReason, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void;
+pub const DeviceLostCallbackInfo = extern struct {
+    next_in_chain: ?*ChainedStruct = null,
+
+    // Apparently in the webgpu header this has no (valid) default: https://github.com/webgpu-native/webgpu-headers/pull/471
+    // As of wgpu-native v24.0.3.1, Instance.waitAny() has not been implemented, but Instance.processEvents() has,
+    // so the safest mode to use currently is probably CallbackMode.allow_process_events.
+    // If you really know what you're doing, CallbackMode.allow_spontaneous could also work as an option here.
+    // TODO: Revisit this if/when Instance.waitAny() is implemented in wgpu-native
+    mode: CallbackMode = CallbackMode.allow_process_events,
+    callback: DeviceLostCallback = defaultDeviceLostCallback,
+    userdata1: ?*anyopaque = null,
+    userdata2: ?*anyopaque = null,
+};
+
+// `device` is a reference to the device which was lost. If, and only if, the `reason` is DeviceLostReason.failed_creation, `device` is a non-null pointer to a null Device.
+pub const DeviceLostCallback = *const fn(device: *const ?*Device, reason: DeviceLostReason, message: StringView, userdata1: ?*anyopaque, userdata2: ?*anyopaque) callconv(.C) void;
+pub fn defaultDeviceLostCallback(device: *const ?*Device, reason: DeviceLostReason, message: StringView, userdata1: ?*anyopaque, userdata2: ?*anyopaque) callconv(.C) void {
+    _ = device;
+    _ = userdata1;
+    _ = userdata2;
+
+    // Without a device you can't really do much of anything, so do a panic here by default.
+    // For better error handling, implement DeviceLostCallback with your own error handling logic.
+    // Remember you can pass pointers in through the userdata fields of the DeviceLostCallbackInfo struct;
+    // you could pass in a simple pointer to a bool or something more complex like a struct.
+    std.debug.panic("Device lost: reason={s} message=\"{s}\"\n", .{ @tagName(reason), message.toSlice() orelse "" });
+}
 
 pub const DeviceExtras = extern struct {
     chain: ChainedStruct = ChainedStruct {
@@ -79,10 +109,6 @@ pub const DeviceExtras = extern struct {
     },
     trace_path: StringView,
 };
-
-pub fn defaultDeviceLostCallback(reason: DeviceLostReason, message: ?[*:0]const u8, _: ?*anyopaque) callconv(.C) void {
-    std.log.err("Device lost: reason={s} message=\"{s}\"\n", .{ @tagName(reason), message orelse "" });
-}
 
 pub const ErrorType = enum(u32) {
     no_error      = 0x00000001,
@@ -92,7 +118,7 @@ pub const ErrorType = enum(u32) {
     unknown       = 0x00000005,
 };
 
-pub const ErrorCallback = *const fn(@"type": ErrorType, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void;
+pub const UncapturedErrorCallback = *const fn(device: ?*Device, error_type: ErrorType, message: StringView, userdata1: ?*anyopaque, userdata2: ?*anyopaque) callconv(.C) void;
 
 pub const ErrorFilter = enum(u32) {
     validation    = 0x00000001,
@@ -102,19 +128,19 @@ pub const ErrorFilter = enum(u32) {
 
 pub const UncapturedErrorCallbackInfo = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    callback: ?ErrorCallback = null,
-    userdata: ?*anyopaque = null,
+    callback: ?UncapturedErrorCallback = null,
+    userdata1: ?*anyopaque = null,
+    userdata2: ?*anyopaque = null,
 };
 
 pub const DeviceDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     required_feature_count: usize = 0,
-    required_features: ?[*]const FeatureName = null,
+    required_features: [*]const FeatureName = &[0]FeatureName {},
     required_limits: ?*const RequiredLimits,
     default_queue: QueueDescriptor = QueueDescriptor{},
-    device_lost_callback: DeviceLostCallback = defaultDeviceLostCallback,
-    device_lost_user_data: ?*anyopaque = null,
+    device_lost_callback_info: DeviceLostCallbackInfo = DeviceLostCallbackInfo {},
     uncaptured_error_callback_info: UncapturedErrorCallbackInfo = UncapturedErrorCallbackInfo{},
 
     pub inline fn withTracePath(self: DeviceDescriptor, trace_path: []const u8) DeviceDescriptor {
@@ -134,11 +160,29 @@ pub const RequestDeviceStatus = enum(u32) {
 };
 
 // TODO: This probably belongs in adapter.zig
-pub const AdapterRequestDeviceCallback = *const fn(status: RequestDeviceStatus, device: ?*Device, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void;
+pub const RequestDeviceCallback = *const fn(
+    status: RequestDeviceStatus, 
+    device: ?*Device,
+    message: StringView,
+    userdata1: ?*anyopaque,
+    userdata2: ?*anyopaque
+) callconv(.C) void;
+
 pub const RequestDeviceResponse = struct {
     status: RequestDeviceStatus,
-    message: ?[*:0]const u8,
+    message: ?[]const u8,
     device: ?*Device,
+};
+
+pub const RequestDeviceCallbackInfo = extern struct {
+    next_in_chain: ?*ChainedStruct = null,
+
+    // TODO: Revisit this default if/when Instance.waitAny() is implemented.
+    mode: CallbackMode = CallbackMode.allow_process_events,
+
+    callback: RequestDeviceCallback,
+    userdata1: ?*anyopaque = null,
+    userdata2: ?*anyopaque = null,
 };
 
 // Generic function return type for wgpuGetProcAddress
@@ -150,18 +194,48 @@ pub const PopErrorScopeStatus = enum(u32) {
     empty_stack      = 0x00000003, // The error scope stack could not be popped, because it was empty.
 };
 
+// status
+// See PopErrorScopeStatus.
+//
+// error_type
+// The type of the error caught by the scope, or ErrorType.no_error if there was none.
+// If the `status` is not PopErrorScopeStatus.success, this is ErrorType.no_error.
+//
+// message
+// If the `type` is not ErrorType.no_error, this is a non-empty string;
+// otherwise, this is an empty string.
+//
+pub const PopErrorScopeCallback = *const fn(
+    status: PopErrorScopeStatus,
+    error_type: ErrorType,
+    message: StringView,
+    userdata1: ?*anyopaque,
+    userdata2: ?*anyopaque,
+) callconv(.C) void;
+
+pub const PopErrorScopeCallbackInfo = extern struct {
+    next_in_chain: ?*ChainedStruct = null,
+
+    // TODO: Revisit this default if/when Instance.waitAny() is implemented.
+    mode: CallbackMode = CallbackMode.allow_process_events,
+
+    callback: PopErrorScopeCallback,
+    userdata1: ?*anyopaque = null,
+    userdata2: ?*anyopaque = null,
+};
+
 pub const DeviceProcs = struct {
     pub const CreateBindGroup = *const fn(*Device, *const BindGroupDescriptor) callconv(.C) ?*BindGroup;
     pub const CreateBindGroupLayout = *const fn(*Device, *const BindGroupLayoutDescriptor) callconv(.C) ?*BindGroupLayout;
     pub const CreateBuffer = *const fn(*Device, *const BufferDescriptor) callconv(.C) ?*Buffer;
     pub const CreateCommandEncoder = *const fn(*Device, *const CommandEncoderDescriptor) callconv(.C) ?*CommandEncoder;
     pub const CreateComputePipeline = *const fn(*Device, *const ComputePipelineDescriptor) callconv(.C) ?*ComputePipeline;
-    pub const CreateComputePipelineAsync = *const fn(*Device, *const ComputePipelineDescriptor, DeviceCreateComputePipelineAsyncCallback, ?*anyopaque) callconv(.C) void;
+    pub const CreateComputePipelineAsync = *const fn(*Device, *const ComputePipelineDescriptor, CreateComputePipelineAsyncCallbackInfo) callconv(.C) Future;
     pub const CreatePipelineLayout = *const fn(*Device, *const PipelineLayoutDescriptor) callconv(.C) ?*PipelineLayout;
     pub const CreateQuerySet = *const fn(*Device, *const QuerySetDescriptor) callconv(.C) ?*QuerySet;
     pub const CreateRenderBundleEncoder = *const fn(*Device, *const RenderBundleEncoderDescriptor) callconv(.C) ?*RenderBundleEncoder;
     pub const CreateRenderPipeline = *const fn(*Device, *const RenderPipelineDescriptor) callconv(.C) ?*RenderPipeline;
-    pub const CreateRenderPipelineAsync = *const fn(*Device, *const RenderPipelineDescriptor, DeviceCreateRenderPipelineAsyncCallback, ?*anyopaque) callconv(.C) void;
+    pub const CreateRenderPipelineAsync = *const fn(*Device, *const RenderPipelineDescriptor, CreateRenderPipelineAsyncCallbackInfo) callconv(.C) Future;
     pub const CreateSampler = *const fn(*Device, *const SamplerDescriptor) callconv(.C) ?*Sampler;
     pub const CreateShaderModule = *const fn(*Device, *const ShaderModuleDescriptor) callconv(.C) ?*ShaderModule;
     pub const CreateTexture = *const fn(*Device, *const TextureDescriptor) callconv(.C) ?*Texture;
@@ -170,7 +244,7 @@ pub const DeviceProcs = struct {
     pub const GetLimits = *const fn(*Device, *SupportedLimits) callconv(.C) WGPUBool;
     pub const GetQueue = *const fn(*Device) callconv(.C) ?*Queue;
     pub const HasFeature = *const fn(*Device, FeatureName) callconv(.C) WGPUBool;
-    pub const PopErrorScope = *const fn(*Device, ErrorCallback, ?*anyopaque) callconv(.C) void;
+    pub const PopErrorScope = *const fn(*Device, PopErrorScopeCallbackInfo) callconv(.C) Future;
     pub const PushErrorScope = *const fn(*Device, ErrorFilter) callconv(.C) void;
     pub const SetLabel = *const fn(*Device, ?[*:0]const u8) callconv(.C) void;
     pub const AddRef = *const fn(*Device) callconv(.C) void;
@@ -186,12 +260,12 @@ extern fn wgpuDeviceCreateBindGroupLayout(device: *Device, descriptor: *const Bi
 extern fn wgpuDeviceCreateBuffer(device: *Device, descriptor: *const BufferDescriptor) ?*Buffer;
 extern fn wgpuDeviceCreateCommandEncoder(device: *Device, descriptor: *const CommandEncoderDescriptor) ?*CommandEncoder;
 extern fn wgpuDeviceCreateComputePipeline(device: *Device, descriptor: *const ComputePipelineDescriptor) ?*ComputePipeline;
-extern fn wgpuDeviceCreateComputePipelineAsync(device: *Device, descriptor: *const ComputePipelineDescriptor, callback: DeviceCreateComputePipelineAsyncCallback, userdata: ?*anyopaque) void;
+extern fn wgpuDeviceCreateComputePipelineAsync(device: *Device, descriptor: *const ComputePipelineDescriptor, callback_info: CreateComputePipelineAsyncCallbackInfo) Future;
 extern fn wgpuDeviceCreatePipelineLayout(device: *Device, descriptor: *const PipelineLayoutDescriptor) ?*PipelineLayout;
 extern fn wgpuDeviceCreateQuerySet(device: *Device, descriptor: *const QuerySetDescriptor) ?*QuerySet;
 extern fn wgpuDeviceCreateRenderBundleEncoder(device: *Device, descriptor: *const RenderBundleEncoderDescriptor) ?*RenderBundleEncoder;
 extern fn wgpuDeviceCreateRenderPipeline(device: *Device, descriptor: *const RenderPipelineDescriptor) ?*RenderPipeline;
-extern fn wgpuDeviceCreateRenderPipelineAsync(device: *Device, descriptor: *const RenderPipelineDescriptor, callback: DeviceCreateRenderPipelineAsyncCallback, userdata: ?*anyopaque) void;
+extern fn wgpuDeviceCreateRenderPipelineAsync(device: *Device, descriptor: *const RenderPipelineDescriptor, callback_info: CreateRenderPipelineAsyncCallbackInfo) Future;
 extern fn wgpuDeviceCreateSampler(device: *Device, descriptor: *const SamplerDescriptor) ?*Sampler;
 extern fn wgpuDeviceCreateShaderModule(device: *Device, descriptor: *const ShaderModuleDescriptor) ?*ShaderModule;
 extern fn wgpuDeviceCreateTexture(device: *Device, descriptor: *const TextureDescriptor) ?*Texture;
@@ -200,7 +274,7 @@ extern fn wgpuDeviceEnumerateFeatures(device: *Device, features: ?[*]FeatureName
 extern fn wgpuDeviceGetLimits(device: *Device, limits: *SupportedLimits) WGPUBool;
 extern fn wgpuDeviceGetQueue(device: *Device) ?*Queue;
 extern fn wgpuDeviceHasFeature(device: *Device, feature: FeatureName) WGPUBool;
-extern fn wgpuDevicePopErrorScope(device: *Device, callback: ErrorCallback, userdata: ?*anyopaque) void;
+extern fn wgpuDevicePopErrorScope(device: *Device, callback_info: PopErrorScopeCallbackInfo) Future;
 extern fn wgpuDevicePushErrorScope(device: *Device, filter: ErrorFilter) void;
 extern fn wgpuDeviceSetLabel(device: *Device, label: ?[*:0]const u8) void;
 extern fn wgpuDeviceAddRef(device: *Device) void;
@@ -237,8 +311,8 @@ pub const Device = opaque {
     pub inline fn createComputePipeline(self: *Device, descriptor: *const ComputePipelineDescriptor) ?*ComputePipeline {
         return wgpuDeviceCreateComputePipeline(self, descriptor);
     }
-    pub inline fn createComputePipelineAsync(self: *Device, descriptor: *const ComputePipelineDescriptor, callback: DeviceCreateComputePipelineAsyncCallback, userdata: ?*anyopaque) void {
-        wgpuDeviceCreateComputePipelineAsync(self, descriptor, callback, userdata);
+    pub inline fn createComputePipelineAsync(self: *Device, descriptor: *const ComputePipelineDescriptor, callback_info: CreateComputePipelineAsyncCallbackInfo) Future {
+        return wgpuDeviceCreateComputePipelineAsync(self, descriptor, callback_info);
     }
     pub inline fn createPipelineLayout(self: *Device, descriptor: *const PipelineLayoutDescriptor) ?*PipelineLayout {
         return wgpuDeviceCreatePipelineLayout(self, descriptor);
@@ -252,8 +326,8 @@ pub const Device = opaque {
     pub inline fn createRenderPipeline(self: *Device, descriptor: *const RenderPipelineDescriptor) ?*RenderPipeline {
         return wgpuDeviceCreateRenderPipeline(self, descriptor);
     }
-    pub inline fn createRenderPipelineAsync(self: *Device, descriptor: *const RenderPipelineDescriptor, callback: DeviceCreateRenderPipelineAsyncCallback, userdata: ?*anyopaque) void {
-        wgpuDeviceCreateRenderPipelineAsync(self, descriptor, callback, userdata);
+    pub inline fn createRenderPipelineAsync(self: *Device, descriptor: *const RenderPipelineDescriptor, callback_info: CreateRenderPipelineAsyncCallbackInfo) Future {
+        return wgpuDeviceCreateRenderPipelineAsync(self, descriptor, callback_info);
     }
     pub inline fn createSampler(self: *Device, descriptor: *const SamplerDescriptor) ?*Sampler {
         return wgpuDeviceCreateSampler(self, descriptor);
@@ -280,9 +354,8 @@ pub const Device = opaque {
         return wgpuDeviceHasFeature(self, feature);
     }
 
-    // TODO: Should popErrorScope have a non-callback version?
-    pub inline fn popErrorScope(self: *Device, callback: ErrorCallback, userdata: ?*anyopaque) void {
-        wgpuDevicePopErrorScope(self, callback, userdata);
+    pub inline fn popErrorScope(self: *Device, callback_info: PopErrorScopeCallbackInfo) Future {
+        return wgpuDevicePopErrorScope(self, callback_info);
     }
     pub inline fn pushErrorScope(self: *Device, filter: ErrorFilter) void {
         wgpuDevicePushErrorScope(self, filter);

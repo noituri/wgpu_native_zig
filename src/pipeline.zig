@@ -15,6 +15,9 @@ const CompareFunction = _misc.CompareFunction;
 const WGPUFlags = _misc.WGPUFlags;
 const StringView = _misc.StringView;
 
+const _async = @import("async.zig");
+const CallbackMode = _async.CallbackMode;
+
 const TextureFormat = @import("texture.zig").TextureFormat;
 
 pub const PushConstantRange = extern struct {
@@ -84,7 +87,7 @@ pub const ProgrammableStageDescriptor = extern struct {
     module: *ShaderModule,
     entry_point: ?[*:0]const u8 = null,
     constant_count: usize = 0,
-    constants: [*]const ConstantEntry = (&[_]ConstantEntry{}).ptr,
+    constants: [*]const ConstantEntry = &[0]ConstantEntry {},
 };
 
 pub const ComputePipelineDescriptor = extern struct {
@@ -102,12 +105,24 @@ pub const CreatePipelineAsyncStatus = enum(u32) {
     unknown          = 0x00000005,
 };
 
+pub const CreateComputePipelineAsyncCallbackInfo = extern struct {
+    next_in_chain: ?*ChainedStruct = null,
+
+    // TODO: Revisit this default if/when Instance.waitAny() is implemented.
+    mode: CallbackMode = CallbackMode.allow_process_events,
+
+    callback: CreateComputePipelineAsyncCallback,
+    userdata1: ?*anyopaque = null,
+    userdata2: ?*anyopaque = null,
+};
+
 // TODO: This should probably be in device.zig, as well as its RenderPipeline counterpart
-pub const DeviceCreateComputePipelineAsyncCallback = *const fn(
+pub const CreateComputePipelineAsyncCallback = *const fn(
     status: CreatePipelineAsyncStatus,
     pipeline: ?*ComputePipeline,
-    message: ?[*:0]const u8,
-    userdata: ?*anyopaque
+    message: StringView,
+    userdata1: ?*anyopaque,
+    userdata2: ?*anyopaque,
 ) callconv(.C) void;
 
 pub const ComputePipelineProcs = struct {
@@ -206,9 +221,9 @@ pub const VertexState = extern struct {
     module: *ShaderModule,
     entry_point: ?[*:0]const u8 = null,
     constant_count: usize = 0,
-    constants: [*]const ConstantEntry = (&[_]ConstantEntry{}).ptr,
+    constants: [*]const ConstantEntry = &[0]ConstantEntry {},
     buffer_count: usize = 0,
-    buffers: [*]const VertexBufferLayout = (&[_]VertexBufferLayout{}).ptr,
+    buffers: [*]const VertexBufferLayout = &[0]VertexBufferLayout {},
 };
 
 pub const PrimitiveTopology = enum(u32) {
@@ -398,7 +413,7 @@ pub const FragmentState = extern struct {
     module: *ShaderModule,
     entry_point: ?[*:0]const u8 = null,
     constant_count: usize = 0,
-    constants: [*]const ConstantEntry = (&[_]ConstantEntry{}).ptr,
+    constants: [*]const ConstantEntry = &[0]ConstantEntry {},
     target_count: usize,
     targets: [*]const ColorTargetState,
 };
@@ -441,9 +456,21 @@ pub const RenderPipeline = opaque {
     }
 };
 
-pub const DeviceCreateRenderPipelineAsyncCallback = *const fn(
+pub const CreateRenderPipelineAsyncCallbackInfo = extern struct {
+    next_in_chain: ?*ChainedStruct = null,
+
+    // TODO: Revisit this default if/when Instance.waitAny() is implemented.
+    mode: CallbackMode = CallbackMode.allow_process_events,
+
+    callback: CreateRenderPipelineAsyncCallback,
+    userdata1: ?*anyopaque = null,
+    userdata2: ?*anyopaque = null,
+};
+
+pub const CreateRenderPipelineAsyncCallback = *const fn(
     status: CreatePipelineAsyncStatus,
     pipeline: ?*RenderPipeline,
-    message: ?[*:0]const u8,
-    userdata: ?*anyopaque
+    message: StringView,
+    userdata1: ?*anyopaque,
+    userdata2: ?*anyopaque,
 ) callconv(.C) void;

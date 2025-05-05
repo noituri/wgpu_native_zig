@@ -101,29 +101,53 @@ b.getInstallStep().dependOn(&install_dll.step);
     ```zig
     Instance.createSurface(self: *Instance, descriptor: *const SurfaceDescriptor) ?*Surface
     ```
-* Certain methods that require a callback such as requestAdapter and requestDevice are provided with wrapper methods.
+* Certain asynchronous methods such as requestAdapter and requestDevice are provided with wrapper methods.
   * For example, requesting an adapter with a callback looks something like
     ```zig
-    fn handleRequestAdapter(status: RequestAdapterStatus, adapter: ?*Adapter, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void {
+    fn handleRequestAdapter(
+        status: RequestAdapterStatus,
+        adapter: ?*Adapter,
+        message: StringView,
+        userdata1: ?*anyopaque,
+        userdata2: ?*anyopaque
+    ) callconv(.C) void {
         switch(status) {
             .success => {
-                const ud_adapter: **Adapter = @ptrCast(@alignCast(userdata));
+                const ud_adapter: **Adapter = @ptrCast(@alignCast(userdata1));
                 ud_adapter.* = adapter.?;
             },
             else => {
-              std.log.err("{s}\n", .{message});
+              std.log.err("{s}\n", .{message.toSlice()});
             }
         }
+        const completed: *bool = @ptrCast(@alignCast(userdata2));
+        completed.* = true;
     }
     var adapter_ptr: ?*Adapter = null;
-    instance.requestAdapter(null, handleRequestAdapter, @ptrCast(&adapter_ptr));
+    var completed = false;
+    const request_adapter_info = RequestAdapterInfo {
+        .callback = handleRequestAdapter,
+        .userdata1 = @ptrCast(&adapter_ptr),
+        .userdata2 = @ptrCast(&completed),
+    }
+    const ra_future = instance.requestAdapter(null, handleRequestAdapter, request_adapter_info);
+
+    // There is currently no way to use a `Future`,
+    // it's supposed to be passed into `Instance.waitAny()`,
+    // which is unimplemented as of `wgpu_native` v24.0.3.1.
+    _ = ra_future; 
+
+    instance.processEvents();
+    while(!completed) {
+      std.Thread.sleep(200_000_000);
+      instance.processEvents();
+    }
     ```
     whereas the non-callback version looks like
     ```zig
-    const response = instance.requestAdapterSync(null);
+    // The wrapper methods use polling, so 200_000_000 is the polling interval in nanoseconds.
+    const response = instance.requestAdapterSync(null, 200_000_000);
 
-    // Unfortunately propagating anything more than status codes is ugly in Zig;
-    // see https://github.com/ziglang/zig/issues/2647
     const adapter_ptr: ?*Adapter = switch (response.status) {
         .success => response.adapter,
         else => blk: {
@@ -172,7 +196,6 @@ b.getInstallStep().dependOn(&install_dll.step);
 * Test this on other machines with different OS/CPU. Currently only tested on x86_64-linux-gnu and x86_64-windows (msvc and gnu); zig version 0.14.0.
 * Cleanup/organization: 
   * If types are only tied to a specific opaque struct, they should be decls inside that struct.
-    * For example, `ShaderModuleGetCompilationInfoCallback` should be `ShaderModule.GetCompilationInfoCallback`, since that callback type isn't used anywhere outside of the context of `ShaderModule`.
   * The associated Procs struct should probably be a decl of the opaque struct as well.
   * There are many things that seem to be in the wrong file.
     * For example a lot of what is in `pipeline.zig` is actually only used by `Device`, and should probably be in `device.zig` instead.

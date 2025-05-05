@@ -1,3 +1,5 @@
+const std = @import("std");
+
 const _chained_struct = @import("chained_struct.zig");
 const ChainedStruct = _chained_struct.ChainedStruct;
 const SType = _chained_struct.SType;
@@ -5,7 +7,8 @@ const SType = _chained_struct.SType;
 const _adapter = @import("adapter.zig");
 const Adapter = _adapter.Adapter;
 const RequestAdapterOptions = _adapter.RequestAdapterOptions;
-const InstanceRequestAdapterCallback = _adapter.InstanceRequestAdapterCallback;
+const RequestAdapterCallbackInfo = _adapter.RequestAdapterCallbackInfo;
+const RequestAdapterCallback = _adapter.RequestAdapterCallback;
 const RequestAdapterStatus = _adapter.RequestAdapterStatus;
 const RequestAdapterResponse = _adapter.RequestAdapterResponse;
 const BackendType = _adapter.BackendType;
@@ -18,6 +21,8 @@ const _misc = @import("misc.zig");
 const WGPUFlags = _misc.WGPUFlags;
 const WGPUBool = _misc.WGPUBool;
 const StringView = _misc.StringView;
+
+const Future = @import("async.zig").Future;
 
 pub const InstanceBackend = WGPUFlags;
 pub const InstanceBackends = struct {
@@ -87,7 +92,7 @@ pub const InstanceProcs = struct {
     pub const CreateSurface = *const fn(*Instance, *const SurfaceDescriptor) ?*Surface;
     pub const HasWGSLLanguageFeature = *const fn(*Instance, WGSLLanguageFeatureName) WGPUBool;
     pub const ProcessEvents = *const fn(*Instance) callconv(.C) void;
-    pub const RequestAdapter = *const fn(*Instance, ?*const RequestAdapterOptions, InstanceRequestAdapterCallback, ?*anyopaque) callconv(.C) void;
+    pub const RequestAdapter = *const fn(*Instance, ?*const RequestAdapterOptions, RequestAdapterCallbackInfo) callconv(.C) Future;
     pub const InstanceAddRef = *const fn(*Instance) callconv(.C) void;
     pub const InstanceRelease = *const fn(*Instance) callconv(.C) void;
 
@@ -100,7 +105,7 @@ extern fn wgpuCreateInstance(descriptor: ?*const InstanceDescriptor) ?*Instance;
 extern fn wgpuInstanceCreateSurface(instance: *Instance, descriptor: *const SurfaceDescriptor) ?*Surface;
 extern fn wgpuInstanceHasWGSLLanguageFeature(instance: *Instance, feature: WGSLLanguageFeatureName) WGPUBool;
 extern fn wgpuInstanceProcessEvents(instance: *Instance) void;
-extern fn wgpuInstanceRequestAdapter(instance: *Instance, options: ?*const RequestAdapterOptions, callback: InstanceRequestAdapterCallback, userdata: ?*anyopaque) void;
+extern fn wgpuInstanceRequestAdapter(instance: *Instance, options: ?*const RequestAdapterOptions, callback_info: RequestAdapterCallbackInfo) Future;
 extern fn wgpuInstanceAddRef(instance: *Instance) void;
 extern fn wgpuInstanceRelease(instance: *Instance) void;
 
@@ -162,27 +167,47 @@ pub const Instance = opaque {
         wgpuInstanceProcessEvents(self);
     }
 
-    fn defaultAdapterCallback(status: RequestAdapterStatus, adapter: ?*Adapter, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void {
-        const ud_response: *RequestAdapterResponse = @ptrCast(@alignCast(userdata));
+    fn defaultAdapterCallback(status: RequestAdapterStatus, adapter: ?*Adapter, message: StringView, userdata1: ?*anyopaque, userdata2: ?*anyopaque) callconv(.C) void {
+        const ud_response: *RequestAdapterResponse = @ptrCast(@alignCast(userdata1));
         ud_response.* = RequestAdapterResponse {
             .status = status,
-            .message = message,
+            .message = message.toSlice(),
             .adapter = adapter,
         };
+
+        const completed: *bool = @ptrCast(@alignCast(userdata2));
+        completed.* = true;
     }
 
-    pub fn requestAdapterSync(self: *Instance, options: ?*const RequestAdapterOptions) RequestAdapterResponse {
+    // This is a synchronous wrapper that handles asynchronous (callback) logic.
+    // It uses polling to see when the request has been fulfilled, so needs a polling interval parameter.
+    pub fn requestAdapterSync(self: *Instance, options: ?*const RequestAdapterOptions, polling_interval_nanoseconds: u64) RequestAdapterResponse {
         var response: RequestAdapterResponse = undefined;
-        wgpuInstanceRequestAdapter(self, options, defaultAdapterCallback, @ptrCast(&response));
+        var completed = false;
+        const callback_info = RequestAdapterCallbackInfo {
+            .callback = defaultAdapterCallback,
+            .userdata1 = @ptrCast(&response),
+            .userdata2 = @ptrCast(&completed),
+        };
+        const adapter_future = wgpuInstanceRequestAdapter(self, options, callback_info);
+
+        // TODO: Revisit once Instance.waitAny() is implemented in wgpu-native,
+        //       it takes in futures and returns when one of them completes.
+        _ = adapter_future;
+        self.processEvents();
+        while (!completed) {
+            std.Thread.sleep(polling_interval_nanoseconds);
+            self.processEvents();
+        }
+
         return response;
     }
 
-    pub inline fn requestAdapter(self: *Instance, options: ?*const RequestAdapterOptions, callback: InstanceRequestAdapterCallback, userdata: ?*anyopaque) void {
-        wgpuInstanceRequestAdapter(self, options, callback, userdata);
+    pub inline fn requestAdapter(self: *Instance, options: ?*const RequestAdapterOptions, callback_info: RequestAdapterCallbackInfo) Future {
+        return wgpuInstanceRequestAdapter(self, options, callback_info);
     }
 
     pub inline fn addRef(self: *Instance) void {
-        // TODO: Find out WTF wgpuInstanceAddRef does.
         wgpuInstanceAddRef(self);
     }
 
@@ -212,7 +237,7 @@ test "can request adapter" {
     const testing = @import("std").testing;
 
     const instance = Instance.create(null);
-    const response = instance.?.requestAdapterSync(null);
+    const response = instance.?.requestAdapterSync(null, 200_000_000);
     const adapter: ?*Adapter = switch(response.status) {
         .success => response.adapter,
         else => null,

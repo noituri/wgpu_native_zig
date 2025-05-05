@@ -207,7 +207,7 @@ pub const SurfaceConfiguration = extern struct {
     format: TextureFormat,
     usage: TextureUsage = TextureUsages.render_attachment,
     view_format_count: usize = 0,
-    view_formats: [*]const TextureFormat = (&[_]TextureFormat{}).ptr,
+    view_formats: [*]const TextureFormat = &[0]TextureFormat {},
     alpha_mode: CompositeAlphaMode = CompositeAlphaMode.auto,
     width: u32,
     height: u32,

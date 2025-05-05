@@ -8,6 +8,10 @@ const _misc = @import("misc.zig");
 const WGPUFlags = _misc.WGPUFlags;
 const StringView = _misc.StringView;
 
+const _async = @import("async.zig");
+const CallbackMode = _async.CallbackMode;
+const Future = _async.Future;
+
 pub const ShaderStage = WGPUFlags;
 pub const ShaderStages = struct {
     pub const none     = @as(ShaderStage, 0x0000000000000000);
@@ -26,7 +30,7 @@ pub const ShaderModuleDescriptor = extern struct {
     next_in_chain: *const ChainedStruct,
     label: ?[*:0]const u8 = null,
     hint_count: usize = 0,
-    hints: [*]const CompilationHint = (&[_]CompilationHint{}).ptr,
+    hints: [*]const CompilationHint = &[0]CompilationHint {},
 };
 
 // This is specific to wgpu-native (from wgpu.h), and unfortunately it is *NOT* the same thing as ShaderSourceSPIRV
@@ -46,7 +50,7 @@ pub const ShaderModuleSPIRVDescriptor = extern struct {
 pub const ShaderModuleSPIRVMergedDescriptor = struct {
     label: ?[*:0]const u8 = null,
     hint_count: usize = 0,
-    hints: [*]const CompilationHint = (&[_]CompilationHint{}).ptr,
+    hints: [*]const CompilationHint = &[0]CompilationHint {},
     code_size: u32,
     code: [*]const u32,
 };
@@ -73,7 +77,7 @@ pub const ShaderModuleWGSLDescriptor = extern struct {
 pub const ShaderModuleWGSLMergedDescriptor = struct {
     label: ?[*:0]const u8 = null,
     hint_count: usize = 0,
-    hints: [*]const CompilationHint = (&[_]CompilationHint{}).ptr,
+    hints: [*]const CompilationHint = &[0]CompilationHint {},
     code: [*:0]const u8,
 };
 pub inline fn shaderModuleWGSLDescriptor(
@@ -105,7 +109,7 @@ pub const ShaderModuleGLSLDescriptor = extern struct {
 pub const ShaderModuleGLSLMergedDescriptor = struct {
     label: ?[*:0]const u8 = null,
     hint_count: usize = 0,
-    hints: [*]const CompilationHint = (&[_]CompilationHint{}).ptr,
+    hints: [*]const CompilationHint = &[0]CompilationHint {},
     stage: ShaderStage,
     code: [*:0]const u8,
     define_count: u32 = 0,
@@ -159,23 +163,34 @@ pub const CompilationInfo = extern struct {
     messages: [*]const CompilationMessage,
 };
 
-pub const ShaderModuleGetCompilationInfoCallback = *const fn(status: CompilationInfoRequestStatus, compilation_info: ?*const CompilationInfo, userdata: ?*anyopaque) callconv(.C) void;
+pub const CompilationInfoCallback = *const fn(status: CompilationInfoRequestStatus, compilationInfo: ?*const CompilationInfo, userdata1: ?*anyopaque, userdata2: ?*anyopaque) callconv(.C) void;
+
+pub const CompilationInfoCallbackInfo = extern struct {
+    next_in_chain: ?*const ChainedStruct = null,
+
+    // TODO: Revisit this default if/when Instance.waitAny() is implemented.
+    mode: CallbackMode = CallbackMode.allow_process_events,
+
+    callback: CompilationInfoCallback,
+    userdata1: ?*anyopaque = null,
+    userdata2: ?*anyopaque = null,
+};
 
 pub const ShaderModuleProcs = struct {
-    pub const GetCompilationInfo = *const fn(*ShaderModule, ShaderModuleGetCompilationInfoCallback, ?*anyopaque) callconv(.C) void;
+    pub const GetCompilationInfo = *const fn(*ShaderModule, CompilationInfoCallbackInfo) callconv(.C) Future;
     pub const SetLabel = *const fn(*ShaderModule, ?[*:0]const u8) callconv(.C) void;
     pub const AddRef = *const fn(*ShaderModule) callconv(.C) void;
     pub const Release = *const fn(*ShaderModule) callconv(.C) void;
 };
 
-extern fn wgpuShaderModuleGetCompilationInfo(shader_module: *ShaderModule, callback: ShaderModuleGetCompilationInfoCallback, userdata: ?*anyopaque) void;
+extern fn wgpuShaderModuleGetCompilationInfo(shader_module: *ShaderModule, callback_info: CompilationInfoCallbackInfo) Future;
 extern fn wgpuShaderModuleSetLabel(shader_module: *ShaderModule, label: ?[*:0]const u8) void;
 extern fn wgpuShaderModuleAddRef(shader_module: *ShaderModule) void;
 extern fn wgpuShaderModuleRelease(shader_module: *ShaderModule) void;
 
 pub const ShaderModule = opaque {
-    pub inline fn getCompilationInfo(self: *ShaderModule, callback: ShaderModuleGetCompilationInfoCallback, userdata: ?*anyopaque) void {
-        wgpuShaderModuleGetCompilationInfo(self, callback, userdata);
+    pub inline fn getCompilationInfo(self: *ShaderModule, callback_info: CompilationInfoCallbackInfo) Future {
+        return wgpuShaderModuleGetCompilationInfo(self, callback_info);
     }
     pub inline fn setLabel(self: *ShaderModule, label: ?[*:0]const u8) void {
         wgpuShaderModuleSetLabel(self, label);
