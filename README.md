@@ -130,7 +130,7 @@ b.getInstallStep().dependOn(&install_dll.step);
         .userdata1 = @ptrCast(&adapter_ptr),
         .userdata2 = @ptrCast(&completed),
     }
-    const ra_future = instance.requestAdapter(null, handleRequestAdapter, request_adapter_info);
+    const ra_future = instance.requestAdapter(null, request_adapter_info);
 
     // There is currently no way to use a `Future`,
     // it's supposed to be passed into `Instance.waitAny()`,
