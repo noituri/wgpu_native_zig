@@ -182,12 +182,10 @@ b.getInstallStep().dependOn(&install_dll.step);
     ```
   * For optional chained structs, you can either write them explicitely like in the example above, or you can use a method of the parent struct instance to add them, for example:
     ```zig
-    &(PrimitiveState {
-      .topology = PrimitiveTopology.triangle_list,
-      .strip_index_format = IndexFormat.uint16,
-      .front_face = FrontFace.ccw,
-      .cull_mode = CullMode.back,
-    }).withDepthClipControl(false);
+    &(SurfaceConfiguration {
+      .device = device,
+      // other stuff
+    }).withDesiredMaxFrameLatency(2);
     ```
 * `WGPUBool` is replaced with `bool` whenever possible.
   * This pretty much means, it is replaced with `bool` in the parameters and return values of methods, but not in structs or the parameters/return values of procs (which are supposed to be function pointers to things returned by `wgpuGetProcAddress`).

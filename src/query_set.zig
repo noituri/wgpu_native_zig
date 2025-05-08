@@ -2,6 +2,8 @@ const _chained_struct = @import("chained_struct.zig");
 const ChainedStruct = _chained_struct.ChainedStruct;
 const SType = _chained_struct.SType;
 
+const StringView = @import("misc.zig").StringView;
+
 pub const QueryType = enum(u32) {
     occlusion           = 0x00000001,
     timestamp           = 0x00000002,
@@ -28,7 +30,7 @@ pub const QuerySetDescriptorExtras = extern struct {
 
 pub const QuerySetDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     @"type": QueryType,
     count: u32,
 

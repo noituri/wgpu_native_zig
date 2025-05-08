@@ -8,6 +8,7 @@ const _misc = @import("misc.zig");
 const WGPUBool = _misc.WGPUBool;
 const FeatureName = _misc.FeatureName;
 const StringView = _misc.StringView;
+const Status = _misc.Status;
 
 const _async = @import("async.zig");
 const CallbackMode = _async.CallbackMode;
@@ -15,8 +16,6 @@ const Future = _async.Future;
 
 const _limits = @import("limits.zig");
 const Limits = _limits.Limits;
-const SupportedLimits = _limits.SupportedLimits;
-const RequiredLimits = _limits.RequiredLimits;
 
 const _bind_group = @import("bind_group.zig");
 const BindGroupDescriptor = _bind_group.BindGroupDescriptor;
@@ -138,7 +137,7 @@ pub const DeviceDescriptor = extern struct {
     label: StringView = StringView {},
     required_feature_count: usize = 0,
     required_features: [*]const FeatureName = &[0]FeatureName {},
-    required_limits: ?*const RequiredLimits,
+    required_limits: ?*const Limits,
     default_queue: QueueDescriptor = QueueDescriptor{},
     device_lost_callback_info: DeviceLostCallbackInfo = DeviceLostCallbackInfo {},
     uncaptured_error_callback_info: UncapturedErrorCallbackInfo = UncapturedErrorCallbackInfo{},
@@ -241,7 +240,7 @@ pub const DeviceProcs = struct {
     pub const CreateTexture = *const fn(*Device, *const TextureDescriptor) callconv(.C) ?*Texture;
     pub const Destroy = *const fn(*Device) callconv(.C) void;
     pub const EnumerateFeatures = *const fn(*Device, ?[*]FeatureName) callconv(.C) usize;
-    pub const GetLimits = *const fn(*Device, *SupportedLimits) callconv(.C) WGPUBool;
+    pub const GetLimits = *const fn(*Device, *Limits) callconv(.C) Status;
     pub const GetQueue = *const fn(*Device) callconv(.C) ?*Queue;
     pub const HasFeature = *const fn(*Device, FeatureName) callconv(.C) WGPUBool;
     pub const PopErrorScope = *const fn(*Device, PopErrorScopeCallbackInfo) callconv(.C) Future;
@@ -271,7 +270,7 @@ extern fn wgpuDeviceCreateShaderModule(device: *Device, descriptor: *const Shade
 extern fn wgpuDeviceCreateTexture(device: *Device, descriptor: *const TextureDescriptor) ?*Texture;
 extern fn wgpuDeviceDestroy(device: *Device) void;
 extern fn wgpuDeviceEnumerateFeatures(device: *Device, features: ?[*]FeatureName) usize;
-extern fn wgpuDeviceGetLimits(device: *Device, limits: *SupportedLimits) WGPUBool;
+extern fn wgpuDeviceGetLimits(device: *Device, limits: *Limits) Status;
 extern fn wgpuDeviceGetQueue(device: *Device) ?*Queue;
 extern fn wgpuDeviceHasFeature(device: *Device, feature: FeatureName) WGPUBool;
 extern fn wgpuDevicePopErrorScope(device: *Device, callback_info: PopErrorScopeCallbackInfo) Future;
@@ -344,7 +343,7 @@ pub const Device = opaque {
     pub inline fn enumerateFeatures(self: *Device, features: ?[*]FeatureName) usize {
         return wgpuDeviceEnumerateFeatures(self, features);
     }
-    pub inline fn getLimits(self: *Device, limits: *SupportedLimits) WGPUBool {
+    pub inline fn getLimits(self: *Device, limits: *Limits) Status {
         return wgpuDeviceGetLimits(self, limits);
     }
     pub inline fn getQueue(self: *Device) ?*Queue {

@@ -15,136 +15,169 @@ const TextureUsages = _texture.TextureUsages;
 const _device = @import("device.zig");
 const Device = _device.Device;
 
-const WGPUBool = @import("misc.zig").WGPUBool;
+const _misc = @import("misc.zig");
+const WGPUBool = _misc.WGPUBool;
+const StringView = _misc.StringView;
 
+// The root descriptor for the creation of an Surface with Instance.createSurface().
+// It isn't sufficient by itself and must have one of the *SurfaceSource in its chain.
 pub const SurfaceDescriptor = extern struct {
     next_in_chain: *const ChainedStruct,
-    label: ?[*:0]const u8 = null,
+
+    // Label used to refer to the object.
+    label: StringView = StringView {},
 };
 
-pub const SurfaceDescriptorFromAndroidNativeWindow = extern struct {
+// Chained in SurfaceDescriptor to make an Surface wrapping an Android [`ANativeWindow`](https://developer.android.com/ndk/reference/group/a-native-window).
+pub const SurfaceSourceAndroidNativeWindow = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.surface_source_android_native_window,
     },
+
+    // The pointer to the [`ANativeWindow`](https://developer.android.com/ndk/reference/group/a-native-window) that will be wrapped by the Surface.
     window: *anyopaque,
 };
 pub const MergedSurfaceDescriptorFromAndroidWindow = struct {
-    label: ?[*:0]const u8 = null,
+    label: []const u8 = "",
     window: *anyopaque,
 };
 pub inline fn surfaceDescriptorFromAndroidNativeWindow(descriptor: MergedSurfaceDescriptorFromAndroidWindow) SurfaceDescriptor {
     return SurfaceDescriptor{
-        .next_in_chain = @ptrCast(&SurfaceDescriptorFromAndroidNativeWindow {
+        .next_in_chain = @ptrCast(&SurfaceSourceAndroidNativeWindow {
             .window = descriptor.window,
         }),
-        .label = descriptor.label,
+        .label = StringView.fromSlice(descriptor.label),
     };
 }
 
-pub const SurfaceDescriptorFromMetalLayer = extern struct {
+// Chained in SurfaceDescriptor to make an Surface wrapping a [`CAMetalLayer`](https://developer.apple.com/documentation/quartzcore/cametallayer?language=objc).
+pub const SurfaceSourceMetalLayer = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.surface_source_metal_layer,
     },
+
+    // The pointer to the [`CAMetalLayer`](https://developer.apple.com/documentation/quartzcore/cametallayer?language=objc) that will be wrapped by the Surface.
     layer: *anyopaque,
 };
 pub const MergedSurfaceDescriptorFromMetalLayer = struct {
-    label: ?[*:0]const u8 = null,
+    label: []const u8 = "",
     layer: *anyopaque,
 };
 pub inline fn surfaceDescriptorFromMetalLayer(descriptor: MergedSurfaceDescriptorFromMetalLayer) SurfaceDescriptor {
     return SurfaceDescriptor{
-        .next_in_chain = @ptrCast(&SurfaceDescriptorFromMetalLayer {
+        .next_in_chain = @ptrCast(&SurfaceSourceMetalLayer {
             .layer = descriptor.layer,
         }),
-        .label = descriptor.label,
+        .label = StringView.fromSlice(descriptor.label),
     };
 }
 
-pub const SurfaceDescriptorFromWaylandSurface = extern struct {
+// Chained in SurfaceDescriptor to make an Surface wrapping a [Wayland](https://wayland.freedesktop.org/) [`wl_surface`](https://wayland.freedesktop.org/docs/html/apa.html#protocol-spec-wl_surface).
+pub const SurfaceSourceWaylandSurface = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.surface_source_wayland_surface,
     },
+
+    // A [`wl_display`](https://wayland.freedesktop.org/docs/html/apa.html#protocol-spec-wl_display) for this Wayland instance.
     display: *anyopaque,
+
+    // A [`wl_surface`](https://wayland.freedesktop.org/docs/html/apa.html#protocol-spec-wl_surface) that will be wrapped by the Surface
     surface: *anyopaque,
 };
 pub const MergedSurfaceDescriptorFromWaylandSurface = struct {
-    label: ?[*:0]const u8 = null,
+    label: []const u8 = "",
     display: *anyopaque,
     surface: *anyopaque,
 };
 pub inline fn surfaceDescriptorFromWaylandSurface(descriptor: MergedSurfaceDescriptorFromWaylandSurface) SurfaceDescriptor {
     return SurfaceDescriptor{
-        .next_in_chain = @ptrCast(&SurfaceDescriptorFromWaylandSurface {
+        .next_in_chain = @ptrCast(&SurfaceSourceWaylandSurface {
             .display = descriptor.display,
             .surface = descriptor.surface,
         }),
-        .label = descriptor.label,
+        .label = StringView.fromSlice(descriptor.label),
     };
 }
 
-pub const SurfaceDescriptorFromWindowsHWND = extern struct {
+// Chained in SurfaceDescriptor to make an Surface wrapping a Windows [`HWND`](https://learn.microsoft.com/en-us/windows/apps/develop/ui-input/retrieve-hwnd).
+pub const SurfaceSourceWindowsHWND = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.surface_source_windows_hwnd,
     },
+
+    // The [`HINSTANCE`](https://learn.microsoft.com/en-us/windows/win32/learnwin32/winmain--the-application-entry-point) for this application.
+    // Most commonly `GetModuleHandle(nullptr)`.
     hinstance: *anyopaque,
+
+    // The [`HWND`](https://learn.microsoft.com/en-us/windows/apps/develop/ui-input/retrieve-hwnd) that will be wrapped by the Surface.
     hwnd: *anyopaque,
 };
 pub const MergedSurfaceDescriptorFromWindowsHWND = struct {
-    label: ?[*:0]const u8 = null,
+    label: []const u8 = "",
     hinstance: *anyopaque,
     hwnd: *anyopaque,
 };
 pub inline fn surfaceDescriptorFromWindowsHWND(descriptor: MergedSurfaceDescriptorFromWindowsHWND) SurfaceDescriptor {
     return SurfaceDescriptor{
-        .next_in_chain = @ptrCast(&SurfaceDescriptorFromWindowsHWND {
+        .next_in_chain = @ptrCast(&SurfaceSourceWindowsHWND {
             .hinstance = descriptor.hinstance,
             .hwnd = descriptor.hwnd,
         }),
-        .label = descriptor.label,
+        .label = StringView.fromSlice(descriptor.label),
     };
 }
 
-pub const SurfaceDescriptorFromXcbWindow = extern struct {
+// Chained in SurfaceDescriptor to make an Surface wrapping an [XCB](https://xcb.freedesktop.org/) `xcb_window_t`.
+pub const SurfaceSourceXCBWindow = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.surface_source_xcb_window,
     },
+
+    // The `xcb_connection_t` for the connection to the X server.
     connection: *anyopaque,
+
+    // The `xcb_window_t` for the window that will be wrapped by the Surface.
     window: u32,
 };
 pub const MergedSurfaceDescriptorFromXcbWindow = struct {
-    label: ?[*:0]const u8 = null,
+    label: []const u8 = "",
     connection: *anyopaque,
     window: u32,
 };
 pub inline fn surfaceDescriptorFromXcbWindow(descriptor: MergedSurfaceDescriptorFromXcbWindow) SurfaceDescriptor {
     return SurfaceDescriptor{
-        .next_in_chain = @ptrCast(&SurfaceDescriptorFromXcbWindow {
+        .next_in_chain = @ptrCast(&SurfaceSourceXCBWindow {
             .connection = descriptor.connection,
             .window = descriptor.window,
         }),
-        .label = descriptor.label,
+        .label = StringView.fromSlice(descriptor.label),
     };
 }
 
-pub const SurfaceDescriptorFromXlibWindow = extern struct {
+// Chained in SurfaceDescriptor to make an Surface wrapping an [Xlib](https://www.x.org/releases/current/doc/libX11/libX11/libX11.html) `Window`.
+pub const SurfaceSourceXlibWindow = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.surface_source_xlib_window,
     },
+
+    // A pointer to the [`Display`](https://www.x.org/releases/current/doc/libX11/libX11/libX11.html#Opening_the_Display) connected to the X server.
     display: *anyopaque,
+
+    // The [`Window`](https://www.x.org/releases/current/doc/libX11/libX11/libX11.html#Creating_Windows) that will be wrapped by the Surface.
     window: u64,
 };
 pub const MergedSurfaceDescriptorFromXlibWindow = struct {
-    label: ?[*:0]const u8 = null,
+    label: []const u8 = "",
     display: *anyopaque,
     window: u64,
 };
 pub inline fn surfaceDescriptorFromXlibWindow(descriptor: MergedSurfaceDescriptorFromXlibWindow) SurfaceDescriptor {
     return SurfaceDescriptor{
-        .next_in_chain = @ptrCast(&SurfaceDescriptorFromXlibWindow {
+        .next_in_chain = @ptrCast(&SurfaceSourceXlibWindow {
             .display = descriptor.display,
             .window = descriptor.window,
         }),
-        .label = descriptor.label,
+        .label = StringView.fromSlice(descriptor.label),
     };
 }
 
@@ -201,16 +234,33 @@ pub const SurfaceConfigurationExtras = extern struct {
     desired_maximum_frame_latency: u32,
 };
 
+// Options to Surface.configure() for defining how a Surface will be rendered to and presented to the user.
 pub const SurfaceConfiguration = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
+
+    // The Device to use to render to surface's textures.
     device: *Device,
+
+    // The TextureFormat of the surface's textures.
     format: TextureFormat,
+
+    // The TextureUsage of the surface's textures.
     usage: TextureUsage = TextureUsages.render_attachment,
+
+    // The width of the surface's textures
+    width: u32,
+
+    // The height of the surface's textures.
+    height: u32,
+
+    // The additional TextureFormat for TextureView format reinterpretation of the surface's textures.
     view_format_count: usize = 0,
     view_formats: [*]const TextureFormat = &[0]TextureFormat {},
+
+    // How the surface's frames will be composited on the screen.
     alpha_mode: CompositeAlphaMode = CompositeAlphaMode.auto,
-    width: u32,
-    height: u32,
+
+    // When and in which order the surface's frames will be shown on the screen.
     present_mode: PresentMode = PresentMode.fifo,
 
     pub inline fn withDesiredMaxFrameLatency(self: SurfaceConfiguration, desired_max_frame_latency: u32) SurfaceConfiguration {
@@ -225,14 +275,28 @@ pub const SurfaceConfiguration = extern struct {
 pub const SurfaceCapabilitiesProcs = struct {
     pub const FreeMembers = *const fn(SurfaceCapabilities) callconv(.C) void;
 };
+
 extern fn wgpuSurfaceCapabilitiesFreeMembers(surface_capabilities: SurfaceCapabilities) void;
+
+// Filled by Surface.getCapabilities() with what's supported for Surface.configure() for a pair of Surface and Adapter.
 pub const SurfaceCapabilities = extern struct {
     next_in_chain: ?*ChainedStructOut = null,
+
+    // The bit set of supported TextureUsage bits.
+    // Guaranteed to contain TextureUsage.render_attachment.
     usages: TextureUsage,
+
+    // A list of supported TextureFormat values, in order of preference.
     format_count: usize,
     formats: [*]const TextureFormat,
+
+    // A list of supported PresentMode values.
+    // Guaranteed to contain PresentMode.fifo.
     present_mode_count: usize,
     present_modes: [*]const PresentMode,
+
+    // A list of supported CompositeAlphaMode values.
+    // CompositeAlphaMode.auto will be an alias for the first element and will never be present in this array.
     alpha_mode_count: usize,
     alpha_modes: [*]const CompositeAlphaMode,
 
@@ -269,9 +333,15 @@ pub const GetCurrentTextureStatus = enum(u32) {
     @"error"           = 0x00000008,
 };
 
+// Queried each frame from a Surface to get a Texture to render to along with some metadata.
 pub const SurfaceTexture = extern struct {
+    next_in_chain: ?*ChainedStructOut,
+
+    // The Texture representing the frame that will be shown on the surface.
+    // It is ReturnedWithOwnership from Surface.getCurrentTexture().
     texture: *Texture,
-    suboptimal: WGPUBool,
+
+    // Whether the call to Surface.getCurrentTexture() succeeded and a hint as to why it might not have.
     status: GetCurrentTextureStatus,
 };
 

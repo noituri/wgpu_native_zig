@@ -2,6 +2,7 @@ const std = @import("std");
 
 const _chained_struct = @import("chained_struct.zig");
 const ChainedStruct = _chained_struct.ChainedStruct;
+const ChainedStructOut = _chained_struct.ChainedStructOut;
 const SType = _chained_struct.SType;
 
 const _adapter = @import("adapter.zig");
@@ -70,8 +71,22 @@ pub const InstanceExtras = extern struct {
     dxc_path: StringView = StringView {},
 };
 
+pub const InstanceCapabilities = extern struct {
+    // This struct chain is used as mutable in some places and immutable in others.
+    next_in_chain: ?*ChainedStructOut = null,
+
+    // Enable use of ::wgpuInstanceWaitAny with `timeoutNS > 0`.
+    timed_wait_any_enable: WGPUBool,
+
+    // The maximum number FutureWaitInfo supported in a call to ::wgpuInstanceWaitAny with `timeoutNS > 0`.
+    timed_wait_any_max_count: usize,
+};
+
 pub const InstanceDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
+
+    // Instance features to enable
+    features: InstanceCapabilities,
 
     pub inline fn withNativeExtras(self: InstanceDescriptor, extras: *InstanceExtras) InstanceDescriptor {
         var id = self;
@@ -85,6 +100,11 @@ pub const WGSLLanguageFeatureName = enum(u32) {
     packed4x8_integer_dot_product           = 0x00000002,
     unrestricted_pointer_parameters         = 0x00000003,
     pointer_composite_access                = 0x00000004,
+};
+
+pub const SupportedWGSLLanguageFeatures = extern struct {
+    feature_count: usize,
+    features: [*]const WGSLLanguageFeatureName,
 };
 
 pub const InstanceProcs = struct {

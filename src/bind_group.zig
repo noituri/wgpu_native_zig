@@ -17,7 +17,9 @@ const StorageTextureBindingLayout = _texture.StorageTextureBindingLayout;
 
 const ShaderStage = @import("shader.zig").ShaderStage;
 
-const WGPU_WHOLE_SIZE = @import("misc.zig").WGPU_WHOLE_SIZE;
+const _misc = @import("misc.zig");
+const WGPU_WHOLE_SIZE = _misc.WGPU_WHOLE_SIZE;
+const StringView = _misc.StringView;
 
 pub const BindGroupLayoutEntryExtras = extern struct {
     chain: ChainedStruct = ChainedStruct {
@@ -48,7 +50,7 @@ pub const BindGroupLayoutEntry = extern struct {
 
 pub const BindGroupLayoutDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     entry_count: usize,
     entries: [*]const BindGroupLayoutEntry,
 };
@@ -105,7 +107,7 @@ pub const BindGroupEntry = extern struct {
 
 pub const BindGroupDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     layout: *BindGroupLayout,
     entry_count: usize,
     entries: [*]const BindGroupEntry,

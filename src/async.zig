@@ -1,3 +1,5 @@
+const WGPUBool = @import("misc.zig").WGPUBool;
+
 //
 // The callback mode controls how a callback for an asynchronous operation may be fired.
 //
@@ -56,4 +58,15 @@ pub const Future = extern struct {
     // Opaque id of the Future
     //
     id: u64,
+};
+
+//
+// Struct holding a future to wait on, and a `completed` boolean flag.
+//
+pub const FutureWaitInfo = extern struct {
+    // The future to wait on.
+    future: Future,
+
+    // Whether or not the future completed.
+    completed: WGPUBool,
 };

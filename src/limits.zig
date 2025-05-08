@@ -11,6 +11,9 @@ pub const WGPU_LIMIT_U32_UNDEFINED = U32_MAX;
 pub const WGPU_LIMIT_U64_UNDEFINED = U64_MAX;
 
 pub const Limits = extern struct {
+    // This struct chain is used as mutable in some places and immutable in others.
+    next_in_chain: ?*ChainedStructOut = null,
+
     max_texture_dimension_1d: u32 = WGPU_LIMIT_U32_UNDEFINED,
     max_texture_dimension_2d: u32 = WGPU_LIMIT_U32_UNDEFINED,
     max_texture_dimension_3d: u32 = WGPU_LIMIT_U32_UNDEFINED,
@@ -33,7 +36,6 @@ pub const Limits = extern struct {
     max_buffer_size: u64 = WGPU_LIMIT_U64_UNDEFINED,
     max_vertex_attributes: u32 = WGPU_LIMIT_U32_UNDEFINED,
     max_vertex_buffer_array_stride: u32 = WGPU_LIMIT_U32_UNDEFINED,
-    max_inter_stage_shader_components: u32 = WGPU_LIMIT_U32_UNDEFINED,
     max_inter_stage_shader_variables: u32 = WGPU_LIMIT_U32_UNDEFINED,
     max_color_attachments: u32 = WGPU_LIMIT_U32_UNDEFINED,
     max_color_attachment_bytes_per_sample: u32 = WGPU_LIMIT_U32_UNDEFINED,
@@ -51,30 +53,4 @@ pub const WGPUNativeLimits = extern struct {
     },
     max_push_constant_size: u32,
     max_non_sampler_bindings: u32,
-};
-
-pub const SupportedLimits = extern struct {
-    next_in_chain: ?*ChainedStructOut = null,
-    limits: Limits,
-
-    // pub inline fn withNativeLimits(self: SupportedLimits, native_limits: WGPUNativeLimits) SupportedLimits {
-    //     var sl = self;
-    //     sl.next_in_chain = @ptrCast(&SupportedLimitsExtras {
-    //         .limits = native_limits,
-    //     });
-    //     return sl;
-    // }
-};
-
-pub const RequiredLimits = extern struct {
-    next_in_chain: ?*const ChainedStruct = null,
-    limits: Limits,
-
-    // pub inline fn withNativeLimits(self: RequiredLimits, native_limits: WGPUNativeLimits) RequiredLimits {
-    //     var rl = self;
-    //     rl.next_in_chain = @ptrCast(&RequiredLimitsExtras {
-    //         .limits = native_limits,
-    //     });
-    //     return rl;
-    // }
 };

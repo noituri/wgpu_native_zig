@@ -7,13 +7,14 @@ const QuerySet = @import("query_set.zig").QuerySet;
 
 const _texture = @import("texture.zig");
 const TextureView = _texture.TextureView;
-const ImageCopyBuffer = _texture.ImageCopyBuffer;
-const ImageCopyTexture = _texture.ImageCopyTexture;
+const TexelCopyBufferInfo = _texture.TexelCopyBufferInfo;
+const TexelCopyTextureInfo = _texture.TexelCopyTextureInfo;
 const Extent3D = _texture.Extent3D;
 
 const _misc = @import("misc.zig");
 const WGPUBool = _misc.WGPUBool;
 const IndexFormat = _misc.IndexFormat;
+const StringView = _misc.StringView;
 const U32_MAX = _misc.U32_MAX;
 
 const BindGroup = @import("bind_group.zig").BindGroup;
@@ -39,13 +40,13 @@ pub const ComputePassTimestampWrites = TimestampWrites;
 
 pub const ComputePassDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     timestamp_writes: ?*const ComputePassTimestampWrites = null,
 };
 
 pub const CommandEncoderDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
 };
 
 const ComputePassEncoderProcs = struct {
@@ -179,7 +180,7 @@ pub const DepthStencilAttachment = extern struct {
 
 pub const RenderPassTimestampWrites = TimestampWrites;
 
-pub const RenderPassDescriptorMaxDrawCount = extern struct {
+pub const RenderPassMaxDrawCount = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.render_pass_max_draw_count
     },
@@ -188,7 +189,7 @@ pub const RenderPassDescriptorMaxDrawCount = extern struct {
 
 pub const RenderPassDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     color_attachment_count: usize,
     color_attachments: [*]const ColorAttachment,
     depth_stencil_attachment: ?*const DepthStencilAttachment = null,
@@ -197,7 +198,7 @@ pub const RenderPassDescriptor = extern struct {
 
     pub inline fn withMaxDrawCount(self: RenderPassDescriptor, max_draw_count: u64) RenderPassDescriptor {
         var descriptor = self;
-        descriptor.next_in_chain = @ptrCast(&RenderPassDescriptorMaxDrawCount {
+        descriptor.next_in_chain = @ptrCast(&RenderPassMaxDrawCount {
             .max_draw_count = max_draw_count,
         });
 
@@ -370,7 +371,7 @@ pub const RenderPassEncoder = opaque {
 
 pub const CommandBufferDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0] const u8 = null,
+    label: StringView = StringView {},
 };
 
 pub const CommandBufferProcs = struct {
@@ -400,9 +401,9 @@ pub const CommandEncoderProcs = struct {
     pub const BeginRenderPass = *const fn(*CommandEncoder, *const RenderPassDescriptor) callconv(.C) ?*RenderPassEncoder;
     pub const ClearBuffer = *const fn(*CommandEncoder, *Buffer, u64, u64) callconv(.C) void;
     pub const CopyBufferToBuffer = *const fn(*CommandEncoder, *Buffer, u64, *Buffer, u64, u64) callconv(.C) void;
-    pub const CopyBufferToTexture = *const fn(*CommandEncoder, *const ImageCopyBuffer, *const ImageCopyTexture, *const Extent3D) callconv(.C) void;
-    pub const CopyTextureToBuffer = *const fn(*CommandEncoder, *const ImageCopyTexture, *const ImageCopyBuffer, *const Extent3D) callconv(.C) void;
-    pub const CopyTextureToTexture = *const fn(*CommandEncoder, *const ImageCopyTexture, *const ImageCopyTexture, *const Extent3D) callconv(.C) void;
+    pub const CopyBufferToTexture = *const fn(*CommandEncoder, *const TexelCopyBufferInfo, *const TexelCopyTextureInfo, *const Extent3D) callconv(.C) void;
+    pub const CopyTextureToBuffer = *const fn(*CommandEncoder, *const TexelCopyTextureInfo, *const TexelCopyBufferInfo, *const Extent3D) callconv(.C) void;
+    pub const CopyTextureToTexture = *const fn(*CommandEncoder, *const TexelCopyTextureInfo, *const TexelCopyTextureInfo, *const Extent3D) callconv(.C) void;
     pub const Finish = *const fn(*CommandEncoder, ?*const CommandBufferDescriptor) callconv(.C) ?*CommandBuffer;
     pub const InsertDebugMarker = *const fn(*CommandEncoder, [*:0]const u8) callconv(.C) void;
     pub const PopDebugGroup = *const fn(*CommandEncoder) callconv(.C) void;
@@ -418,9 +419,9 @@ extern fn wgpuCommandEncoderBeginComputePass(command_encoder: *CommandEncoder, d
 extern fn wgpuCommandEncoderBeginRenderPass(command_encoder: *CommandEncoder, descriptor: *const RenderPassDescriptor) ?*RenderPassEncoder;
 extern fn wgpuCommandEncoderClearBuffer(command_encoder: *CommandEncoder, buffer: *Buffer, offset: u64, size: u64) void;
 extern fn wgpuCommandEncoderCopyBufferToBuffer(command_encoder: *CommandEncoder, source: *Buffer, source_offset: u64, destination: *Buffer, destination_offset: u64, size: u64) void;
-extern fn wgpuCommandEncoderCopyBufferToTexture(command_encoder: *CommandEncoder, source: *const ImageCopyBuffer, destination: *const ImageCopyTexture, copy_size: *const Extent3D) void;
-extern fn wgpuCommandEncoderCopyTextureToBuffer(command_encoder: *CommandEncoder, source: *const ImageCopyTexture, destination: *const ImageCopyBuffer, copy_size: *const Extent3D) void;
-extern fn wgpuCommandEncoderCopyTextureToTexture(command_encoder: *CommandEncoder, source: *const ImageCopyTexture, destination: *const ImageCopyTexture, copy_size: *const Extent3D) void;
+extern fn wgpuCommandEncoderCopyBufferToTexture(command_encoder: *CommandEncoder, source: *const TexelCopyBufferInfo, destination: *const TexelCopyTextureInfo, copy_size: *const Extent3D) void;
+extern fn wgpuCommandEncoderCopyTextureToBuffer(command_encoder: *CommandEncoder, source: *const TexelCopyTextureInfo, destination: *const TexelCopyBufferInfo, copy_size: *const Extent3D) void;
+extern fn wgpuCommandEncoderCopyTextureToTexture(command_encoder: *CommandEncoder, source: *const TexelCopyTextureInfo, destination: *const TexelCopyTextureInfo, copy_size: *const Extent3D) void;
 extern fn wgpuCommandEncoderFinish(command_encoder: *CommandEncoder, descriptor: ?*const CommandBufferDescriptor) ?*CommandBuffer;
 extern fn wgpuCommandEncoderInsertDebugMarker(command_encoder: *CommandEncoder, marker_label: [*:0]const u8) void;
 extern fn wgpuCommandEncoderPopDebugGroup(command_encoder: *CommandEncoder) void;
@@ -444,13 +445,13 @@ pub const CommandEncoder = opaque {
     pub inline fn copyBufferToBuffer(self: *CommandEncoder, source: *Buffer, source_offset: u64, destination: *Buffer, destination_offset: u64, size: u64) void {
         wgpuCommandEncoderCopyBufferToBuffer(self, source, source_offset, destination, destination_offset, size);
     }
-    pub inline fn copyBufferToTexture(self: *CommandEncoder, source: *const ImageCopyBuffer, destination: *const ImageCopyTexture, copy_size: *const Extent3D) void {
+    pub inline fn copyBufferToTexture(self: *CommandEncoder, source: *const TexelCopyBufferInfo, destination: *const TexelCopyTextureInfo, copy_size: *const Extent3D) void {
         wgpuCommandEncoderCopyBufferToTexture(self, source, destination, copy_size);
     }
-    pub inline fn copyTextureToBuffer(self: *CommandEncoder, source: *const ImageCopyTexture, destination: *const ImageCopyBuffer, copy_size: *const Extent3D) void {
+    pub inline fn copyTextureToBuffer(self: *CommandEncoder, source: *const TexelCopyTextureInfo, destination: *const TexelCopyBufferInfo, copy_size: *const Extent3D) void {
         wgpuCommandEncoderCopyTextureToBuffer(self, source, destination, copy_size);
     }
-    pub inline fn copyTextureToTexture(self: *CommandEncoder, source: *const ImageCopyTexture, destination: *const ImageCopyTexture, copy_size: *const Extent3D) void {
+    pub inline fn copyTextureToTexture(self: *CommandEncoder, source: *const TexelCopyTextureInfo, destination: *const TexelCopyTextureInfo, copy_size: *const Extent3D) void {
         wgpuCommandEncoderCopyTextureToTexture(self, source, destination, copy_size);
     }
     pub inline fn finish(self: *CommandEncoder, descriptor: ?*const CommandBufferDescriptor) ?*CommandBuffer {

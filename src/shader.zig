@@ -20,27 +20,19 @@ pub const ShaderStages = struct {
     pub const compute  = @as(ShaderStage, 0x0000000000000004);
 };
 
-pub const CompilationHint = extern struct {
-    next_in_chain: ?*const ChainedStruct = null,
-    entry_point: [*:0]const u8,
-    layout: *PipelineLayout,
-};
-
 pub const ShaderModuleDescriptor = extern struct {
     next_in_chain: *const ChainedStruct,
-    label: ?[*:0]const u8 = null,
-    hint_count: usize = 0,
-    hints: [*]const CompilationHint = &[0]CompilationHint {},
+    label: StringView = StringView {},
 };
 
 // This is specific to wgpu-native (from wgpu.h), and unfortunately it is *NOT* the same thing as ShaderSourceSPIRV
 pub const ShaderModuleDescriptorSpirV = extern struct {
-    label: StringView,
+    label: StringView = StringView {},
     source_size: u32,
     source: [*]const u32,
 };
 
-pub const ShaderModuleSPIRVDescriptor = extern struct {
+pub const ShaderSourceSPIRV = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.shader_source_spirv,
     },
@@ -48,9 +40,7 @@ pub const ShaderModuleSPIRVDescriptor = extern struct {
     code: [*]const u32,
 };
 pub const ShaderModuleSPIRVMergedDescriptor = struct {
-    label: ?[*:0]const u8 = null,
-    hint_count: usize = 0,
-    hints: [*]const CompilationHint = &[0]CompilationHint {},
+    label: []const u8 = "",
     code_size: u32,
     code: [*]const u32,
 };
@@ -58,38 +48,32 @@ pub inline fn shaderModuleSPIRVDescriptor(
     descriptor: ShaderModuleSPIRVMergedDescriptor
 ) ShaderModuleDescriptor {
     return ShaderModuleDescriptor {
-        .next_in_chain = @ptrCast(&ShaderModuleSPIRVDescriptor {
+        .next_in_chain = @ptrCast(&ShaderSourceSPIRV {
             .code_size = descriptor.code_size,
             .code = descriptor.code,
         }),
-        .label = descriptor.label,
-        .hint_count = descriptor.hint_count,
-        .hints = descriptor.hints,
+        .label = StringView.fromSlice(descriptor.label),
     };
 }
 
-pub const ShaderModuleWGSLDescriptor = extern struct {
+pub const ShaderSourceWGSL = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.shader_source_wgsl,
     },
-    code: [*:0]const u8,
+    code: StringView
 };
 pub const ShaderModuleWGSLMergedDescriptor = struct {
-    label: ?[*:0]const u8 = null,
-    hint_count: usize = 0,
-    hints: [*]const CompilationHint = &[0]CompilationHint {},
-    code: [*:0]const u8,
+    label: []const u8 = "",
+    code: []const u8,
 };
 pub inline fn shaderModuleWGSLDescriptor(
     descriptor: ShaderModuleWGSLMergedDescriptor,
 ) ShaderModuleDescriptor {
     return ShaderModuleDescriptor {
-        .next_in_chain = @ptrCast(&ShaderModuleWGSLDescriptor {
-            .code = descriptor.code,
+        .next_in_chain = @ptrCast(&ShaderSourceWGSL {
+            .code = StringView.fromSlice(descriptor.code),
         }),
-        .label = descriptor.label,
-        .hint_count = descriptor.hint_count,
-        .hints = descriptor.hints,
+        .label = StringView.fromSlice(descriptor.label),
     };
 }
 
@@ -107,11 +91,9 @@ pub const ShaderModuleGLSLDescriptor = extern struct {
     defines: ?[*]ShaderDefine = null,
 };
 pub const ShaderModuleGLSLMergedDescriptor = struct {
-    label: ?[*:0]const u8 = null,
-    hint_count: usize = 0,
-    hints: [*]const CompilationHint = &[0]CompilationHint {},
+    label: []const u8 = "",
     stage: ShaderStage,
-    code: [*:0]const u8,
+    code: []const u8,
     define_count: u32 = 0,
     defines: ?[*]ShaderDefine = null,
 };
@@ -121,13 +103,11 @@ pub inline fn shaderModuleGLSLDescriptor(
     return ShaderModuleDescriptor {
         .next_in_chain = @ptrCast(&ShaderModuleGLSLDescriptor {
             .stage = descriptor.stage,
-            .code = descriptor.code,
+            .code = StringView.fromSlice(descriptor.code),
             .define_count = descriptor.define_count,
             .defines = descriptor.defines,
         }),
-        .label = descriptor.label,
-        .hint_count = descriptor.hint_count,
-        .hints = descriptor.hints,
+        .label = StringView.fromSlice(descriptor.label),
     };
 }
 
@@ -146,15 +126,22 @@ pub const CompilationMessageType = enum(u32) {
 
 pub const CompilationMessage = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    message: ?[*:0]const u8 = null,
+    message: StringView,
+
+    // Severity level of the message.
     @"type": CompilationMessageType,
+
+    // Line number where the message is attached, starting at 1.
     line_num: u64,
+
+    // Offset in UTF-8 code units (bytes) from the beginning of the line, starting at 1.
     line_pos: u64,
+
+    // Offset in UTF-8 code units (bytes) from the beginning of the shader code, starting at 0.
     offset: u64,
+
+    // Length in UTF-8 code units (bytes) of the span the message corresponds to.
     length: u64,
-    utf16_line_pos: u64,
-    utf16_offset: u64,
-    utf16_length: u64,
 };
 
 pub const CompilationInfo = extern struct {

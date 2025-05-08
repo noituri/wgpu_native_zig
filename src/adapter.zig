@@ -8,8 +8,9 @@ const _misc = @import("misc.zig");
 const WGPUBool = _misc.WGPUBool;
 const FeatureName = _misc.FeatureName;
 const StringView = _misc.StringView;
+const Status = _misc.Status;
 
-const SupportedLimits = @import("limits.zig").SupportedLimits;
+const Limits = @import("limits.zig").Limits;
 
 const Surface = @import("surface.zig").Surface;
 
@@ -59,10 +60,27 @@ pub const FeatureLevel = enum(u32) {
 
 pub const RequestAdapterOptions = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    compatible_surface: ?*Surface = null,
+
+    // "Feature level" for the adapter request. If an adapter is returned,
+    // it must support the features and limits in the requested feature level.
+    //
+    // Implementations may ignore FeatureLevel.compatibility and provide FeatureLevel.core instead.
+    // FeatureLevel.core is the default in the JS API, but in C, this field is **required** (must not be undefined).
+    feature_level: FeatureLevel = FeatureLevel.core,
+
     power_preference: PowerPreference = PowerPreference.@"undefined",
-    backend_type: BackendType = BackendType.@"undefined",
+
+    // If true, requires the adapter to be a "fallback" adapter as defined by the JS spec.
+    // If this is not possible, the request returns null.
     force_fallback_adapter: WGPUBool = @intFromBool(false),
+
+    // If set, requires the adapter to have a particular backend type.
+    // If this is not possible, the request returns null.
+    backend_type: BackendType = BackendType.@"undefined",
+
+    // If set, requires the adapter to be able to output to a particular surface.
+    // If this is not possible, the request returns null.
+    compatible_surface: ?*Surface = null,
 };
 
 pub const RequestAdapterStatus = enum(u32) {
@@ -107,10 +125,10 @@ extern fn wgpuAdapterInfoFreeMembers(adapter_info: AdapterInfo) void;
 
 pub const AdapterInfo = extern struct {
     next_in_chain: ?*ChainedStructOut = null,
-    vendor: [*:0]const u8,
-    architecture: [*:0]const u8,
-    device: [*:0]const u8,
-    description: [*:0]const u8,
+    vendor: StringView,
+    architecture: StringView,
+    device: StringView,
+    description: StringView,
     backend_type: BackendType,
     adapter_type: AdapterType,
     vendor_id: u32,
@@ -123,7 +141,7 @@ pub const AdapterInfo = extern struct {
 
 pub const AdapterProcs = struct {
     pub const EnumerateFeatures = *const fn(Adapter, ?[*]FeatureName) callconv(.C) usize;
-    pub const GetLimits = *const fn(Adapter, *SupportedLimits) callconv(.C) WGPUBool;
+    pub const GetLimits = *const fn(Adapter, *Limits) callconv(.C) Status;
     pub const GetInfo = *const fn(Adapter, *AdapterInfo) callconv(.C) void;
     pub const HasFeature = *const fn(Adapter, FeatureName) callconv(.C) WGPUBool;
     pub const RequestDevice = *const fn(Adapter, ?*const DeviceDescriptor, RequestDeviceCallbackInfo) callconv(.C) Future;
@@ -132,7 +150,7 @@ pub const AdapterProcs = struct {
 };
 
 extern fn wgpuAdapterEnumerateFeatures(adapter: *Adapter, features: ?[*]FeatureName) usize;
-extern fn wgpuAdapterGetLimits(adapter: *Adapter, limits: *SupportedLimits) WGPUBool;
+extern fn wgpuAdapterGetLimits(adapter: *Adapter, limits: *Limits) Status;
 extern fn wgpuAdapterGetInfo(adapter: *Adapter, info: *AdapterInfo) void;
 extern fn wgpuAdapterHasFeature(adapter: *Adapter, feature: FeatureName) WGPUBool;
 extern fn wgpuAdapterRequestDevice(adapter: *Adapter, descriptor: ?*const DeviceDescriptor, callback_info: RequestDeviceCallbackInfo) Future;
@@ -143,8 +161,8 @@ pub const Adapter = opaque{
     pub inline fn enumerateFeatures(self: *Adapter, features: ?[*]FeatureName) usize {
         return wgpuAdapterEnumerateFeatures(self, features);
     }
-    pub inline fn getLimits(self: *Adapter, limits: *SupportedLimits) bool {
-        return wgpuAdapterGetLimits(self, limits) != 0;
+    pub inline fn getLimits(self: *Adapter, limits: *Limits) Status {
+        return wgpuAdapterGetLimits(self, limits);
     }
     pub inline fn getInfo(self: *Adapter, info: *AdapterInfo) void {
         wgpuAdapterGetInfo(self, info);

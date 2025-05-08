@@ -23,7 +23,7 @@ pub const OptionalBool = enum(u32) {
 };
 
 // Used by both device and adapter
-// FeatureName, Limits, and SupportedLimits are clearly related
+// FeatureName and Limits are clearly related
 // but idk if they should go in device.zig, adapter.zig, or their own separate file.
 // So they're going in the "miscellaneous" pile for now.
 pub const FeatureName = enum(u32) {
@@ -75,6 +75,11 @@ pub const FeatureName = enum(u32) {
     subgroup_barrier                                              = 0x00030023,
     timestamp_query_inside_encoders                               = 0x00030024,
     timestamp_query_inside_passes                                 = 0x00030025,
+};
+
+pub const SupportedFeatures = extern struct {
+    feature_count: usize,
+    features: [*]const FeatureName,
 };
 
 pub const IndexFormat = enum(u32) {

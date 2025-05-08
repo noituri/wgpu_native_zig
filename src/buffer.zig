@@ -79,7 +79,7 @@ pub const BufferMapCallback = *const fn(status: MapAsyncStatus, message: StringV
 
 pub const BufferDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     usage: BufferUsage,
     size: u64,
     mapped_at_creation: WGPUBool = @intFromBool(false),

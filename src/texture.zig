@@ -3,6 +3,7 @@ const ChainedStruct = @import("chained_struct.zig").ChainedStruct;
 const _misc = @import("misc.zig");
 const WGPUFlags = _misc.WGPUFlags;
 const WGPUBool = _misc.WGPUBool;
+const StringView = _misc.StringView;
 const U32_MAX = _misc.U32_MAX;
 
 pub const WGPU_ARRAY_LAYER_COUNT_UNDEFINED = U32_MAX;
@@ -141,7 +142,7 @@ pub const TextureAspect = enum(u32) {
 
 pub const TextureViewDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     format: TextureFormat = TextureFormat.@"undefined",
     dimension: ViewDimension = ViewDimension.@"undefined",
     base_mip_level: u32 = 0,
@@ -149,6 +150,7 @@ pub const TextureViewDescriptor = extern struct {
     base_array_layer: u32 = 0,
     array_layer_count: u32 = WGPU_ARRAY_LAYER_COUNT_UNDEFINED,
     aspect: TextureAspect = TextureAspect.all,
+    usage: TextureUsage = TextureUsages.none,
 };
 
 pub const TextureViewProcs = struct {
@@ -239,7 +241,7 @@ pub const Extent3D = extern struct {
 
 pub const TextureDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     usage: TextureUsage,
     dimension: TextureDimension = TextureDimension.@"2d",
     size: Extent3D,
@@ -328,16 +330,14 @@ pub const Origin3D = extern struct {
     z: u32 = 0,
 };
 
-pub const ImageCopyTexture = extern struct {
-    next_in_chain: ?*const ChainedStruct = null,
+pub const TexelCopyTextureInfo = extern struct {
     texture: *Texture,
     mip_level: u32 = 0,
     origin: Origin3D,
     aspect: TextureAspect = TextureAspect.all,
 };
 
-pub const TextureDataLayout = extern struct {
-    next_in_chain: ?*const ChainedStruct = null,
+pub const TexelCopyBufferLayout = extern struct {
     offset: u64 = 0,
     bytes_per_row: u32 = WGPU_COPY_STRIDE_UNDEFINED,
     rows_per_image: u32 = WGPU_COPY_STRIDE_UNDEFINED,
@@ -345,8 +345,7 @@ pub const TextureDataLayout = extern struct {
 
 // Seems a little weird to put this in texture.zig,
 // but it seems to have more to do with images/textures than with buffers.
-pub const ImageCopyBuffer = extern struct {
-    next_in_chain: ?*const ChainedStruct = null,
-    layout: TextureDataLayout,
+pub const TexelCopyBufferInfo = extern struct {
+    layout: TexelCopyBufferLayout,
     buffer: *Buffer,
 };

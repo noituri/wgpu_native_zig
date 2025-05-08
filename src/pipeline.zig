@@ -14,6 +14,7 @@ const IndexFormat = _misc.IndexFormat;
 const CompareFunction = _misc.CompareFunction;
 const WGPUFlags = _misc.WGPUFlags;
 const StringView = _misc.StringView;
+const OptionalBool = _misc.OptionalBool;
 
 const _async = @import("async.zig");
 const CallbackMode = _async.CallbackMode;
@@ -36,7 +37,7 @@ pub const PipelineLayoutExtras = extern struct {
 
 pub const PipelineLayoutDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     bind_group_layout_count: usize,
     bind_group_layouts: [*]const *BindGroupLayout,
 
@@ -78,21 +79,21 @@ pub const PipelineLayout = opaque {
 
 pub const ConstantEntry = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    key: [*:0]const u8,
+    key: StringView,
     value: f64,
 };
 
 pub const ProgrammableStageDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     module: *ShaderModule,
-    entry_point: ?[*:0]const u8 = null,
+    entry_point: StringView = StringView {},
     constant_count: usize = 0,
     constants: [*]const ConstantEntry = &[0]ConstantEntry {},
 };
 
 pub const ComputePipelineDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     layout: ?*PipelineLayout = null,
     compute: ProgrammableStageDescriptor,
 };
@@ -210,8 +211,12 @@ pub const VertexAttribute = extern struct {
 };
 
 pub const VertexBufferLayout = extern struct {
-    array_stride: u64,
+    // The step mode for the vertex buffer. If VertexStepMode.vertex_buffer_not_used,
+    // indicates a "hole" in the parent VertexState `buffers` array:
+    // the pipeline does not use a vertex buffer at this `location`.
     step_mode: VertexStepMode = VertexStepMode.vertex,
+
+    array_stride: u64,
     attribute_count: usize,
     attributes: [*]const VertexAttribute,
 };
@@ -219,7 +224,7 @@ pub const VertexBufferLayout = extern struct {
 pub const VertexState = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     module: *ShaderModule,
-    entry_point: ?[*:0]const u8 = null,
+    entry_point: StringView = StringView {},
     constant_count: usize = 0,
     constants: [*]const ConstantEntry = &[0]ConstantEntry {},
     buffer_count: usize = 0,
@@ -248,37 +253,14 @@ pub const CullMode = enum(u32) {
     back         = 0x00000003,
 };
 
-pub const PrimitiveDepthClipControl = extern struct {
-    chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.primitive_depth_clip_control,
-    },
-    unclipped_depth: WGPUBool = @intFromBool(false),
-};
 pub const PrimitiveState = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     topology: PrimitiveTopology = PrimitiveTopology.triangle_list,
     strip_index_format: IndexFormat = IndexFormat.@"undefined",
     front_face: FrontFace = FrontFace.ccw,
     cull_mode: CullMode = CullMode.none,
-
-    pub inline fn withDepthClipControl(self: PrimitiveState, unclipped_depth: bool) PrimitiveState {
-        var ps = self;
-        ps.next_in_chain = @ptrCast(&PrimitiveDepthClipControl {
-            .unclipped_depth = @intFromBool(unclipped_depth),
-        });
-
-        return ps;
-    }
+    unclipped_depth: WGPUBool = @intFromBool(false),
 };
-
-test "chain method compiles" {
-    _ = &(PrimitiveState {
-        .topology = PrimitiveTopology.triangle_list,
-        .strip_index_format = IndexFormat.uint16,
-        .front_face = FrontFace.ccw,
-        .cull_mode = CullMode.back
-    }).withDepthClipControl(false);
-}
 
 pub const StencilOperation = enum(u32) {
     @"undefined"    = 0x00000000, // Indicates no value is passed for this argument.
@@ -302,7 +284,7 @@ pub const StencilFaceState = extern struct {
 pub const DepthStencilState = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     format: TextureFormat,
-    depth_write_enabled: WGPUBool = @intFromBool(false),
+    depth_write_enabled: OptionalBool = OptionalBool.@"undefined",
     depth_compare: CompareFunction = CompareFunction.@"undefined",
     stencil_front: StencilFaceState,
     stencil_back: StencilFaceState,
@@ -403,7 +385,12 @@ pub const ColorWriteMasks = struct {
 
 pub const ColorTargetState = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
+
+    // The texture format of the target. If TextureFormat.@"undefined",
+    // indicates a "hole" in the parent FragmentState `targets` array:
+    // the pipeline does not output a value at this `location`.
     format: TextureFormat,
+
     blend: ?*const BlendState = null,
     write_mask: ColorWriteMask = ColorWriteMasks.all,
 };
@@ -411,7 +398,7 @@ pub const ColorTargetState = extern struct {
 pub const FragmentState = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     module: *ShaderModule,
-    entry_point: ?[*:0]const u8 = null,
+    entry_point: StringView = StringView {},
     constant_count: usize = 0,
     constants: [*]const ConstantEntry = &[0]ConstantEntry {},
     target_count: usize,
@@ -420,7 +407,7 @@ pub const FragmentState = extern struct {
 
 pub const RenderPipelineDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     layout: ?*PipelineLayout = null,
     vertex: VertexState,
     primitive: PrimitiveState,

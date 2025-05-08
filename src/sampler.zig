@@ -1,5 +1,8 @@
 const ChainedStruct = @import("chained_struct.zig").ChainedStruct;
-const CompareFunction = @import("misc.zig").CompareFunction;
+
+const _misc = @import("misc.zig");
+const CompareFunction = _misc.CompareFunction;
+const StringView = _misc.StringView;
 
 pub const SamplerBindingType = enum(u32) {
     // Indicates that this SamplerBindingLayout member of its parent BindGroupLayoutEntry is not used.
@@ -39,7 +42,7 @@ pub const MipmapFilterMode = enum(u32) {
 
 pub const SamplerDescriptor = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
-    label: ?[*:0]const u8 = null,
+    label: StringView = StringView {},
     address_mode_u: AddressMode = AddressMode.clamp_to_edge,
     address_mode_v: AddressMode = AddressMode.clamp_to_edge,
     address_mode_w: AddressMode = AddressMode.clamp_to_edge,
