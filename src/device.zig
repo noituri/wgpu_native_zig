@@ -9,6 +9,7 @@ const WGPUBool = _misc.WGPUBool;
 const FeatureName = _misc.FeatureName;
 const StringView = _misc.StringView;
 const Status = _misc.Status;
+const SupportedFeatures = _misc.SupportedFeatures;
 
 const _async = @import("async.zig");
 const CallbackMode = _async.CallbackMode;
@@ -16,6 +17,8 @@ const Future = _async.Future;
 
 const _limits = @import("limits.zig");
 const Limits = _limits.Limits;
+
+const AdapterInfo = @import("adapter.zig").AdapterInfo;
 
 const _bind_group = @import("bind_group.zig");
 const BindGroupDescriptor = _bind_group.BindGroupDescriptor;
@@ -184,9 +187,6 @@ pub const RequestDeviceCallbackInfo = extern struct {
     userdata2: ?*anyopaque = null,
 };
 
-// Generic function return type for wgpuGetProcAddress
-// pub const Proc = *const fn() callconv(.C) void;
-
 pub const PopErrorScopeStatus = enum(u32) {
     success          = 0x00000001, // The error scope stack was successfully popped and a result was reported.
     instance_dropped = 0x00000002,
@@ -239,13 +239,15 @@ pub const DeviceProcs = struct {
     pub const CreateShaderModule = *const fn(*Device, *const ShaderModuleDescriptor) callconv(.C) ?*ShaderModule;
     pub const CreateTexture = *const fn(*Device, *const TextureDescriptor) callconv(.C) ?*Texture;
     pub const Destroy = *const fn(*Device) callconv(.C) void;
-    pub const EnumerateFeatures = *const fn(*Device, ?[*]FeatureName) callconv(.C) usize;
+    pub const GetAdapterInfo = *const fn(*Device) callconv(.C) AdapterInfo;
+    pub const GetFeatures = *const fn(*Device, *SupportedFeatures) callconv(.C) void;
     pub const GetLimits = *const fn(*Device, *Limits) callconv(.C) Status;
+    pub const GetLostFuture = *const fn(*Device) callconv(.C) Future;
     pub const GetQueue = *const fn(*Device) callconv(.C) ?*Queue;
     pub const HasFeature = *const fn(*Device, FeatureName) callconv(.C) WGPUBool;
     pub const PopErrorScope = *const fn(*Device, PopErrorScopeCallbackInfo) callconv(.C) Future;
     pub const PushErrorScope = *const fn(*Device, ErrorFilter) callconv(.C) void;
-    pub const SetLabel = *const fn(*Device, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*Device, StringView) callconv(.C) void;
     pub const AddRef = *const fn(*Device) callconv(.C) void;
     pub const Release = *const fn(*Device) callconv(.C) void;
 
@@ -269,30 +271,21 @@ extern fn wgpuDeviceCreateSampler(device: *Device, descriptor: *const SamplerDes
 extern fn wgpuDeviceCreateShaderModule(device: *Device, descriptor: *const ShaderModuleDescriptor) ?*ShaderModule;
 extern fn wgpuDeviceCreateTexture(device: *Device, descriptor: *const TextureDescriptor) ?*Texture;
 extern fn wgpuDeviceDestroy(device: *Device) void;
-extern fn wgpuDeviceEnumerateFeatures(device: *Device, features: ?[*]FeatureName) usize;
+extern fn wgpuDeviceGetAdapterInfo(device: *Device) AdapterInfo;
+extern fn wgpuDeviceGetFeatures(device: *Device, features: *SupportedFeatures) void;
 extern fn wgpuDeviceGetLimits(device: *Device, limits: *Limits) Status;
+extern fn wgpuDeviceGetLostFuture(device: *Device) Future;
 extern fn wgpuDeviceGetQueue(device: *Device) ?*Queue;
 extern fn wgpuDeviceHasFeature(device: *Device, feature: FeatureName) WGPUBool;
 extern fn wgpuDevicePopErrorScope(device: *Device, callback_info: PopErrorScopeCallbackInfo) Future;
 extern fn wgpuDevicePushErrorScope(device: *Device, filter: ErrorFilter) void;
-extern fn wgpuDeviceSetLabel(device: *Device, label: ?[*:0]const u8) void;
+extern fn wgpuDeviceSetLabel(device: *Device, label: StringView) void;
 extern fn wgpuDeviceAddRef(device: *Device) void;
 extern fn wgpuDeviceRelease(device: *Device) void;
 
 // wgpu-native
 extern fn wgpuDevicePoll(device: *Device, wait: WGPUBool, submission_index: ?*const SubmissionIndex) WGPUBool;
 extern fn wgpuDeviceCreateShaderModuleSpirV(device: *Device, descriptor: *const ShaderModuleDescriptorSpirV) ?*ShaderModule;
-
-// Supposedly getProcAddress is a global function, but it doesn't seem like it should work without being tied to a Device?
-// Could be it's one of those functions that's meant to be called with null the first time, TODO: look into that.
-// 
-// Regardless, apparently the reason it exists is because different devices have different drivers and therefore different procs,
-// so you need to get the version of the proc that is meant for that particular device.
-// 
-// Although this function appears in webgpu.h, it is currently unimplemented in wgpu-native,
-// (https://github.com/gfx-rs/wgpu-native/blob/trunk/src/unimplemented.rs)
-// so I'm leaving it here in case it gets implemented eventually, but commented out until/unless that happens.
-// extern fn wgpuGetProcAddress(device: *Device, proc_name: ?[*:0]const u8) ?Proc;
 
 pub const Device = opaque {
     pub inline fn createBindGroup(self: *Device, descriptor: *const BindGroupDescriptor) ?*BindGroup {
@@ -340,12 +333,21 @@ pub const Device = opaque {
     pub inline fn destroy(self: *Device) void {
         wgpuDeviceDestroy(self);
     }
-    pub inline fn enumerateFeatures(self: *Device, features: ?[*]FeatureName) usize {
-        return wgpuDeviceEnumerateFeatures(self, features);
+    pub inline fn getAdapterInfo(self: *Device) AdapterInfo {
+        return wgpuDeviceGetAdapterInfo(self);
+    }
+    pub inline fn getFeatures(self: *Device, features: *SupportedFeatures) void {
+        wgpuDeviceGetFeatures(self, features);
     }
     pub inline fn getLimits(self: *Device, limits: *Limits) Status {
         return wgpuDeviceGetLimits(self, limits);
     }
+
+    // Returns the Future for the device-lost event of the device.
+    pub inline fn getLostFuture(self: *Device) Future {
+        return wgpuDeviceGetLostFuture(self);
+    }
+
     pub inline fn getQueue(self: *Device) ?*Queue {
         return wgpuDeviceGetQueue(self);
     }
@@ -359,8 +361,8 @@ pub const Device = opaque {
     pub inline fn pushErrorScope(self: *Device, filter: ErrorFilter) void {
         wgpuDevicePushErrorScope(self, filter);
     }
-    pub inline fn setLabel(self: *Device, label: ?[*:0]const u8) void {
-        wgpuDeviceSetLabel(self, label);
+    pub inline fn setLabel(self: *Device, label: []const u8) void {
+        wgpuDeviceSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn addRef(self: *Device) void {
         wgpuDeviceAddRef(self);
@@ -376,10 +378,6 @@ pub const Device = opaque {
     pub inline fn createShaderModuleSpirV(self: *Device, descriptor: *const ShaderModuleDescriptorSpirV) ?*ShaderModule {
         return wgpuDeviceCreateShaderModuleSpirV(self, descriptor);
     }
-
-    // pub inline fn getProcAddress(self: *Device, proc_name: ?[*:0] const u8) ?Proc {
-    //     return wgpuGetProcAddress(self, proc_name);
-    // }
 };
 
 // TODO: Test methods of Device (as long as they can be tested headlessly: see https://eliemichel.github.io/LearnWebGPU/advanced-techniques/headless.html)

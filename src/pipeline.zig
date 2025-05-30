@@ -56,18 +56,18 @@ pub const PipelineLayoutDescriptor = extern struct {
 };
 
 pub const PipelineLayoutProcs = struct {
-    pub const SetLabel = *const fn(*PipelineLayout, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*PipelineLayout, StringView) callconv(.C) void;
     pub const AddRef = *const fn(*PipelineLayout) callconv(.C) void;
     pub const Release = *const fn(*PipelineLayout) callconv(.C) void;
 };
 
-extern fn wgpuPipelineLayoutSetLabel(pipeline_layout: *PipelineLayout, label: ?[*:0]const u8) void;
+extern fn wgpuPipelineLayoutSetLabel(pipeline_layout: *PipelineLayout, label: StringView) void;
 extern fn wgpuPipelineLayoutAddRef(pipeline_layout: *PipelineLayout) void;
 extern fn wgpuPipelineLayoutRelease(pipeline_layout: *PipelineLayout) void;
 
 pub const PipelineLayout = opaque {
-    pub inline fn setLabel(self: *PipelineLayout, label: ?[*:0]const u8) void {
-        wgpuPipelineLayoutSetLabel(self, label);
+    pub inline fn setLabel(self: *PipelineLayout, label: []const u8) void {
+        wgpuPipelineLayoutSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn addRef(self: *PipelineLayout) void {
         wgpuPipelineLayoutAddRef(self);
@@ -128,13 +128,13 @@ pub const CreateComputePipelineAsyncCallback = *const fn(
 
 pub const ComputePipelineProcs = struct {
     pub const GetBindGroupLayout = *const fn(*ComputePipeline, u32) callconv(.C) ?*BindGroupLayout;
-    pub const SetLabel = *const fn(*ComputePipeline, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*ComputePipeline, StringView) callconv(.C) void;
     pub const AddRef = *const fn(*ComputePipeline) callconv(.C) void;
     pub const Release = *const fn(*ComputePipeline) callconv(.C) void;
 };
 
 extern fn wgpuComputePipelineGetBindGroupLayout(compute_pipeline: *ComputePipeline, group_index: u32) ?*BindGroupLayout;
-extern fn wgpuComputePipelineSetLabel(compute_pipeline: *ComputePipeline, label: ?[*:0]const u8) void;
+extern fn wgpuComputePipelineSetLabel(compute_pipeline: *ComputePipeline, label: StringView) void;
 extern fn wgpuComputePipelineAddRef(compute_pipeline: *ComputePipeline) void;
 extern fn wgpuComputePipelineRelease(compute_pipeline: *ComputePipeline) void;
 
@@ -142,8 +142,8 @@ pub const ComputePipeline = opaque {
     pub inline fn getBindGroupLayout(self: *ComputePipeline, group_index: u32) ?*BindGroupLayout {
         return wgpuComputePipelineGetBindGroupLayout(self, group_index);
     }
-    pub inline fn setLabel(self: *ComputePipeline, label: ?[*:0]const u8) void {
-        wgpuComputePipelineSetLabel(self, label);
+    pub inline fn setLabel(self: *ComputePipeline, label: []const u8) void {
+        wgpuComputePipelineSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn addRef(self: *ComputePipeline) void {
         wgpuComputePipelineAddRef(self);
@@ -418,13 +418,13 @@ pub const RenderPipelineDescriptor = extern struct {
 
 pub const RenderPipelineProcs = struct {
     pub const GetBindGroupLayout = *const fn(*RenderPipeline, u32) callconv(.C) ?*BindGroupLayout;
-    pub const SetLabel = *const fn(*RenderPipeline, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*RenderPipeline, StringView) callconv(.C) void;
     pub const AddRef = *const fn(*RenderPipeline) callconv(.C) void;
     pub const Release = *const fn(*RenderPipeline) callconv(.C) void;
 };
 
 extern fn wgpuRenderPipelineGetBindGroupLayout(render_pipeline: *RenderPipeline, group_index: u32) ?*BindGroupLayout;
-extern fn wgpuRenderPipelineSetLabel(render_pipeline: *RenderPipeline, label: ?[*:0]const u8) void;
+extern fn wgpuRenderPipelineSetLabel(render_pipeline: *RenderPipeline, label: StringView) void;
 extern fn wgpuRenderPipelineAddRef(render_pipeline: *RenderPipeline) void;
 extern fn wgpuRenderPipelineRelease(render_pipeline: *RenderPipeline) void;
 
@@ -432,8 +432,8 @@ pub const RenderPipeline = opaque {
     pub inline fn getBindGroupLayout(self: *RenderPipeline, group_index: u32) ?*BindGroupLayout {
         return wgpuRenderPipelineGetBindGroupLayout(self, group_index);
     }
-    pub inline fn setLabel(self: *RenderPipeline, label: ?[*:0]const u8) void {
-        wgpuRenderPipelineSetLabel(self, label);
+    pub inline fn setLabel(self: *RenderPipeline, label: []const u8) void {
+        wgpuRenderPipelineSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn addRef(self: *RenderPipeline) void {
         wgpuRenderPipelineAddRef(self);

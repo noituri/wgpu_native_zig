@@ -16,3 +16,5 @@ pub usingnamespace @import("sampler.zig");
 pub usingnamespace @import("shader.zig");
 pub usingnamespace @import("surface.zig");
 pub usingnamespace @import("texture.zig");
+pub usingnamespace @import("async.zig");
+// pub usingnamespace @import("global.zig");

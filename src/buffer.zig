@@ -93,7 +93,7 @@ pub const BufferProcs = struct {
     pub const GetSize = *const fn(*Buffer) callconv(.C) u64;
     pub const GetUsage = *const fn(*Buffer) callconv(.C) BufferUsage;
     pub const MapAsync = *const fn(*Buffer, MapMode, usize, usize, BufferMapCallbackInfo) callconv(.C) Future;
-    pub const SetLabel = *const fn(*Buffer, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*Buffer, StringView) callconv(.C) void;
     pub const Unmap = *const fn(*Buffer) callconv(.C) void;
     pub const AddRef = *const fn(*Buffer) callconv(.C) void;
     pub const Release = *const fn(*Buffer) callconv(.C) void;
@@ -106,7 +106,7 @@ extern fn wgpuBufferGetMappedRange(buffer: *Buffer, offset: usize, size: usize) 
 extern fn wgpuBufferGetSize(buffer: *Buffer) u64;
 extern fn wgpuBufferGetUsage(buffer: *Buffer) BufferUsage;
 extern fn wgpuBufferMapAsync(buffer: *Buffer, mode: MapMode, offset: usize, size: usize, callback_info: BufferMapCallbackInfo) Future;
-extern fn wgpuBufferSetLabel(buffer: *Buffer, label: ?[*:0]const u8) void;
+extern fn wgpuBufferSetLabel(buffer: *Buffer, label: StringView) void;
 extern fn wgpuBufferUnmap(buffer: *Buffer) void;
 extern fn wgpuBufferAddRef(buffer: *Buffer) void;
 extern fn wgpuBufferRelease(buffer: *Buffer) void;
@@ -115,17 +115,47 @@ pub const Buffer = opaque {
     pub inline fn destroy(self: *Buffer) void {
         wgpuBufferDestroy(self);
     }
+
+    // offset
+    // Byte offset relative to the beginning of the buffer.
+    //
+    // size
+    // Byte size of the range to get. The returned pointer is valid for exactly this many bytes.
+    //
+    // Returns a const pointer to beginning of the mapped range.
+    // It must not be written; writing to this range causes undefined behavior.
+    // Returns `NULL` with ImplementationDefinedLogging if:
+    //
+    // - There is any content-timeline error as defined in the WebGPU specification for `getMappedRange()` (alignments, overlaps, etc.)
+    //   **except** for overlaps with other *const* ranges, which are allowed in C.
+    //   (JS does not allow this because const ranges do not exist.)
+    //
     // wgpu-native translates a size of WGPU_WHOLE_MAP_SIZE to "None" internally
     pub inline fn getConstMappedRange(self: *Buffer, offset: usize, size: usize) ?*const anyopaque {
         return wgpuBufferGetConstMappedRange(self, offset, size);
     }
+
     pub inline fn getMapState(self: *Buffer) BufferMapState {
         return wgpuBufferGetMapState(self);
     }
+
+    // offset
+    // Byte offset relative to the beginning of the buffer.
+    //
+    // size
+    // Byte size of the range to get. The returned pointer is valid for exactly this many bytes.
+    //
+    // Returns a mutable pointer to beginning of the mapped range.
+    // Returns `NULL` with ImplementationDefinedLogging if:
+    //
+    // - There is any content-timeline error as defined in the WebGPU specification for `getMappedRange()` (alignments, overlaps, etc.)
+    // - The buffer is not mapped with MapMode.write.
+    //
     // wgpu-native translates a size of WGPU_WHOLE_MAP_SIZE to "None" internally
     pub inline fn getMappedRange(self: *Buffer, offset: usize, size: usize) ?*anyopaque {
         return wgpuBufferGetMappedRange(self, offset, size);
     }
+
     pub inline fn getSize(self: *Buffer) u64 {
         return wgpuBufferGetSize(self);
     }
@@ -137,8 +167,8 @@ pub const Buffer = opaque {
         return wgpuBufferMapAsync(self, mode, offset, size, callback_info);
     }
 
-    pub inline fn setLabel(self: *Buffer, label: ?[*:0]const u8) void {
-        wgpuBufferSetLabel(self, label);
+    pub inline fn setLabel(self: *Buffer, label: []const u8) void {
+        wgpuBufferSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn unmap(self: *Buffer) void {
         wgpuBufferUnmap(self);

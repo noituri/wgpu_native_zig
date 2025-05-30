@@ -18,6 +18,7 @@ const Device = _device.Device;
 const _misc = @import("misc.zig");
 const WGPUBool = _misc.WGPUBool;
 const StringView = _misc.StringView;
+const Status = _misc.Status;
 
 // The root descriptor for the creation of an Surface with Instance.createSurface().
 // It isn't sufficient by itself and must have one of the *SurfaceSource in its chain.
@@ -300,6 +301,7 @@ pub const SurfaceCapabilities = extern struct {
     alpha_mode_count: usize,
     alpha_modes: [*]const CompositeAlphaMode,
 
+    // Frees array members of SurfaceCapabilities which were allocated by the API.
     pub inline fn freeMembers(self: SurfaceCapabilities) void {
         wgpuSurfaceCapabilitiesFreeMembers(self);
     }
@@ -339,7 +341,7 @@ pub const SurfaceTexture = extern struct {
 
     // The Texture representing the frame that will be shown on the surface.
     // It is ReturnedWithOwnership from Surface.getCurrentTexture().
-    texture: *Texture,
+    texture: ?*Texture,
 
     // Whether the call to Surface.getCurrentTexture() succeeded and a hint as to why it might not have.
     status: GetCurrentTextureStatus,
@@ -347,20 +349,20 @@ pub const SurfaceTexture = extern struct {
 
 pub const SurfaceProcs = struct {
     pub const Configure = *const fn(*Surface, *const SurfaceConfiguration) callconv(.C) void;
-    pub const GetCapabilities = *const fn(*Surface, *Adapter, *SurfaceCapabilities) callconv(.C) void;
+    pub const GetCapabilities = *const fn(*Surface, *Adapter, *SurfaceCapabilities) callconv(.C) Status;
     pub const GetCurrentTexture = *const fn(*Surface, *SurfaceTexture) callconv(.C) void;
-    pub const Present = *const fn(*Surface) callconv(.C) void;
-    pub const SetLabel = *const fn(*Surface, ?[*:0]const u8) void;
+    pub const Present = *const fn(*Surface) callconv(.C) Status;
+    pub const SetLabel = *const fn(*Surface, StringView) void;
     pub const Unconfigure = *const fn(*Surface) callconv(.C) void;
     pub const AddRef = *const fn(*Surface) callconv(.C) void;
     pub const Release = *const fn(*Surface) callconv(.C) void;
 };
 
 extern fn wgpuSurfaceConfigure(surface: *Surface, config: *const SurfaceConfiguration) void;
-extern fn wgpuSurfaceGetCapabilities(surface: *Surface, adapter: *Adapter, capabilities: *SurfaceCapabilities) void;
+extern fn wgpuSurfaceGetCapabilities(surface: *Surface, adapter: *Adapter, capabilities: *SurfaceCapabilities) Status;
 extern fn wgpuSurfaceGetCurrentTexture(surface: *Surface, surface_texture: *SurfaceTexture) void;
-extern fn wgpuSurfacePresent(surface: *Surface) void;
-extern fn wgpuSurfaceSetLabel(surface: *Surface, label: ?[*:0]const u8) void;
+extern fn wgpuSurfacePresent(surface: *Surface) Status;
+extern fn wgpuSurfaceSetLabel(surface: *Surface, label: StringView) void;
 extern fn wgpuSurfaceUnconfigure(surface: *Surface) void;
 extern fn wgpuSurfaceAddRef(surface: *Surface) void;
 extern fn wgpuSurfaceRelease(surface: *Surface) void;
@@ -369,21 +371,49 @@ pub const Surface = opaque {
     pub inline fn configure(self: *Surface, config: *const SurfaceConfiguration) void {
         wgpuSurfaceConfigure(self, config);
     }
-    pub inline fn getCapabilities(self: *Surface, adapter: *Adapter, capabilities: *SurfaceCapabilities) void {
-        wgpuSurfaceGetCapabilities(self, adapter, capabilities);
+
+    // Provides information on how `adapter` is able to use `surface`.
+    //
+    // adapter
+    // The Adapter to get capabilities for presenting to this Surface.
+    //
+    // capabilities
+    // The structure to fill capabilities in.
+    // It may contain memory allocations so `capabilities.freeMembers()` must be called to avoid memory leaks.
+    //
+    // Return value indicates if there was an OutStructChainError.
+    //
+    pub inline fn getCapabilities(self: *Surface, adapter: *Adapter, capabilities: *SurfaceCapabilities) Status {
+        return wgpuSurfaceGetCapabilities(self, adapter, capabilities);
     }
+
+    // Retrieves the Texture to render to `surface` this frame along with metadata on the frame.
+    // Populates surface_texture with .texture = null and .status = GetCurrentTextureStatus.@"error" if the surface is not configured.
+    //
+    // surface_texture
+    // The structure to fill the Texture and metadata in.
+    //
     pub inline fn getCurrentTexture(self: *Surface, surface_texture: *SurfaceTexture) void {
         wgpuSurfaceGetCurrentTexture(self, surface_texture);
     }
-    pub inline fn present(self: *Surface) void {
-        wgpuSurfacePresent(self);
+
+    // Shows `surface`'s current texture to the user.
+    //
+    // Returns Status.@"error" if the surface doesn't have a current texture.
+    //
+    pub inline fn present(self: *Surface) Status {
+        return wgpuSurfacePresent(self);
     }
-    pub inline fn setLabel(self: *Surface, label: ?[*:0]const u8) void {
-        wgpuSurfaceSetLabel(self, label);
+
+    pub inline fn setLabel(self: *Surface, label: []const u8) void {
+        wgpuSurfaceSetLabel(self, StringView.fromSlice(label));
     }
+
+    // Removes the configuration for `surface`.
     pub inline fn unconfigure(self: *Surface) void {
         wgpuSurfaceUnconfigure(self);
     }
+
     pub inline fn addRef(self: *Surface) void {
         wgpuSurfaceAddRef(self);
     }

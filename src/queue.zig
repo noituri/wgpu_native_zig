@@ -42,7 +42,7 @@ pub const QueueWorkDoneCallback = *const fn(status: WorkDoneStatus, userdata1: ?
 
 pub const QueueProcs = struct {
     pub const OnSubmittedWorkDone = *const fn(*Queue, QueueWorkDoneCallbackInfo) callconv(.C) Future;
-    pub const SetLabel = *const fn(*Queue, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*Queue, StringView) callconv(.C) void;
     pub const Submit = *const fn(*Queue, usize, [*]const *const CommandBuffer) callconv(.C) void;
     pub const WriteBuffer = *const fn(*Queue, Buffer, u64, *const anyopaque, usize) callconv(.C) void;
     pub const WriteTexture = *const fn(*Queue, *const TexelCopyTextureInfo, *const anyopaque, usize, *const TexelCopyBufferLayout, *const Extent3D) callconv(.C) void;
@@ -54,7 +54,7 @@ pub const QueueProcs = struct {
 };
 
 extern fn wgpuQueueOnSubmittedWorkDone(queue: *Queue, callback_info: QueueWorkDoneCallbackInfo) Future;
-extern fn wgpuQueueSetLabel(queue: *Queue, label: ?[*:0]const u8) void;
+extern fn wgpuQueueSetLabel(queue: *Queue, label: StringView) void;
 extern fn wgpuQueueSubmit(queue: *Queue, command_count: usize, commands: [*]const *const CommandBuffer) void;
 extern fn wgpuQueueWriteBuffer(queue: *Queue, buffer: *Buffer, buffer_offset: u64, data: *const anyopaque, size: usize) void;
 extern fn wgpuQueueWriteTexture(queue: *Queue, destination: *const TexelCopyTextureInfo, data: *const anyopaque, data_size: usize, data_layout: *const TexelCopyBufferLayout, write_size: *const Extent3D) void;
@@ -68,15 +68,17 @@ pub const Queue = opaque {
     pub inline fn onSubmittedWorkDone(self: *Queue, callback_info: QueueWorkDoneCallbackInfo) Future {
         return wgpuQueueOnSubmittedWorkDone(self, callback_info);
     }
-    pub inline fn setLabel(self: *Queue, label: ?[*:0]const u8) void {
-        wgpuQueueSetLabel(self, label);
+    pub inline fn setLabel(self: *Queue, label: []const u8) void {
+        wgpuQueueSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn submit(self: *Queue, commands: []const *const CommandBuffer) void {
         wgpuQueueSubmit(self, commands.len, commands.ptr);
     }
+
     pub inline fn writeBuffer(self: *Queue, buffer: *Buffer, buffer_offset: u64, data: *const anyopaque, size: usize) void {
         wgpuQueueWriteBuffer(self, buffer, buffer_offset, data, size);
     }
+
     pub inline fn writeTexture(self: *Queue, destination: *const TexelCopyTextureInfo, data: *const anyopaque, data_size: usize, data_layout: *const TexelCopyBufferLayout, write_size: *const Extent3D) void {
         wgpuQueueWriteTexture(self, destination, data, data_size, data_layout, write_size);
     }

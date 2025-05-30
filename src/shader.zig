@@ -165,13 +165,13 @@ pub const CompilationInfoCallbackInfo = extern struct {
 
 pub const ShaderModuleProcs = struct {
     pub const GetCompilationInfo = *const fn(*ShaderModule, CompilationInfoCallbackInfo) callconv(.C) Future;
-    pub const SetLabel = *const fn(*ShaderModule, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*ShaderModule, StringView) callconv(.C) void;
     pub const AddRef = *const fn(*ShaderModule) callconv(.C) void;
     pub const Release = *const fn(*ShaderModule) callconv(.C) void;
 };
 
 extern fn wgpuShaderModuleGetCompilationInfo(shader_module: *ShaderModule, callback_info: CompilationInfoCallbackInfo) Future;
-extern fn wgpuShaderModuleSetLabel(shader_module: *ShaderModule, label: ?[*:0]const u8) void;
+extern fn wgpuShaderModuleSetLabel(shader_module: *ShaderModule, label: StringView) void;
 extern fn wgpuShaderModuleAddRef(shader_module: *ShaderModule) void;
 extern fn wgpuShaderModuleRelease(shader_module: *ShaderModule) void;
 
@@ -179,8 +179,8 @@ pub const ShaderModule = opaque {
     pub inline fn getCompilationInfo(self: *ShaderModule, callback_info: CompilationInfoCallbackInfo) Future {
         return wgpuShaderModuleGetCompilationInfo(self, callback_info);
     }
-    pub inline fn setLabel(self: *ShaderModule, label: ?[*:0]const u8) void {
-        wgpuShaderModuleSetLabel(self, label);
+    pub inline fn setLabel(self: *ShaderModule, label: []const u8) void {
+        wgpuShaderModuleSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn addRef(self: *ShaderModule) void {
         wgpuShaderModuleAddRef(self);

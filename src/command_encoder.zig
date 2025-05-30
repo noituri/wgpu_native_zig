@@ -53,11 +53,11 @@ const ComputePassEncoderProcs = struct {
     pub const DispatchWorkgroups = *const fn(*ComputePassEncoder, u32, u32, u32) callconv(.C) void;
     pub const DispatchWorkgroupsIndirect = *const fn(*ComputePassEncoder, *Buffer, u64) callconv(.C) void;
     pub const End = *const fn(*ComputePassEncoder) callconv(.C) void;
-    pub const InsertDebugMarker = *const fn(*ComputePassEncoder, [*:0]const u8) callconv(.C) void;
+    pub const InsertDebugMarker = *const fn(*ComputePassEncoder, StringView) callconv(.C) void;
     pub const PopDebugGroup = *const fn(*ComputePassEncoder) callconv(.C) void;
-    pub const PushDebugGroup = *const fn(*ComputePassEncoder, [*:0]const u8) callconv(.C) void;
+    pub const PushDebugGroup = *const fn(*ComputePassEncoder, StringView) callconv(.C) void;
     pub const SetBindGroup = *const fn(*ComputePassEncoder, u32, *BindGroup, usize, ?[*]const u32) callconv(.C) void;
-    pub const SetLabel = *const fn(*ComputePassEncoder, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*ComputePassEncoder, StringView) callconv(.C) void;
     pub const SetPipeline = *const fn(*ComputePassEncoder, *ComputePipeline) callconv(.C) void;
     pub const AddRef = *const fn(*ComputePassEncoder) callconv(.C) void;
     pub const Release = *const fn(*ComputePassEncoder) callconv(.C) void;
@@ -72,11 +72,11 @@ const ComputePassEncoderProcs = struct {
 extern fn wgpuComputePassEncoderDispatchWorkgroups(compute_pass_encoder: *ComputePassEncoder, workgroup_count_x: u32, workgroup_count_y: u32, workgroup_count_z: u32) void;
 extern fn wgpuComputePassEncoderDispatchWorkgroupsIndirect(compute_pass_encoder: *ComputePassEncoder, indirect_buffer: *Buffer, indirect_offset: u64) void;
 extern fn wgpuComputePassEncoderEnd(compute_pass_encoder: *ComputePassEncoder) void;
-extern fn wgpuComputePassEncoderInsertDebugMarker(compute_pass_encoder: *ComputePassEncoder, marker_label: [*:0]const u8) void;
+extern fn wgpuComputePassEncoderInsertDebugMarker(compute_pass_encoder: *ComputePassEncoder, marker_label: StringView) void;
 extern fn wgpuComputePassEncoderPopDebugGroup(compute_pass_encoder: *ComputePassEncoder) void;
-extern fn wgpuComputePassEncoderPushDebugGroup(compute_pass_encoder: *ComputePassEncoder, group_label: [*:0]const u8) void;
+extern fn wgpuComputePassEncoderPushDebugGroup(compute_pass_encoder: *ComputePassEncoder, group_label: StringView) void;
 extern fn wgpuComputePassEncoderSetBindGroup(compute_pass_encoder: *ComputePassEncoder, group_index: u32, group: *BindGroup, dynamic_offset_count: usize, dynamic_offsets: ?[*]const u32) void;
-extern fn wgpuComputePassEncoderSetLabel(compute_pass_encoder: *ComputePassEncoder, label: ?[*:0]const u8) void;
+extern fn wgpuComputePassEncoderSetLabel(compute_pass_encoder: *ComputePassEncoder, label: StringView) void;
 extern fn wgpuComputePassEncoderSetPipeline(compute_pass_encoder: *ComputePassEncoder, pipeline: *ComputePipeline) void;
 extern fn wgpuComputePassEncoderAddRef(compute_pass_encoder: *ComputePassEncoder) void;
 extern fn wgpuComputePassEncoderRelease(compute_pass_encoder: *ComputePassEncoder) void;
@@ -97,20 +97,20 @@ pub const ComputePassEncoder = opaque {
     pub inline fn end(self: *ComputePassEncoder) void {
         wgpuComputePassEncoderEnd(self);
     }
-    pub inline fn insertDebugMarker(self: *ComputePassEncoder, marker_label: [*:0]const u8) void {
-        wgpuComputePassEncoderInsertDebugMarker(self, marker_label);
+    pub inline fn insertDebugMarker(self: *ComputePassEncoder, marker_label: []const u8) void {
+        wgpuComputePassEncoderInsertDebugMarker(self, StringView.fromSlice(marker_label));
     }
     pub inline fn popDebugGroup(self: *ComputePassEncoder) void {
         wgpuComputePassEncoderPopDebugGroup(self);
     }
-    pub inline fn pushDebugGroup(self: *ComputePassEncoder, group_label: [*:0]const u8) void {
-        wgpuComputePassEncoderPushDebugGroup(self, group_label);
+    pub inline fn pushDebugGroup(self: *ComputePassEncoder, group_label: []const u8) void {
+        wgpuComputePassEncoderPushDebugGroup(self, StringView.fromSlice(group_label));
     }
     pub inline fn setBindGroup(self: *ComputePassEncoder, group_index: u32, group: *BindGroup, dynamic_offset_count: usize, dynamic_offsets: ?[*]const u32) void {
         wgpuComputePassEncoderSetBindGroup(self, group_index, group, dynamic_offset_count, dynamic_offsets);
     }
-    pub inline fn setLabel(self: *ComputePassEncoder, label: ?[*:0]const u8) void {
-        wgpuComputePassEncoderSetLabel(self, label);
+    pub inline fn setLabel(self: *ComputePassEncoder, label: []const u8) void {
+        wgpuComputePassEncoderSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn setPipeline(self: *ComputePassEncoder, pipeline: *ComputePipeline) void {
         wgpuComputePassEncoderSetPipeline(self, pipeline);
@@ -215,13 +215,13 @@ pub const RenderPassEncoderProcs = struct {
     pub const End = *const fn(*RenderPassEncoder) callconv(.C) void;
     pub const EndOcclusionQuery = *const fn(*RenderPassEncoder) callconv(.C) void;
     pub const ExecuteBundles = *const fn(*RenderPassEncoder, usize, [*]const *const RenderBundle) callconv(.C) void;
-    pub const InsertDebugMarker = *const fn(*RenderPassEncoder, [*:0]const u8) callconv(.C) void;
+    pub const InsertDebugMarker = *const fn(*RenderPassEncoder, StringView) callconv(.C) void;
     pub const PopDebugGroup = *const fn(*RenderPassEncoder) callconv(.C) void;
-    pub const PushDebugGroup = *const fn(*RenderPassEncoder, [*:0]const u8) callconv(.C) void;
+    pub const PushDebugGroup = *const fn(*RenderPassEncoder, StringView) callconv(.C) void;
     pub const SetBindGroup = *const fn(*RenderPassEncoder, u32, *BindGroup, usize, ?[*]const u32) callconv(.C) void;
     pub const SetBlendConstant = *const fn(*RenderPassEncoder, *const Color) callconv(.C) void;
     pub const SetIndexBuffer = *const fn(*RenderPassEncoder, *Buffer, IndexFormat, u64, u64) callconv(.C) void;
-    pub const SetLabel = *const fn(*RenderPassEncoder, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*RenderPassEncoder, StringView) callconv(.C) void;
     pub const SetPipeline = *const fn(*RenderPassEncoder, *RenderPipeline) callconv(.C) void;
     pub const SetScissorRect = *const fn(*RenderPassEncoder, u32, u32, u32, u32) callconv(.C) void;
     pub const SetStencilReference = *const fn(*RenderPassEncoder, u32) callconv(.C) void;
@@ -249,13 +249,13 @@ extern fn wgpuRenderPassEncoderDrawIndirect(render_pass_encoder: *RenderPassEnco
 extern fn wgpuRenderPassEncoderEnd(render_pass_encoder: *RenderPassEncoder) void;
 extern fn wgpuRenderPassEncoderEndOcclusionQuery(render_pass_encoder: *RenderPassEncoder) void;
 extern fn wgpuRenderPassEncoderExecuteBundles(render_pass_encoder: *RenderPassEncoder, bundle_count: usize, bundles: [*]const *const RenderBundle) void;
-extern fn wgpuRenderPassEncoderInsertDebugMarker(render_pass_encoder: *RenderPassEncoder, marker_label: [*:0]const u8) void;
+extern fn wgpuRenderPassEncoderInsertDebugMarker(render_pass_encoder: *RenderPassEncoder, marker_label: StringView) void;
 extern fn wgpuRenderPassEncoderPopDebugGroup(render_pass_encoder: *RenderPassEncoder) void;
-extern fn wgpuRenderPassEncoderPushDebugGroup(render_pass_encoder: *RenderPassEncoder, group_label: [*:0]const u8) void;
+extern fn wgpuRenderPassEncoderPushDebugGroup(render_pass_encoder: *RenderPassEncoder, group_label: StringView) void;
 extern fn wgpuRenderPassEncoderSetBindGroup(render_pass_encoder: *RenderPassEncoder, group_index: u32, group: *BindGroup, dynamic_offset_count: usize, dynamic_offsets: ?[*]const u32) void;
 extern fn wgpuRenderPassEncoderSetBlendConstant(render_pass_encoder: *RenderPassEncoder, color: *const Color) void;
 extern fn wgpuRenderPassEncoderSetIndexBuffer(render_pass_encoder: *RenderPassEncoder, buffer: *Buffer, format: IndexFormat, offset: u64, size: u64) void;
-extern fn wgpuRenderPassEncoderSetLabel(render_pass_encoder: *RenderPassEncoder, label: ?[*:0]const u8) void;
+extern fn wgpuRenderPassEncoderSetLabel(render_pass_encoder: *RenderPassEncoder, label: StringView) void;
 extern fn wgpuRenderPassEncoderSetPipeline(render_pass_encoder: *RenderPassEncoder, pipeline: *RenderPipeline) void;
 extern fn wgpuRenderPassEncoderSetScissorRect(render_pass_encoder: *RenderPassEncoder, x: u32, y: u32, width: u32, height: u32) void;
 extern fn wgpuRenderPassEncoderSetStencilReference(render_pass_encoder: *RenderPassEncoder, stencil_reference: u32) void;
@@ -299,14 +299,14 @@ pub const RenderPassEncoder = opaque {
     pub inline fn executeBundles(self: *RenderPassEncoder, bundles: []const *const RenderBundle) void {
         wgpuRenderPassEncoderExecuteBundles(self, bundles.len, bundles.ptr);
     }
-    pub inline fn insertDebugMarker(self: *RenderPassEncoder, marker_label: [*:0]const u8) void {
-        wgpuRenderPassEncoderInsertDebugMarker(self, marker_label);
+    pub inline fn insertDebugMarker(self: *RenderPassEncoder, marker_label: []const u8) void {
+        wgpuRenderPassEncoderInsertDebugMarker(self, StringView.fromSlice(marker_label));
     }
     pub inline fn popDebugGroup(self: *RenderPassEncoder) void {
         wgpuRenderPassEncoderPopDebugGroup(self);
     }
-    pub inline fn pushDebugGroup(self: *RenderPassEncoder, group_label: [*:0]const u8) void {
-        wgpuRenderPassEncoderPushDebugGroup(self, group_label);
+    pub inline fn pushDebugGroup(self: *RenderPassEncoder, group_label: []const u8) void {
+        wgpuRenderPassEncoderPushDebugGroup(self, StringView.fromSlice(group_label));
     }
     pub inline fn setBindGroup(self: *RenderPassEncoder, group_index: u32, group: *BindGroup, dynamic_offset_count: usize, dynamic_offsets: ?[*]const u32) void {
         wgpuRenderPassEncoderSetBindGroup(self, group_index, group, dynamic_offset_count, dynamic_offsets);
@@ -317,8 +317,8 @@ pub const RenderPassEncoder = opaque {
     pub inline fn setIndexBuffer(self: *RenderPassEncoder, buffer: *Buffer, format: IndexFormat, offset: u64, size: u64) void {
         wgpuRenderPassEncoderSetIndexBuffer(self, buffer, format, offset, size);
     }
-    pub inline fn setLabel(self: *RenderPassEncoder, label: ?[*:0]const u8) void {
-        wgpuRenderPassEncoderSetLabel(self, label);
+    pub inline fn setLabel(self: *RenderPassEncoder, label: []const u8) void {
+        wgpuRenderPassEncoderSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn setPipeline(self: *RenderPassEncoder, pipeline: *RenderPipeline) void {
         wgpuRenderPassEncoderSetPipeline(self, pipeline);
@@ -375,18 +375,18 @@ pub const CommandBufferDescriptor = extern struct {
 };
 
 pub const CommandBufferProcs = struct {
-    pub const SetLabel = *const fn(*CommandBuffer, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*CommandBuffer, StringView) callconv(.C) void;
     pub const AddRef = *const fn(*CommandBuffer) callconv(.C) void;
     pub const Release = *const fn(*CommandBuffer) callconv(.C) void;
 };
 
-extern fn wgpuCommandBufferSetLabel(command_buffer: *CommandBuffer, label: ?[*:0]const u8) void;
+extern fn wgpuCommandBufferSetLabel(command_buffer: *CommandBuffer, label: StringView) void;
 extern fn wgpuCommandBufferAddRef(command_buffer: *CommandBuffer) void;
 extern fn wgpuCommandBufferRelease(command_buffer: *CommandBuffer) void;
 
 pub const CommandBuffer = opaque {
-    pub inline fn setLabel(self: *CommandBuffer, label: ?[*:0]const u8) void {
-        wgpuCommandBufferSetLabel(self, label);
+    pub inline fn setLabel(self: *CommandBuffer, label: []const u8) void {
+        wgpuCommandBufferSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn addRef(self: *CommandBuffer) void {
         wgpuCommandBufferAddRef(self);
@@ -405,11 +405,11 @@ pub const CommandEncoderProcs = struct {
     pub const CopyTextureToBuffer = *const fn(*CommandEncoder, *const TexelCopyTextureInfo, *const TexelCopyBufferInfo, *const Extent3D) callconv(.C) void;
     pub const CopyTextureToTexture = *const fn(*CommandEncoder, *const TexelCopyTextureInfo, *const TexelCopyTextureInfo, *const Extent3D) callconv(.C) void;
     pub const Finish = *const fn(*CommandEncoder, ?*const CommandBufferDescriptor) callconv(.C) ?*CommandBuffer;
-    pub const InsertDebugMarker = *const fn(*CommandEncoder, [*:0]const u8) callconv(.C) void;
+    pub const InsertDebugMarker = *const fn(*CommandEncoder, StringView) callconv(.C) void;
     pub const PopDebugGroup = *const fn(*CommandEncoder) callconv(.C) void;
-    pub const PushDebugGroup = *const fn(*CommandEncoder, [*:0]const u8) callconv(.C) void;
+    pub const PushDebugGroup = *const fn(*CommandEncoder, StringView) callconv(.C) void;
     pub const ResolveQuerySet = *const fn(*CommandEncoder, *QuerySet, u32, u32, *Buffer, u64) callconv(.C) void;
-    pub const SetLabel = *const fn(*CommandEncoder, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*CommandEncoder, StringView) callconv(.C) void;
     pub const WriteTimestamp = *const fn(*CommandEncoder, *QuerySet, u32) callconv(.C) void;
     pub const AddRef = *const fn(*CommandEncoder) callconv(.C) void;
     pub const Release = *const fn(*CommandEncoder) callconv(.C) void;
@@ -423,11 +423,11 @@ extern fn wgpuCommandEncoderCopyBufferToTexture(command_encoder: *CommandEncoder
 extern fn wgpuCommandEncoderCopyTextureToBuffer(command_encoder: *CommandEncoder, source: *const TexelCopyTextureInfo, destination: *const TexelCopyBufferInfo, copy_size: *const Extent3D) void;
 extern fn wgpuCommandEncoderCopyTextureToTexture(command_encoder: *CommandEncoder, source: *const TexelCopyTextureInfo, destination: *const TexelCopyTextureInfo, copy_size: *const Extent3D) void;
 extern fn wgpuCommandEncoderFinish(command_encoder: *CommandEncoder, descriptor: ?*const CommandBufferDescriptor) ?*CommandBuffer;
-extern fn wgpuCommandEncoderInsertDebugMarker(command_encoder: *CommandEncoder, marker_label: [*:0]const u8) void;
+extern fn wgpuCommandEncoderInsertDebugMarker(command_encoder: *CommandEncoder, marker_label: StringView) void;
 extern fn wgpuCommandEncoderPopDebugGroup(command_encoder: *CommandEncoder) void;
-extern fn wgpuCommandEncoderPushDebugGroup(command_encoder: *CommandEncoder, group_label: [*:0]const u8) void;
+extern fn wgpuCommandEncoderPushDebugGroup(command_encoder: *CommandEncoder, group_label: StringView) void;
 extern fn wgpuCommandEncoderResolveQuerySet(command_encoder: *CommandEncoder, query_set: *QuerySet, first_query: u32, query_count: u32, destination: *Buffer, destination_offset: u64) void;
-extern fn wgpuCommandEncoderSetLabel(command_encoder: *CommandEncoder, label: ?[*:0]const u8) void;
+extern fn wgpuCommandEncoderSetLabel(command_encoder: *CommandEncoder, label: StringView) void;
 extern fn wgpuCommandEncoderWriteTimestamp(command_encoder: *CommandEncoder, query_set: *QuerySet, query_index: u32) void;
 extern fn wgpuCommandEncoderAddRef(command_encoder: *CommandEncoder) void;
 extern fn wgpuCommandEncoderRelease(command_encoder: *CommandEncoder) void;
@@ -457,20 +457,20 @@ pub const CommandEncoder = opaque {
     pub inline fn finish(self: *CommandEncoder, descriptor: ?*const CommandBufferDescriptor) ?*CommandBuffer {
         return wgpuCommandEncoderFinish(self, descriptor);
     }
-    pub inline fn insertDebugMarker(self: *CommandEncoder, marker_label: [*:0]const u8) void {
-        wgpuCommandEncoderInsertDebugMarker(self, marker_label);
+    pub inline fn insertDebugMarker(self: *CommandEncoder, marker_label: []const u8) void {
+        wgpuCommandEncoderInsertDebugMarker(self, StringView.fromSlice(marker_label));
     }
     pub inline fn popDebugGroup(self: *CommandEncoder) void {
         wgpuCommandEncoderPopDebugGroup(self);
     }
-    pub inline fn pushDebugGroup(self: *CommandEncoder, group_label: [*:0]const u8) void {
-        wgpuCommandEncoderPushDebugGroup(self, group_label);
+    pub inline fn pushDebugGroup(self: *CommandEncoder, group_label: []const u8) void {
+        wgpuCommandEncoderPushDebugGroup(self, StringView.fromSlice(group_label));
     }
     pub inline fn resolveQuerySet(self: *CommandEncoder, query_set: *QuerySet, first_query: u32, query_count: u32, destination: *Buffer, destination_offset: u64) void {
         wgpuCommandEncoderResolveQuerySet(self, query_set, first_query, query_count, destination, destination_offset);
     }
-    pub inline fn setLabel(self: *CommandEncoder, label: ?[*:0]const u8) void {
-        wgpuCommandEncoderSetLabel(self, label);
+    pub inline fn setLabel(self: *CommandEncoder, label: []const u8) void {
+        wgpuCommandEncoderSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn writeTimestamp(self: *CommandEncoder, query_set: *QuerySet, query_index: u32) void {
         wgpuCommandEncoderWriteTimestamp(self, query_set, query_index);

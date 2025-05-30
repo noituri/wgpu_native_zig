@@ -77,9 +77,20 @@ pub const FeatureName = enum(u32) {
     timestamp_query_inside_passes                                 = 0x00030025,
 };
 
+pub const SupportedFeaturesProcs = struct {
+    pub const FreeMembers = *const fn(SupportedFeatures) callconv(.C) void;
+};
+
+extern fn wgpuSupportedFeaturesFreeMembers(supported_features: SupportedFeatures) void;
+
 pub const SupportedFeatures = extern struct {
     feature_count: usize,
     features: [*]const FeatureName,
+
+    // Frees array members of SupportedFeatures which were allocated by the API.
+    pub inline fn freeMembers(self: SupportedFeatures) void {
+        wgpuSupportedFeaturesFreeMembers(self);
+    }
 };
 
 pub const IndexFormat = enum(u32) {

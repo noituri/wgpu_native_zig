@@ -22,8 +22,12 @@ const _misc = @import("misc.zig");
 const WGPUFlags = _misc.WGPUFlags;
 const WGPUBool = _misc.WGPUBool;
 const StringView = _misc.StringView;
+const Status = _misc.Status;
 
-const Future = @import("async.zig").Future;
+const _async = @import("async.zig");
+const Future = _async.Future;
+const WaitStatus = _async.WaitStatus;
+const FutureWaitInfo = _async.FutureWaitInfo;
 
 pub const InstanceBackend = WGPUFlags;
 pub const InstanceBackends = struct {
@@ -102,17 +106,31 @@ pub const WGSLLanguageFeatureName = enum(u32) {
     pointer_composite_access                = 0x00000004,
 };
 
+pub const SupportedWGSLLanguageFeaturesProcs = struct {
+    pub const FreeMembers = *const fn(SupportedWGSLLanguageFeatures) callconv(.C) void;
+};
+
+extern fn wgpuSupportedWGSLLanguageFeaturesFreeMembers(supported_wgsl_language_features: SupportedWGSLLanguageFeatures) void;
+
 pub const SupportedWGSLLanguageFeatures = extern struct {
     feature_count: usize,
     features: [*]const WGSLLanguageFeatureName,
+
+    pub inline fn freeMembers(self: SupportedWGSLLanguageFeatures) void {
+        wgpuSupportedWGSLLanguageFeaturesFreeMembers(self);
+    }
 };
 
 pub const InstanceProcs = struct {
     pub const CreateInstance = *const fn(?*const InstanceDescriptor) callconv(.C) ?*Instance;
-    pub const CreateSurface = *const fn(*Instance, *const SurfaceDescriptor) ?*Surface;
-    pub const HasWGSLLanguageFeature = *const fn(*Instance, WGSLLanguageFeatureName) WGPUBool;
+    pub const GetCapabilities = *const fn(*InstanceCapabilities) callconv(.C) Status;
+
+    pub const CreateSurface = *const fn(*Instance, *const SurfaceDescriptor) callconv(.C) ?*Surface;
+    pub const GetWGSLLanguageFeatures = *const fn(*Instance, *SupportedWGSLLanguageFeatures) callconv(.C) Status;
+    pub const HasWGSLLanguageFeature = *const fn(*Instance, WGSLLanguageFeatureName) callconv(.C) WGPUBool;
     pub const ProcessEvents = *const fn(*Instance) callconv(.C) void;
     pub const RequestAdapter = *const fn(*Instance, ?*const RequestAdapterOptions, RequestAdapterCallbackInfo) callconv(.C) Future;
+    pub const WaitAny = *const fn(*Instance, usize, ?[*] FutureWaitInfo, u64) callconv(.C) WaitStatus;
     pub const InstanceAddRef = *const fn(*Instance) callconv(.C) void;
     pub const InstanceRelease = *const fn(*Instance) callconv(.C) void;
 
@@ -121,11 +139,15 @@ pub const InstanceProcs = struct {
     // pub const EnumerateAdapters = *const fn(*Instance, ?*const EnumerateAdapterOptions, ?[*]Adapter) callconv(.C) usize;
 };
 
+extern fn wgpuGetInstanceCapabilities(capabilities: *InstanceCapabilities) Status;
+
 extern fn wgpuCreateInstance(descriptor: ?*const InstanceDescriptor) ?*Instance;
 extern fn wgpuInstanceCreateSurface(instance: *Instance, descriptor: *const SurfaceDescriptor) ?*Surface;
+extern fn wgpuInstanceGetWGSLLanguageFeatures(instance: *Instance, features: *SupportedWGSLLanguageFeatures) Status;
 extern fn wgpuInstanceHasWGSLLanguageFeature(instance: *Instance, feature: WGSLLanguageFeatureName) WGPUBool;
 extern fn wgpuInstanceProcessEvents(instance: *Instance) void;
 extern fn wgpuInstanceRequestAdapter(instance: *Instance, options: ?*const RequestAdapterOptions, callback_info: RequestAdapterCallbackInfo) Future;
+extern fn wgpuInstanceWaitAny(instance: *Instance, future_count: usize, futures: ?[*] FutureWaitInfo, timeout_ns: u64) WaitStatus;
 extern fn wgpuInstanceAddRef(instance: *Instance) void;
 extern fn wgpuInstanceRelease(instance: *Instance) void;
 
@@ -171,18 +193,30 @@ extern fn wgpuGenerateReport(instance: *Instance, report: *GlobalReport) void;
 extern fn wgpuInstanceEnumerateAdapters(instance: *Instance, options: ?*EnumerateAdapterOptions, adapters: ?[*]Adapter) usize;
 
 pub const Instance = opaque {
+    // This is a global function, but it creates an instance so I put it here.
     pub inline fn create(descriptor: ?*const InstanceDescriptor) ?*Instance {
         return wgpuCreateInstance(descriptor);
+    }
+
+    // This is also a global function, but I think it would make sense being a member of Instance;
+    // You'd use it like `const status = Instance.getCapabilities(&capabilities);`
+    pub inline fn getCapabilities(capabilities: *InstanceCapabilities) Status {
+        return wgpuGetInstanceCapabilities(capabilities);
     }
 
     pub inline fn createSurface(self: *Instance, descriptor: *const SurfaceDescriptor) ?*Surface {
         return wgpuInstanceCreateSurface(self, descriptor);
     }
 
+    pub inline fn getWGSLLanguageFeatures(self: *Instance, features: *SupportedWGSLLanguageFeatures) Status {
+        return wgpuInstanceGetWGSLLanguageFeatures(self, features);
+    }
+
     pub inline fn hasWGSLLanguageFeature(self: *Instance, feature: WGSLLanguageFeatureName) bool {
         return wgpuInstanceHasWGSLLanguageFeature(self, feature) != 0;
     }
 
+    // Processes asynchronous events on this Instance, calling any callbacks for asynchronous operations created with `CallbackMode.allow_process_events`.
     pub inline fn processEvents(self: *Instance) void {
         wgpuInstanceProcessEvents(self);
     }
@@ -225,6 +259,11 @@ pub const Instance = opaque {
 
     pub inline fn requestAdapter(self: *Instance, options: ?*const RequestAdapterOptions, callback_info: RequestAdapterCallbackInfo) Future {
         return wgpuInstanceRequestAdapter(self, options, callback_info);
+    }
+
+    // Wait for at least one Future in `futures` to complete, and call callbacks of the respective completed asynchronous operations.
+    pub inline fn waitAny(self: *Instance, future_count: usize, futures: ?[*] FutureWaitInfo, timeout_ns: u64) WaitStatus {
+        return wgpuInstanceWaitAny(self, future_count, futures, timeout_ns);
     }
 
     pub inline fn addRef(self: *Instance) void {

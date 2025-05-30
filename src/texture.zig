@@ -154,18 +154,18 @@ pub const TextureViewDescriptor = extern struct {
 };
 
 pub const TextureViewProcs = struct {
-    pub const SetLabel = *const fn(*TextureView, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*TextureView, StringView) callconv(.C) void;
     pub const AddRef = *const fn(*TextureView) callconv(.C) void;
     pub const Release = *const fn(*TextureView) callconv(.C) void;
 };
 
-extern fn wgpuTextureViewSetLabel(texture_view: *TextureView, label: ?[*:0]const u8) void;
+extern fn wgpuTextureViewSetLabel(texture_view: *TextureView, label: StringView) void;
 extern fn wgpuTextureViewAddRef(texture_view: *TextureView) void;
 extern fn wgpuTextureViewRelease(texture_view: *TextureView) void;
 
 pub const TextureView = opaque {
-    pub inline fn setLabel(self: *TextureView, label: ?[*:0]const u8) void {
-        wgpuTextureViewSetLabel(self, label);
+    pub inline fn setLabel(self: *TextureView, label: []const u8) void {
+        wgpuTextureViewSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn addRef(self: *TextureView) void {
         wgpuTextureViewAddRef(self);
@@ -263,7 +263,7 @@ pub const TextureProcs = struct {
     pub const GetSampleCount = *const fn(*Texture) callconv(.C) u32;
     pub const GetUsage = *const fn(*Texture) callconv(.C) TextureUsage;
     pub const GetWidth = *const fn(*Texture) callconv(.C) u32;
-    pub const SetLabel = *const fn(*Texture, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*Texture, StringView) callconv(.C) void;
     pub const AddRef = *const fn(*Texture) callconv(.C) void;
     pub const Release = *const fn(*Texture) callconv(.C) void;
 };
@@ -278,7 +278,7 @@ extern fn wgpuTextureGetMipLevelCount(texture: *Texture) u32;
 extern fn wgpuTextureGetSampleCount(texture: *Texture) u32;
 extern fn wgpuTextureGetUsage(texture: *Texture) TextureUsage;
 extern fn wgpuTextureGetWidth(texture: *Texture) u32;
-extern fn wgpuTextureSetLabel(texture: *Texture, label: ?[*:0]const u8) void;
+extern fn wgpuTextureSetLabel(texture: *Texture, label: StringView) void;
 extern fn wgpuTextureAddRef(texture: *Texture) void;
 extern fn wgpuTextureRelease(texture: *Texture) void;
 
@@ -313,8 +313,8 @@ pub const Texture = opaque {
     pub inline fn getWidth(self: *Texture) u32 {
         return wgpuTextureGetWidth(self);
     }
-    pub inline fn setLabel(self: *Texture, label: ?[*:0]const u8) void {
-        wgpuTextureSetLabel(self, label);
+    pub inline fn setLabel(self: *Texture, label: []const u8) void {
+        wgpuTextureSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn addRef(self: *Texture) void {
         wgpuTextureAddRef(self);

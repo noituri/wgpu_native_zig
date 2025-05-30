@@ -27,12 +27,12 @@ pub const RenderBundleEncoderProcs = struct {
     pub const DrawIndexedIndirect = *const fn(*RenderBundleEncoder, *Buffer, u64) callconv(.C) void;
     pub const DrawIndirect = *const fn(*RenderBundleEncoder, *Buffer, u64) callconv(.C) void;
     pub const Finish = *const fn(*RenderBundleEncoder, *const RenderBundleDescriptor) callconv(.C) ?*RenderBundle;
-    pub const InsertDebugMarker = *const fn(*RenderBundleEncoder, [*:0]const u8) callconv(.C) void;
+    pub const InsertDebugMarker = *const fn(*RenderBundleEncoder, StringView) callconv(.C) void;
     pub const PopDebugGroup = *const fn(*RenderBundleEncoder) callconv(.C) void;
-    pub const PushDebugGroup = *const fn(*RenderBundleEncoder, [*:0]const u8) callconv(.C) void;
+    pub const PushDebugGroup = *const fn(*RenderBundleEncoder, StringView) callconv(.C) void;
     pub const SetBindGroup = *const fn(*RenderBundleEncoder, u32, *BindGroup, usize, ?[*]const u32) callconv(.C) void;
     pub const SetIndexBuffer = *const fn(*RenderBundleEncoder, *Buffer, IndexFormat, u64, u64) callconv(.C) void;
-    pub const SetLabel = *const fn(*RenderBundleEncoder, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*RenderBundleEncoder, StringView) callconv(.C) void;
     pub const SetPipeline = *const fn(*RenderBundleEncoder, *RenderPipeline) callconv(.C) void;
     pub const SetVertexBuffer = *const fn(*RenderBundleEncoder, u32, *Buffer, u64, u64) callconv(.C) void;
     pub const AddRef = *const fn(*RenderBundleEncoder) callconv(.C) void;
@@ -47,12 +47,12 @@ extern fn wgpuRenderBundleEncoderDrawIndexed(render_bundle_encoder: *RenderBundl
 extern fn wgpuRenderBundleEncoderDrawIndexedIndirect(render_bundle_encoder: *RenderBundleEncoder, indirect_buffer: *Buffer, indirect_offset: u64) void;
 extern fn wgpuRenderBundleEncoderDrawIndirect(render_bundle_encoder: *RenderBundleEncoder, indirect_buffer: *Buffer, indirect_offset: u64) void;
 extern fn wgpuRenderBundleEncoderFinish(render_bundle_encoder: *RenderBundleEncoder, descriptor: *const RenderBundleDescriptor) ?*RenderBundle;
-extern fn wgpuRenderBundleEncoderInsertDebugMarker(render_bundle_encoder: *RenderBundleEncoder, marker_label: [*:0]const u8) void;
+extern fn wgpuRenderBundleEncoderInsertDebugMarker(render_bundle_encoder: *RenderBundleEncoder, marker_label: StringView) void;
 extern fn wgpuRenderBundleEncoderPopDebugGroup(render_bundle_encoder: *RenderBundleEncoder) void;
-extern fn wgpuRenderBundleEncoderPushDebugGroup(render_bundle_encoder: *RenderBundleEncoder, group_label: [*:0]const u8) void;
+extern fn wgpuRenderBundleEncoderPushDebugGroup(render_bundle_encoder: *RenderBundleEncoder, group_label: StringView) void;
 extern fn wgpuRenderBundleEncoderSetBindGroup(render_bundle_encoder: *RenderBundleEncoder, group_index: u32, group: *BindGroup, dynamic_offset_count: usize, dynamic_offsets: ?[*]const u32) void;
 extern fn wgpuRenderBundleEncoderSetIndexBuffer(render_bundle_encoder: *RenderBundleEncoder, buffer: *Buffer, format: IndexFormat, offset: u64, size: u64) void;
-extern fn wgpuRenderBundleEncoderSetLabel(render_bundle_encoder: *RenderBundleEncoder, label: ?[*:0]const u8) void;
+extern fn wgpuRenderBundleEncoderSetLabel(render_bundle_encoder: *RenderBundleEncoder, label: StringView) void;
 extern fn wgpuRenderBundleEncoderSetPipeline(render_bundle_encoder: *RenderBundleEncoder, pipeline: *RenderPipeline) void;
 extern fn wgpuRenderBundleEncoderSetVertexBuffer(render_bundle_encoder: *RenderBundleEncoder, slot: u32, buffer: *Buffer, offset: u64, size: u64) void;
 extern fn wgpuRenderBundleEncoderAddRef(render_bundle_encoder: *RenderBundleEncoder) void;
@@ -78,14 +78,14 @@ pub const RenderBundleEncoder = opaque {
     pub inline fn finish(self: *RenderBundleEncoder, descriptor: *const RenderBundleDescriptor) ?*RenderBundle {
         return wgpuRenderBundleEncoderFinish(self, descriptor);
     }
-    pub inline fn insertDebugMarker(self: *RenderBundleEncoder, marker_label: [*:0]const u8) void {
-        wgpuRenderBundleEncoderInsertDebugMarker(self, marker_label);
+    pub inline fn insertDebugMarker(self: *RenderBundleEncoder, marker_label: []const u8) void {
+        wgpuRenderBundleEncoderInsertDebugMarker(self, StringView.fromSlice(marker_label));
     }
     pub inline fn popDebugGroup(self: *RenderBundleEncoder) void {
         wgpuRenderBundleEncoderPopDebugGroup(self);
     }
-    pub inline fn pushDebugGroup(self: *RenderBundleEncoder, group_label: [*:0]const u8) void {
-        wgpuRenderBundleEncoderPushDebugGroup(self, group_label);
+    pub inline fn pushDebugGroup(self: *RenderBundleEncoder, group_label: []const u8) void {
+        wgpuRenderBundleEncoderPushDebugGroup(self, StringView.fromSlice(group_label));
     }
     pub inline fn setBindGroup(self: *RenderBundleEncoder, group_index: u32, group: *BindGroup, dynamic_offset_count: usize, dynamic_offsets: ?[*]const u32) void {
         wgpuRenderBundleEncoderSetBindGroup(self, group_index, group, dynamic_offset_count, dynamic_offsets);
@@ -93,8 +93,8 @@ pub const RenderBundleEncoder = opaque {
     pub inline fn setIndexBuffer(self: *RenderBundleEncoder, buffer: *Buffer, format: IndexFormat, offset: u64, size: u64) void {
         wgpuRenderBundleEncoderSetIndexBuffer(self, buffer, format, offset, size);
     }
-    pub inline fn setLabel(self: *RenderBundleEncoder, label: ?[*:0]const u8) void {
-        wgpuRenderBundleEncoderSetLabel(self, label);
+    pub inline fn setLabel(self: *RenderBundleEncoder, label: []const u8) void {
+        wgpuRenderBundleEncoderSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn setPipeline(self: *RenderBundleEncoder, pipeline: *RenderPipeline) void {
         wgpuRenderBundleEncoderSetPipeline(self, pipeline);
@@ -121,18 +121,18 @@ pub const RenderBundleDescriptor = extern struct {
 };
 
 pub const RenderBundleProcs = struct {
-    pub const SetLabel = *const fn(*RenderBundle, ?[*:0]const u8) callconv(.C) void;
+    pub const SetLabel = *const fn(*RenderBundle, StringView) callconv(.C) void;
     pub const AddRef = *const fn(*RenderBundle) callconv(.C) void;
     pub const Release = *const fn(*RenderBundle) callconv(.C) void;
 };
 
-extern fn wgpuRenderBundleSetLabel(render_bundle: *RenderBundle, label: ?[*:0]const u8) void;
+extern fn wgpuRenderBundleSetLabel(render_bundle: *RenderBundle, label: StringView) void;
 extern fn wgpuRenderBundleAddRef(render_bundle: *RenderBundle) void;
 extern fn wgpuRenderBundleRelease(render_bundle: *RenderBundle) void;
 
 pub const RenderBundle = opaque {
-    pub inline fn setLabel(self: *RenderBundle, label: ?[*:0]const u8) void {
-        wgpuRenderBundleSetLabel(self, label);
+    pub inline fn setLabel(self: *RenderBundle, label: []const u8) void {
+        wgpuRenderBundleSetLabel(self, StringView.fromSlice(label));
     }
     pub inline fn addRef(self: *RenderBundle) void {
         wgpuRenderBundleAddRef(self);
