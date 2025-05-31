@@ -3,18 +3,45 @@ const testing = std.testing;
 
 const wgpu = @import("wgpu-c");
 
-fn handle_request_adapter(_: wgpu.WGPURequestAdapterStatus, adapter: wgpu.WGPUAdapter, _: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void {
-    const ud: *wgpu.WGPUAdapter = @ptrCast(@alignCast(userdata));
-    ud.* = adapter.?;
+fn handleRequestAdapter(status: wgpu.WGPURequestAdapterStatus, adapter: wgpu.WGPUAdapter, _: wgpu.WGPUStringView, userdata1: ?*anyopaque, userdata2: ?*anyopaque) callconv(.C) void {
+    switch(status) {
+        wgpu.WGPURequestAdapterStatus_Success => {
+            const ud_adapter: *wgpu.WGPUAdapter = @ptrCast(@alignCast(userdata1));
+            ud_adapter.* = adapter;
+        },
+        else => {
+            std.log.err("adapter request failed", .{});
+        }
+    }
+    const completed: *bool = @ptrCast(@alignCast(userdata2));
+    completed.* = true;
 }
 
-fn handle_request_device(_: wgpu.WGPURequestDeviceStatus, device: wgpu.WGPUDevice, _: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void {
-    const ud: *wgpu.WGPUDevice = @ptrCast(@alignCast(userdata));
-    ud.* = device.?;
+fn handleRequestDevice(status: wgpu.WGPURequestDeviceStatus, device: wgpu.WGPUDevice, _: wgpu.WGPUStringView, userdata1: ?*anyopaque, userdata2: ?*anyopaque) callconv(.C) void {
+    switch(status) {
+        wgpu.WGPURequestDeviceStatus_Success => {
+            const ud_device: *wgpu.WGPUDevice = @ptrCast(@alignCast(userdata1));
+            ud_device.* = device;
+        },
+        else => {
+            std.log.err("device request failed", .{});
+        }
+    }
+    const completed: *bool = @ptrCast(@alignCast(userdata2));
+    completed.* = true;
 }
 
-fn handle_buffer_map(status: wgpu.WGPUBufferMapAsyncStatus, _: ?*anyopaque) callconv(.C) void {
+fn handleBufferMap(status: wgpu.WGPUMapAsyncStatus, _: wgpu.WGPUStringView, userdata1: ?*anyopaque, _: ?*anyopaque) callconv(.C) void {
     std.log.info("buffer_map status={x:.8}\n", .{status});
+    const completed: *bool = @ptrCast(@alignCast(userdata1));
+    completed.* = true;
+}
+
+fn waitForCompletion(instance: wgpu.WGPUInstance, complete: *bool) void {
+    wgpu.wgpuInstanceProcessEvents(instance);
+    while(!complete.*) {
+        wgpu.wgpuInstanceProcessEvents(instance);
+    }
 }
 
 fn compute_collatz() [4]u32 {
@@ -25,30 +52,61 @@ fn compute_collatz() [4]u32 {
     const instance = wgpu.wgpuCreateInstance(null);
     defer wgpu.wgpuInstanceRelease(instance);
 
+
     var adapter: wgpu.WGPUAdapter = null;
-    wgpu.wgpuInstanceRequestAdapter(instance, null, handle_request_adapter, @ptrCast(&adapter));
+    {
+        var request_complete = false;
+        _ = wgpu.wgpuInstanceRequestAdapter(instance, null, wgpu.WGPURequestAdapterCallbackInfo {
+            .nextInChain = null,
+            .mode = wgpu.WGPUCallbackMode_AllowProcessEvents,
+            .callback = handleRequestAdapter,
+            .userdata1 = @ptrCast(&adapter),
+            .userdata2 = @ptrCast(&request_complete),
+        });
+        waitForCompletion(instance, &request_complete);
+    }
     defer wgpu.wgpuAdapterRelease(adapter);
 
     var device: wgpu.WGPUDevice = null;
-    wgpu.wgpuAdapterRequestDevice(adapter.?, null, handle_request_device, @ptrCast(&device));
+    {
+        var request_complete = false;
+        _ = wgpu.wgpuAdapterRequestDevice(adapter.?, null, wgpu.WGPURequestDeviceCallbackInfo {
+            .nextInChain = null,
+            .mode = wgpu.WGPUCallbackMode_AllowProcessEvents,
+            .callback = handleRequestDevice,
+            .userdata1 = @ptrCast(&device),
+            .userdata2 = @ptrCast(&request_complete),
+        });
+        waitForCompletion(instance, &request_complete);
+    }
     defer wgpu.wgpuDeviceRelease(device);
 
     const queue = wgpu.wgpuDeviceGetQueue(device.?);
     defer wgpu.wgpuQueueRelease(queue);
 
+    const compute_shader = @embedFile("./compute.wgsl");
     const shader_module = wgpu.wgpuDeviceCreateShaderModule(device.?, &wgpu.WGPUShaderModuleDescriptor {
-        .label = "compute.wgsl",
-        .nextInChain = @ptrCast(&wgpu.WGPUShaderModuleWGSLDescriptor {
+        .label = wgpu.WGPUStringView {
+            .data = "compute.wgsl",
+            .length = wgpu.WGPU_STRLEN, // Treat as null-terminated string
+        },
+        .nextInChain = @ptrCast(&wgpu.WGPUShaderSourceWGSL {
             .chain = wgpu.WGPUChainedStruct {
-                .sType = wgpu.WGPUSType_ShaderModuleWGSLDescriptor,
+                .sType = wgpu.WGPUSType_ShaderSourceWGSL,
             },
-            .code = @embedFile("./compute.wgsl")
+            .code = wgpu.WGPUStringView {
+                .data = compute_shader.ptr,
+                .length = compute_shader.len,
+            },
         }),
     });
     defer wgpu.wgpuShaderModuleRelease(shader_module);
 
     const staging_buffer = wgpu.wgpuDeviceCreateBuffer(device.?, &wgpu.WGPUBufferDescriptor {
-        .label = "staging_buffer",
+        .label = wgpu.WGPUStringView {
+            .data = "staging_buffer",
+            .length = wgpu.WGPU_STRLEN,
+        },
         .usage = wgpu.WGPUBufferUsage_MapRead | wgpu.WGPUBufferUsage_CopyDst,
         .size = numbers_size,
         .mappedAtCreation = @as(u32, @intFromBool(false)),
@@ -56,7 +114,10 @@ fn compute_collatz() [4]u32 {
     defer wgpu.wgpuBufferRelease(staging_buffer);
 
     const storage_buffer = wgpu.wgpuDeviceCreateBuffer(device.?, &wgpu.WGPUBufferDescriptor {
-        .label = "storage_buffer",
+        .label = wgpu.WGPUStringView {
+            .data = "storage_buffer",
+            .length = wgpu.WGPU_STRLEN,
+        },
         .usage = wgpu.WGPUBufferUsage_Storage | wgpu.WGPUBufferUsage_CopyDst | wgpu.WGPUBufferUsage_CopySrc,
         .size = numbers_size,
         .mappedAtCreation = @as(u32, @intFromBool(false)),
@@ -64,10 +125,16 @@ fn compute_collatz() [4]u32 {
     defer wgpu.wgpuBufferRelease(storage_buffer);
 
     const compute_pipeline = wgpu.wgpuDeviceCreateComputePipeline(device.?, &wgpu.WGPUComputePipelineDescriptor {
-        .label = "compute_pipeline",
+        .label = wgpu.WGPUStringView {
+            .data = "compute_pipeline",
+            .length = wgpu.WGPU_STRLEN,
+        },
         .compute = wgpu.WGPUProgrammableStageDescriptor{
             .module = shader_module,
-            .entryPoint = "main",
+            .entryPoint = wgpu.WGPUStringView {
+                .data = "main",
+                .length = wgpu.WGPU_STRLEN,
+            },
         },
     });
     defer wgpu.wgpuComputePipelineRelease(compute_pipeline);
@@ -76,7 +143,10 @@ fn compute_collatz() [4]u32 {
     defer wgpu.wgpuBindGroupLayoutRelease(bind_group_layout);
 
     const bind_group = wgpu.wgpuDeviceCreateBindGroup(device.?, &wgpu.WGPUBindGroupDescriptor {
-        .label = "bind_group",
+        .label = wgpu.WGPUStringView {
+            .data = "bind_group",
+            .length = wgpu.WGPU_STRLEN,
+        },
         .layout = bind_group_layout,
         .entryCount = 1,
         .entries = &[_]wgpu.WGPUBindGroupEntry {
@@ -91,12 +161,18 @@ fn compute_collatz() [4]u32 {
     defer wgpu.wgpuBindGroupRelease(bind_group);
 
     const command_encoder = wgpu.wgpuDeviceCreateCommandEncoder(device.?, &wgpu.WGPUCommandEncoderDescriptor {
-        .label = "command_encoder",
+        .label = wgpu.WGPUStringView {
+            .data = "command_encoder",
+            .length = wgpu.WGPU_STRLEN,
+        },
     });
     defer wgpu.wgpuCommandEncoderRelease(command_encoder);
 
     const compute_pass_encoder = wgpu.wgpuCommandEncoderBeginComputePass(command_encoder, &wgpu.WGPUComputePassDescriptor {
-        .label = "compute_pass",
+        .label = wgpu.WGPUStringView {
+            .data = "compute_pass",
+            .length = wgpu.WGPU_STRLEN,
+        },
     });
 
     wgpu.wgpuComputePassEncoderSetPipeline(compute_pass_encoder, compute_pipeline);
@@ -110,15 +186,25 @@ fn compute_collatz() [4]u32 {
     wgpu.wgpuCommandEncoderCopyBufferToBuffer(command_encoder, storage_buffer, 0, staging_buffer, 0, numbers_size);
 
     const command_buffer = wgpu.wgpuCommandEncoderFinish(command_encoder, &wgpu.WGPUCommandBufferDescriptor {
-        .label = "command_buffer",
+        .label = wgpu.WGPUStringView {
+            .data = "command_buffer",
+            .length = wgpu.WGPU_STRLEN,
+        },
     });
     defer wgpu.wgpuCommandBufferRelease(command_buffer);
 
     wgpu.wgpuQueueWriteBuffer(queue, storage_buffer, 0, &numbers, numbers_size);
     wgpu.wgpuQueueSubmit(queue, 1, &command_buffer);
 
-    wgpu.wgpuBufferMapAsync(staging_buffer, wgpu.WGPUMapMode_Read, 0, numbers_size, handle_buffer_map, null);
-    _ = wgpu.wgpuDevicePoll(device.?, @as(u32, @intFromBool(true)), null);
+    var buffer_map_complete = false;
+    _ = wgpu.wgpuBufferMapAsync(staging_buffer, wgpu.WGPUMapMode_Read, 0, numbers_size, wgpu.WGPUBufferMapCallbackInfo {
+        .nextInChain = null,
+        .mode = wgpu.WGPUCallbackMode_AllowProcessEvents,
+        .callback = handleBufferMap,
+        .userdata1 = @ptrCast(&buffer_map_complete),
+        .userdata2 = null,
+    });
+    waitForCompletion(instance, &buffer_map_complete);
 
     const buf: [*]u32 = @ptrCast(@alignCast(wgpu.wgpuBufferGetMappedRange(staging_buffer, 0, numbers_size)));
     defer wgpu.wgpuBufferUnmap(staging_buffer);

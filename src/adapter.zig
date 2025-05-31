@@ -228,7 +228,7 @@ test "can request device" {
         .success => adapter_response.adapter,
         else => null,
     };
-    const device_response = adapter.?.requestDeviceSync(null, 200_000_000);
+    const device_response = adapter.?.requestDeviceSync(instance.?, null, 200_000_000);
     const device: ?*Device = switch(device_response.status) {
         .success => device_response.device,
         else => null
