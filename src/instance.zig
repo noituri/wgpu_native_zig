@@ -63,6 +63,22 @@ pub const Gles3MinorVersion = enum(u32) {
     version_2  = 0x00000003,
 };
 
+pub const DxcMaxShaderModel = enum(u32) {
+    dxc_max_shader_model_v6_0 = 0x00000000,
+    dxc_max_shader_model_v6_1 = 0x00000001,
+    dxc_max_shader_model_v6_2 = 0x00000002,
+    dxc_max_shader_model_v6_3 = 0x00000003,
+    dxc_max_shader_model_v6_4 = 0x00000004,
+    dxc_max_shader_model_v6_5 = 0x00000005,
+    dxc_max_shader_model_v6_6 = 0x00000006,
+    dxc_max_shader_model_v6_7 = 0x00000007,
+};
+
+pub const GLFenceBehaviour = enum(u32) {
+    gl_fence_behaviour_normal      = 0x00000000,
+    gl_fence_behaviour_auto_finish = 0x00000001,
+};
+
 pub const InstanceExtras = extern struct {
     chain: ChainedStruct = ChainedStruct {
         .s_type = SType.instance_extras,
@@ -71,8 +87,10 @@ pub const InstanceExtras = extern struct {
     flags: InstanceFlag,
     dx12_shader_compiler: Dx12Compiler,
     gles3_minor_version: Gles3MinorVersion,
+    gl_fence_behavior: GLFenceBehaviour,
     dxil_path: StringView = StringView {},
     dxc_path: StringView = StringView {},
+    dxc_max_shader_model: DxcMaxShaderModel,
 };
 
 pub const InstanceCapabilities = extern struct {

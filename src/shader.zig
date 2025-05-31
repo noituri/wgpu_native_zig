@@ -81,9 +81,9 @@ pub const ShaderDefine = extern struct {
     name: StringView,
     value: StringView,
 };
-pub const ShaderModuleGLSLDescriptor = extern struct {
+pub const ShaderSourceGLSL = extern struct {
     chain: ChainedStruct = ChainedStruct {
-        .s_type = SType.shader_module_glsl_descriptor,
+        .s_type = SType.shader_source_glsl,
     },
     stage: ShaderStage,
     code: StringView,
@@ -101,7 +101,7 @@ pub inline fn shaderModuleGLSLDescriptor(
     descriptor: ShaderModuleGLSLMergedDescriptor,
 ) ShaderModuleDescriptor {
     return ShaderModuleDescriptor {
-        .next_in_chain = @ptrCast(&ShaderModuleGLSLDescriptor {
+        .next_in_chain = @ptrCast(&ShaderSourceGLSL {
             .stage = descriptor.stage,
             .code = StringView.fromSlice(descriptor.code),
             .define_count = descriptor.define_count,

@@ -372,8 +372,8 @@ pub const Device = opaque {
     }
 
     // wgpu-native
-    pub inline fn poll(self: *Device, wait: bool, wrapped_submission_index: ?*const SubmissionIndex) bool {
-        return wgpuDevicePoll(self, @intFromBool(wait), wrapped_submission_index) != 0;
+    pub inline fn poll(self: *Device, wait: bool, submission_index: ?*const SubmissionIndex) bool {
+        return wgpuDevicePoll(self, @intFromBool(wait), submission_index) != 0;
     }
     pub inline fn createShaderModuleSpirV(self: *Device, descriptor: *const ShaderModuleDescriptorSpirV) ?*ShaderModule {
         return wgpuDeviceCreateShaderModuleSpirV(self, descriptor);
