@@ -109,9 +109,13 @@ pub const ComputePassEncoder = opaque {
     pub inline fn setBindGroup(self: *ComputePassEncoder, group_index: u32, group: *BindGroup, dynamic_offset_count: usize, dynamic_offsets: ?[*]const u32) void {
         wgpuComputePassEncoderSetBindGroup(self, group_index, group, dynamic_offset_count, dynamic_offsets);
     }
-    pub inline fn setLabel(self: *ComputePassEncoder, label: []const u8) void {
-        wgpuComputePassEncoderSetLabel(self, StringView.fromSlice(label));
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L51
+    // pub inline fn setLabel(self: *ComputePassEncoder, label: []const u8) void {
+    //     wgpuComputePassEncoderSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn setPipeline(self: *ComputePassEncoder, pipeline: *ComputePipeline) void {
         wgpuComputePassEncoderSetPipeline(self, pipeline);
     }
@@ -317,9 +321,13 @@ pub const RenderPassEncoder = opaque {
     pub inline fn setIndexBuffer(self: *RenderPassEncoder, buffer: *Buffer, format: IndexFormat, offset: u64, size: u64) void {
         wgpuRenderPassEncoderSetIndexBuffer(self, buffer, format, offset, size);
     }
-    pub inline fn setLabel(self: *RenderPassEncoder, label: []const u8) void {
-        wgpuRenderPassEncoderSetLabel(self, StringView.fromSlice(label));
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L153
+    // pub inline fn setLabel(self: *RenderPassEncoder, label: []const u8) void {
+    //     wgpuRenderPassEncoderSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn setPipeline(self: *RenderPassEncoder, pipeline: *RenderPipeline) void {
         wgpuRenderPassEncoderSetPipeline(self, pipeline);
     }
@@ -385,9 +393,12 @@ extern fn wgpuCommandBufferAddRef(command_buffer: *CommandBuffer) void;
 extern fn wgpuCommandBufferRelease(command_buffer: *CommandBuffer) void;
 
 pub const CommandBuffer = opaque {
-    pub inline fn setLabel(self: *CommandBuffer, label: []const u8) void {
-        wgpuCommandBufferSetLabel(self, StringView.fromSlice(label));
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L35
+    // pub inline fn setLabel(self: *CommandBuffer, label: []const u8) void {
+    //     wgpuCommandBufferSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *CommandBuffer) void {
         wgpuCommandBufferAddRef(self);
     }
@@ -469,9 +480,13 @@ pub const CommandEncoder = opaque {
     pub inline fn resolveQuerySet(self: *CommandEncoder, query_set: *QuerySet, first_query: u32, query_count: u32, destination: *Buffer, destination_offset: u64) void {
         wgpuCommandEncoderResolveQuerySet(self, query_set, first_query, query_count, destination, destination_offset);
     }
-    pub inline fn setLabel(self: *CommandEncoder, label: []const u8) void {
-        wgpuCommandEncoderSetLabel(self, StringView.fromSlice(label));
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L43
+    // pub inline fn setLabel(self: *CommandEncoder, label: []const u8) void {
+    //     wgpuCommandEncoderSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn writeTimestamp(self: *CommandEncoder, query_set: *QuerySet, query_index: u32) void {
         wgpuCommandEncoderWriteTimestamp(self, query_set, query_index);
     }

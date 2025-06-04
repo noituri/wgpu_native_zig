@@ -66,9 +66,12 @@ extern fn wgpuBindGroupLayoutAddRef(bind_group_layout: *BindGroupLayout) void;
 extern fn wgpuBindGroupLayoutRelease(bind_group_layout: *BindGroupLayout) void;
 
 pub const BindGroupLayout = opaque {
-    pub inline fn setLabel(self: *BindGroupLayout, label: []const u8) void {
-        wgpuBindGroupLayoutSetLabel(self, StringView.fromSlice(label));
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L17
+    // pub inline fn setLabel(self: *BindGroupLayout, label: []const u8) void {
+    //     wgpuBindGroupLayoutSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *BindGroupLayout) void {
         wgpuBindGroupLayoutAddRef(self);
     }
@@ -124,9 +127,12 @@ extern fn wgpuBindGroupAddRef(bind_group: *BindGroup) void;
 extern fn wgpuBindGroupRelease(bind_group: *BindGroup) void;
 
 pub const BindGroup = opaque {
-    pub inline fn setLabel(self: *BindGroup, label: []const u8) void {
-        wgpuBindGroupSetLabel(self, StringView.fromSlice(label));
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L9
+    // pub inline fn setLabel(self: *BindGroup, label: []const u8) void {
+    //     wgpuBindGroupSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *BindGroup) void {
         wgpuBindGroupAddRef(self);
     }

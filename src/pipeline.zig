@@ -66,9 +66,13 @@ extern fn wgpuPipelineLayoutAddRef(pipeline_layout: *PipelineLayout) void;
 extern fn wgpuPipelineLayoutRelease(pipeline_layout: *PipelineLayout) void;
 
 pub const PipelineLayout = opaque {
-    pub inline fn setLabel(self: *PipelineLayout, label: []const u8) void {
-        wgpuPipelineLayoutSetLabel(self, StringView.fromSlice(label));
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L116
+    // pub inline fn setLabel(self: *PipelineLayout, label: []const u8) void {
+    //     wgpuPipelineLayoutSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *PipelineLayout) void {
         wgpuPipelineLayoutAddRef(self);
     }
@@ -142,9 +146,13 @@ pub const ComputePipeline = opaque {
     pub inline fn getBindGroupLayout(self: *ComputePipeline, group_index: u32) ?*BindGroupLayout {
         return wgpuComputePipelineGetBindGroupLayout(self, group_index);
     }
-    pub inline fn setLabel(self: *ComputePipeline, label: []const u8) void {
-        wgpuComputePipelineSetLabel(self, StringView.fromSlice(label));
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L59
+    // pub inline fn setLabel(self: *ComputePipeline, label: []const u8) void {
+    //     wgpuComputePipelineSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *ComputePipeline) void {
         wgpuComputePipelineAddRef(self);
     }
@@ -432,9 +440,13 @@ pub const RenderPipeline = opaque {
     pub inline fn getBindGroupLayout(self: *RenderPipeline, group_index: u32) ?*BindGroupLayout {
         return wgpuRenderPipelineGetBindGroupLayout(self, group_index);
     }
-    pub inline fn setLabel(self: *RenderPipeline, label: []const u8) void {
-        wgpuRenderPipelineSetLabel(self, StringView.fromSlice(label));
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L161
+    // pub inline fn setLabel(self: *RenderPipeline, label: []const u8) void {
+    //     wgpuRenderPipelineSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *RenderPipeline) void {
         wgpuRenderPipelineAddRef(self);
     }

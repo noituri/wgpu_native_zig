@@ -164,9 +164,12 @@ extern fn wgpuTextureViewAddRef(texture_view: *TextureView) void;
 extern fn wgpuTextureViewRelease(texture_view: *TextureView) void;
 
 pub const TextureView = opaque {
-    pub inline fn setLabel(self: *TextureView, label: []const u8) void {
-        wgpuTextureViewSetLabel(self, StringView.fromSlice(label));
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L216
+    // pub inline fn setLabel(self: *TextureView, label: []const u8) void {
+    //     wgpuTextureViewSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *TextureView) void {
         wgpuTextureViewAddRef(self);
     }
@@ -313,9 +316,13 @@ pub const Texture = opaque {
     pub inline fn getWidth(self: *Texture) u32 {
         return wgpuTextureGetWidth(self);
     }
-    pub inline fn setLabel(self: *Texture, label: []const u8) void {
-        wgpuTextureSetLabel(self, StringView.fromSlice(label));
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L208
+    // pub inline fn setLabel(self: *Texture, label: []const u8) void {
+    //     wgpuTextureSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *Texture) void {
         wgpuTextureAddRef(self);
     }

@@ -134,9 +134,11 @@ pub const SupportedWGSLLanguageFeatures = extern struct {
     feature_count: usize,
     features: [*]const WGSLLanguageFeatureName,
 
-    pub inline fn freeMembers(self: SupportedWGSLLanguageFeatures) void {
-        wgpuSupportedWGSLLanguageFeaturesFreeMembers(self);
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L193
+    // pub inline fn freeMembers(self: SupportedWGSLLanguageFeatures) void {
+    //     wgpuSupportedWGSLLanguageFeaturesFreeMembers(self);
+    // }
 };
 
 pub const InstanceProcs = struct {
@@ -226,13 +228,17 @@ pub const Instance = opaque {
         return wgpuInstanceCreateSurface(self, descriptor);
     }
 
-    pub inline fn getWGSLLanguageFeatures(self: *Instance, features: *SupportedWGSLLanguageFeatures) Status {
-        return wgpuInstanceGetWGSLLanguageFeatures(self, features);
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L100
+    // pub inline fn getWGSLLanguageFeatures(self: *Instance, features: *SupportedWGSLLanguageFeatures) Status {
+    //     return wgpuInstanceGetWGSLLanguageFeatures(self, features);
+    // }
 
-    pub inline fn hasWGSLLanguageFeature(self: *Instance, feature: WGSLLanguageFeatureName) bool {
-        return wgpuInstanceHasWGSLLanguageFeature(self, feature) != 0;
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L108
+    // pub inline fn hasWGSLLanguageFeature(self: *Instance, feature: WGSLLanguageFeatureName) bool {
+    //     return wgpuInstanceHasWGSLLanguageFeature(self, feature) != 0;
+    // }
 
     // Processes asynchronous events on this Instance, calling any callbacks for asynchronous operations created with `CallbackMode.allow_process_events`.
     pub inline fn processEvents(self: *Instance) void {
@@ -279,10 +285,12 @@ pub const Instance = opaque {
         return wgpuInstanceRequestAdapter(self, options, callback_info);
     }
 
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L224
     // Wait for at least one Future in `futures` to complete, and call callbacks of the respective completed asynchronous operations.
-    pub inline fn waitAny(self: *Instance, future_count: usize, futures: ?[*] FutureWaitInfo, timeout_ns: u64) WaitStatus {
-        return wgpuInstanceWaitAny(self, future_count, futures, timeout_ns);
-    }
+    // pub inline fn waitAny(self: *Instance, future_count: usize, futures: ?[*] FutureWaitInfo, timeout_ns: u64) WaitStatus {
+    //     return wgpuInstanceWaitAny(self, future_count, futures, timeout_ns);
+    // }
 
     pub inline fn addRef(self: *Instance) void {
         wgpuInstanceAddRef(self);

@@ -135,9 +135,11 @@ pub const Buffer = opaque {
         return wgpuBufferGetConstMappedRange(self, offset, size);
     }
 
-    pub inline fn getMapState(self: *Buffer) BufferMapState {
-        return wgpuBufferGetMapState(self);
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L25
+    // pub inline fn getMapState(self: *Buffer) BufferMapState {
+    //     return wgpuBufferGetMapState(self);
+    // }
 
     // offset
     // Byte offset relative to the beginning of the buffer.
@@ -167,9 +169,12 @@ pub const Buffer = opaque {
         return wgpuBufferMapAsync(self, mode, offset, size, callback_info);
     }
 
-    pub inline fn setLabel(self: *Buffer, label: []const u8) void {
-        wgpuBufferSetLabel(self, StringView.fromSlice(label));
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L30
+    // pub inline fn setLabel(self: *Buffer, label: []const u8) void {
+    //     wgpuBufferSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn unmap(self: *Buffer) void {
         wgpuBufferUnmap(self);
     }

@@ -176,12 +176,18 @@ extern fn wgpuShaderModuleAddRef(shader_module: *ShaderModule) void;
 extern fn wgpuShaderModuleRelease(shader_module: *ShaderModule) void;
 
 pub const ShaderModule = opaque {
-    pub inline fn getCompilationInfo(self: *ShaderModule, callback_info: CompilationInfoCallbackInfo) Future {
-        return wgpuShaderModuleGetCompilationInfo(self, callback_info);
-    }
-    pub inline fn setLabel(self: *ShaderModule, label: []const u8) void {
-        wgpuShaderModuleSetLabel(self, StringView.fromSlice(label));
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L177
+    // pub inline fn getCompilationInfo(self: *ShaderModule, callback_info: CompilationInfoCallbackInfo) Future {
+    //     return wgpuShaderModuleGetCompilationInfo(self, callback_info);
+    // }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L185
+    // pub inline fn setLabel(self: *ShaderModule, label: []const u8) void {
+    //     wgpuShaderModuleSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *ShaderModule) void {
         wgpuShaderModuleAddRef(self);
     }

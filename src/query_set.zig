@@ -74,9 +74,13 @@ pub const QuerySet = opaque {
     pub inline fn getType(self: *QuerySet) QueryType {
         return wgpuQuerySetGetType(self);
     }
-    pub inline fn setLabel(self: *QuerySet, label: []const u8) void {
-        wgpuQuerySetSetLabel(self, StringView.fromSlice(label));
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L124
+    // pub inline fn setLabel(self: *QuerySet, label: []const u8) void {
+    //     wgpuQuerySetSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *QuerySet) void {
         wgpuQuerySetAddRef(self);
     }

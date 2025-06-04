@@ -405,9 +405,11 @@ pub const Surface = opaque {
         return wgpuSurfacePresent(self);
     }
 
-    pub inline fn setLabel(self: *Surface, label: []const u8) void {
-        wgpuSurfaceSetLabel(self, StringView.fromSlice(label));
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L200
+    // pub inline fn setLabel(self: *Surface, label: []const u8) void {
+    //     wgpuSurfaceSetLabel(self, StringView.fromSlice(label));
+    // }
 
     // Removes the configuration for `surface`.
     pub inline fn unconfigure(self: *Surface) void {

@@ -68,9 +68,13 @@ pub const Queue = opaque {
     pub inline fn onSubmittedWorkDone(self: *Queue, callback_info: QueueWorkDoneCallbackInfo) Future {
         return wgpuQueueOnSubmittedWorkDone(self, callback_info);
     }
-    pub inline fn setLabel(self: *Queue, label: []const u8) void {
-        wgpuQueueSetLabel(self, StringView.fromSlice(label));
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L132
+    // pub inline fn setLabel(self: *Queue, label: []const u8) void {
+    //     wgpuQueueSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn submit(self: *Queue, commands: []const *const CommandBuffer) void {
         wgpuQueueSubmit(self, commands.len, commands.ptr);
     }

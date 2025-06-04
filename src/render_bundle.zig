@@ -93,9 +93,13 @@ pub const RenderBundleEncoder = opaque {
     pub inline fn setIndexBuffer(self: *RenderBundleEncoder, buffer: *Buffer, format: IndexFormat, offset: u64, size: u64) void {
         wgpuRenderBundleEncoderSetIndexBuffer(self, buffer, format, offset, size);
     }
-    pub inline fn setLabel(self: *RenderBundleEncoder, label: []const u8) void {
-        wgpuRenderBundleEncoderSetLabel(self, StringView.fromSlice(label));
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L145
+    // pub inline fn setLabel(self: *RenderBundleEncoder, label: []const u8) void {
+    //     wgpuRenderBundleEncoderSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn setPipeline(self: *RenderBundleEncoder, pipeline: *RenderPipeline) void {
         wgpuRenderBundleEncoderSetPipeline(self, pipeline);
     }
@@ -131,9 +135,12 @@ extern fn wgpuRenderBundleAddRef(render_bundle: *RenderBundle) void;
 extern fn wgpuRenderBundleRelease(render_bundle: *RenderBundle) void;
 
 pub const RenderBundle = opaque {
-    pub inline fn setLabel(self: *RenderBundle, label: []const u8) void {
-        wgpuRenderBundleSetLabel(self, StringView.fromSlice(label));
-    }
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L137
+    // pub inline fn setLabel(self: *RenderBundle, label: []const u8) void {
+    //     wgpuRenderBundleSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *RenderBundle) void {
         wgpuRenderBundleAddRef(self);
     }

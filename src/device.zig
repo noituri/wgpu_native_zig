@@ -303,9 +303,13 @@ pub const Device = opaque {
     pub inline fn createComputePipeline(self: *Device, descriptor: *const ComputePipelineDescriptor) ?*ComputePipeline {
         return wgpuDeviceCreateComputePipeline(self, descriptor);
     }
-    pub inline fn createComputePipelineAsync(self: *Device, descriptor: *const ComputePipelineDescriptor, callback_info: CreateComputePipelineAsyncCallbackInfo) Future {
-        return wgpuDeviceCreateComputePipelineAsync(self, descriptor, callback_info);
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L67
+    // pub inline fn createComputePipelineAsync(self: *Device, descriptor: *const ComputePipelineDescriptor, callback_info: CreateComputePipelineAsyncCallbackInfo) Future {
+    //     return wgpuDeviceCreateComputePipelineAsync(self, descriptor, callback_info);
+    // }
+
     pub inline fn createPipelineLayout(self: *Device, descriptor: *const PipelineLayoutDescriptor) ?*PipelineLayout {
         return wgpuDeviceCreatePipelineLayout(self, descriptor);
     }
@@ -318,9 +322,13 @@ pub const Device = opaque {
     pub inline fn createRenderPipeline(self: *Device, descriptor: *const RenderPipelineDescriptor) ?*RenderPipeline {
         return wgpuDeviceCreateRenderPipeline(self, descriptor);
     }
-    pub inline fn createRenderPipelineAsync(self: *Device, descriptor: *const RenderPipelineDescriptor, callback_info: CreateRenderPipelineAsyncCallbackInfo) Future {
-        return wgpuDeviceCreateRenderPipelineAsync(self, descriptor, callback_info);
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L76
+    // pub inline fn createRenderPipelineAsync(self: *Device, descriptor: *const RenderPipelineDescriptor, callback_info: CreateRenderPipelineAsyncCallbackInfo) Future {
+    //     return wgpuDeviceCreateRenderPipelineAsync(self, descriptor, callback_info);
+    // }
+
     pub inline fn createSampler(self: *Device, descriptor: *const SamplerDescriptor) ?*Sampler {
         return wgpuDeviceCreateSampler(self, descriptor);
     }
@@ -333,9 +341,13 @@ pub const Device = opaque {
     pub inline fn destroy(self: *Device) void {
         wgpuDeviceDestroy(self);
     }
-    pub inline fn getAdapterInfo(self: *Device) AdapterInfo {
-        return wgpuDeviceGetAdapterInfo(self);
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L85
+    // pub inline fn getAdapterInfo(self: *Device) AdapterInfo {
+    //     return wgpuDeviceGetAdapterInfo(self);
+    // }
+
     pub inline fn getFeatures(self: *Device, features: *SupportedFeatures) void {
         wgpuDeviceGetFeatures(self, features);
     }
@@ -343,10 +355,12 @@ pub const Device = opaque {
         return wgpuDeviceGetLimits(self, limits);
     }
 
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L90
     // Returns the Future for the device-lost event of the device.
-    pub inline fn getLostFuture(self: *Device) Future {
-        return wgpuDeviceGetLostFuture(self);
-    }
+    // pub inline fn getLostFuture(self: *Device) Future {
+    //     return wgpuDeviceGetLostFuture(self);
+    // }
 
     pub inline fn getQueue(self: *Device) ?*Queue {
         return wgpuDeviceGetQueue(self);
@@ -361,9 +375,13 @@ pub const Device = opaque {
     pub inline fn pushErrorScope(self: *Device, filter: ErrorFilter) void {
         wgpuDevicePushErrorScope(self, filter);
     }
-    pub inline fn setLabel(self: *Device, label: []const u8) void {
-        wgpuDeviceSetLabel(self, StringView.fromSlice(label));
-    }
+
+    // Unimplemented as of wgpu-native v25.0.2.1,
+    // see https://github.com/gfx-rs/wgpu-native/blob/d8238888998db26ceab41942f269da0fa32b890c/src/unimplemented.rs#L95
+    // pub inline fn setLabel(self: *Device, label: []const u8) void {
+    //     wgpuDeviceSetLabel(self, StringView.fromSlice(label));
+    // }
+
     pub inline fn addRef(self: *Device) void {
         wgpuDeviceAddRef(self);
     }
