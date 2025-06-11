@@ -11,11 +11,16 @@ fn link_windows_system_libraries(comptime T: type, mod: *T, is_gnu: bool) void {
         // For gnu, the linker needs the d3dcompiler dll since it can't find a suitable static lib
         // (I'd guess it tries to search for something like "libd3dcompiler.a" instead of "d3dcompiler.lib").
         linkSystemLibrary(mod, "d3dcompiler_47", .{});
+
+        // This seems to have something to do with the windows-result crate in wgpu-native's dependencies
+        linkSystemLibrary(mod, "api-ms-win-core-winrt-error-l1-1-0", .{});
     } else {
         linkSystemLibrary(mod, "d3dcompiler", .{});
 
         // GetClientRect is unresolved unless we link this for msvc
         linkSystemLibrary(mod, "user32", .{});
+
+        linkSystemLibrary(mod, "RuntimeObject", .{});
     }
     linkSystemLibrary(mod, "opengl32", .{});
     linkSystemLibrary(mod, "gdi32", .{});
@@ -24,13 +29,12 @@ fn link_windows_system_libraries(comptime T: type, mod: *T, is_gnu: bool) void {
     linkSystemLibrary(mod, "OleAut32", .{});
     linkSystemLibrary(mod, "Ole32", .{});
 
-    // Apparetly these four are needed because of rust stdlib
-    // https://github.com/gfx-rs/wgpu-native/issues/263
-    // Not sure why I don't get link errors for ntdll stuff despite that issue, or why I DO get link errors for gdi32.
+    // Apparently these are needed because of rust stdlib
     linkSystemLibrary(mod, "ws2_32", .{});
-    linkSystemLibrary(mod, "advapi32", .{});
     linkSystemLibrary(mod, "userenv", .{});
-    linkSystemLibrary(mod, "bcrypt", .{});
+
+    // Needed by windows-rs (wgpu-native dependency)
+    linkSystemLibrary(mod, "propsys", .{});
 }
 
 fn link_mac_frameworks(mod: *std.Build.Step.Compile) void {
@@ -220,6 +224,14 @@ fn dynamic_link(context: *const WGPUBuildContext, c: *std.Build.Step.Compile, cm
     cmd.addPathDir(context.install_lib_dir);
 }
 
+fn handle_rt(context: *const WGPUBuildContext, exe: *std.Build.Step.Compile) void {
+    if (context.is_windows and context.target.result.abi == .msvc) {
+        // We get duplicate symbol errors at link-time if we don't disable these;
+        exe.bundle_compiler_rt = false;
+        exe.bundle_ubsan_rt = false;
+    }
+}
+
 fn triangle_example(b: *std.Build, context: *const WGPUBuildContext) void {
     const bmp_mod = b.createModule(.{
         .root_source_file = b.path("examples/bmp.zig"),
@@ -236,6 +248,7 @@ fn triangle_example(b: *std.Build, context: *const WGPUBuildContext) void {
         .name = "triangle-example",
         .root_module = triangle_example_exe_mod,
     });
+    handle_rt(context, triangle_example_exe);
 
     const run_triangle_cmd = b.addRunArtifact(triangle_example_exe);
 
@@ -277,6 +290,7 @@ fn unit_tests(b: *std.Build, context: *const WGPUBuildContext) void {
             .name = test_name,
             .root_module = test_mod,
         });
+        handle_rt(context, t);
         if (context.libwgpu_path != null) {
             t.addObjectFile(context.libwgpu_path.?);
         }
@@ -320,6 +334,7 @@ fn compute_tests(b: *std.Build, context: *const WGPUBuildContext) void {
         .name = "compute-test",
         .root_module = compute_test_mod,
     });
+    handle_rt(context, compute_test);
 
     const run_compute_test = b.addRunArtifact(compute_test);
 
@@ -333,6 +348,7 @@ fn compute_tests(b: *std.Build, context: *const WGPUBuildContext) void {
         .name = "compute-test-c",
         .root_module = compute_test_c_mod,
     });
+    handle_rt(context, compute_test_c);
 
     const run_compute_test_c = b.addRunArtifact(compute_test_c);
 

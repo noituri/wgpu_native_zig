@@ -59,6 +59,15 @@ const wgpu_native_dep = b.dependency("wgpu_native_zig", .{
   .target = target
 });
 ```
+
+When using static linking with MSVC, you might encounter duplicate symbol errors. If so, try
+```zig
+if (target.result.abi == .msvc) {
+  // "exe" here is the *std.Build.Step.Compile from b.addExecutable() (or b.addTest())
+  exe.bundle_compiler_rt = false;
+  exe.bundle_ubsan_rt = false;
+}
+```
 An example of using `wgpu-native-zig` with static linking on Windows can be found at [wgpu-native-zig-windows-test](https://github.com/bronter/wgpu-native-zig-windows-test).
 
 ### Dynamic linking
