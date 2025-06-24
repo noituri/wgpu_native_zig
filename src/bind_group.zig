@@ -5,15 +5,19 @@ const SType = _chained_struct.SType;
 const _buffer = @import("buffer.zig");
 const Buffer = _buffer.Buffer;
 const BufferBindingLayout = _buffer.BufferBindingLayout;
+const BufferBindingType = _buffer.BufferBindingType;
 
 const _sampler = @import("sampler.zig");
 const Sampler = _sampler.Sampler;
 const SamplerBindingLayout = _sampler.SamplerBindingLayout;
+const SamplerBindingType = _sampler.SamplerBindingType;
 
 const _texture = @import("texture.zig");
 const TextureView = _texture.TextureView;
 const TextureBindingLayout = _texture.TextureBindingLayout;
 const StorageTextureBindingLayout = _texture.StorageTextureBindingLayout;
+const StorageTextureAccess = _texture.StorageTextureAccess;
+const SampleType = _texture.SampleType;
 
 const ShaderStage = @import("shader.zig").ShaderStage;
 
@@ -34,10 +38,18 @@ pub const BindGroupLayoutEntry = extern struct {
     next_in_chain: ?*const ChainedStruct = null,
     binding: u32,
     visibility: ShaderStage,
-    buffer: BufferBindingLayout = .{},
-    sampler: SamplerBindingLayout = .{},
-    texture: TextureBindingLayout = .{},
-    storage_texture: StorageTextureBindingLayout = .{},
+    buffer: BufferBindingLayout = BufferBindingLayout {
+        .@"type" = BufferBindingType.binding_not_used,
+    },
+    sampler: SamplerBindingLayout = SamplerBindingLayout {
+        .@"type" = SamplerBindingType.binding_not_used,
+    },
+    texture: TextureBindingLayout = TextureBindingLayout {
+        .sample_type = SampleType.binding_not_used,
+    },
+    storage_texture: StorageTextureBindingLayout = StorageTextureBindingLayout {
+        .access = StorageTextureAccess.binding_not_used,
+    },
 
     pub inline fn withCount(self: BindGroupLayoutEntry, count: u32) BindGroupLayoutEntry {
         var bgle = self;
