@@ -210,7 +210,7 @@ pub const EnumerateAdapterOptions = extern struct {
 
 // wgpu-native
 extern fn wgpuGenerateReport(instance: *Instance, report: *GlobalReport) void;
-extern fn wgpuInstanceEnumerateAdapters(instance: *Instance, options: ?*EnumerateAdapterOptions, adapters: ?[*]Adapter) usize;
+extern fn wgpuInstanceEnumerateAdapters(instance: *Instance, options: ?*EnumerateAdapterOptions, adapters: ?[*]*Adapter) usize;
 
 pub const Instance = opaque {
     // This is a global function, but it creates an instance so I put it here.
@@ -305,7 +305,7 @@ pub const Instance = opaque {
     pub inline fn generateReport(self: *Instance, report: *GlobalReport) void {
         wgpuGenerateReport(self, report);
     }
-    pub inline fn enumerateAdapters(self: *Instance, options: ?*EnumerateAdapterOptions, adapters: ?[*]Adapter) usize {
+    pub inline fn enumerateAdapters(self: *Instance, options: ?*EnumerateAdapterOptions, adapters: ?[*]*Adapter) usize {
         return wgpuInstanceEnumerateAdapters(self, options, adapters);
     }
 };
