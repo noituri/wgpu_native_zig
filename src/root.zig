@@ -1,4 +1,4 @@
-pub const _misc = @import("misc.zig");
+const _misc = @import("misc.zig");
 pub const U32_MAX = _misc.U32_MAX;
 pub const U64_MAX = _misc.U64_MAX;
 pub const USIZE_MAX = _misc.USIZE_MAX;
@@ -16,7 +16,7 @@ pub const getVersion = _misc.getVersion;
 pub const WGPU_STRLEN = _misc.WGPU_STRLEN;
 pub const StringView = _misc.StringView;
 
-pub const _adapter = @import("adapter.zig");
+const _adapter = @import("adapter.zig");
 pub const PowerPreference = _adapter.PowerPreference;
 pub const AdapterType = _adapter.AdapterType;
 pub const BackendType = _adapter.BackendType;
@@ -31,7 +31,7 @@ pub const AdapterInfo = _adapter.AdapterInfo;
 pub const AdapterProcs = _adapter.AdapterProcs;
 pub const Adapter = _adapter.Adapter;
 
-pub const _bind_group = @import("bind_group.zig");
+const _bind_group = @import("bind_group.zig");
 pub const BindGroupLayoutEntryExtras = _bind_group.BindGroupLayoutEntryExtras;
 pub const BindGroupLayoutEntry = _bind_group.BindGroupLayoutEntry;
 pub const BindGroupLayoutDescriptor = _bind_group.BindGroupLayoutDescriptor;
@@ -43,7 +43,7 @@ pub const BindGroupDescriptor = _bind_group.BindGroupDescriptor;
 pub const BindGroupProcs = _bind_group.BindGroupProcs;
 pub const BindGroup = _bind_group.BindGroup;
 
-pub const _buffer = @import("buffer.zig");
+const _buffer = @import("buffer.zig");
 pub const WGPU_WHOLE_MAP_SIZE = _buffer.WGPU_WHOLE_MAP_SIZE;
 pub const BufferBindingType = _buffer.BufferBindingType;
 pub const BufferBindingLayout = _buffer.BufferBindingLayout;
@@ -59,12 +59,12 @@ pub const BufferDescriptor = _buffer.BufferDescriptor;
 pub const BufferProcs = _buffer.BufferProcs;
 pub const Buffer = _buffer.Buffer;
 
-pub const _chained_struct = @import("chained_struct.zig");
+const _chained_struct = @import("chained_struct.zig");
 pub const SType = _chained_struct.SType;
 pub const ChainedStruct = _chained_struct.ChainedStruct;
 pub const ChainedStructOut = _chained_struct.ChainedStructOut;
 
-pub const _command_encoder = @import("command_encoder.zig");
+const _command_encoder = @import("command_encoder.zig");
 pub const WGPU_DEPTH_SLICE_UNDEFINED = _command_encoder.WGPU_DEPTH_SLICE_UNDEFINED;
 pub const WGPU_QUERY_SET_INDEX_UNDEFINED = _command_encoder.WGPU_QUERY_SET_INDEX_UNDEFINED;
 pub const TimestampWrites = _command_encoder.TimestampWrites;
@@ -88,7 +88,7 @@ pub const CommandBuffer = _command_encoder.CommandBuffer;
 pub const CommandEncoderProcs = _command_encoder.CommandEncoderProcs;
 pub const CommandEncoder = _command_encoder.CommandEncoder;
 
-pub const _device = @import("device.zig");
+const _device = @import("device.zig");
 pub const DeviceLostReason = _device.DeviceLostReason;
 pub const DeviceLostCallbackInfo = _device.DeviceLostCallbackInfo;
 pub const DeviceLostCallback = _device.DeviceLostCallback;
@@ -109,7 +109,7 @@ pub const PopErrorScopeCallbackInfo = _device.PopErrorScopeCallbackInfo;
 pub const DeviceProcs = _device.DeviceProcs;
 pub const Device = _device.Device;
 
-pub const _instance = @import("instance.zig");
+const _instance = @import("instance.zig");
 pub const InstanceBackend = _instance.InstanceBackend;
 pub const InstanceBackends = _instance.InstanceBackends;
 pub const InstanceFlag = _instance.InstanceFlag;
@@ -131,19 +131,19 @@ pub const GlobalReport = _instance.GlobalReport;
 pub const EnumerateAdapterOptions = _instance.EnumerateAdapterOptions;
 pub const Instance = _instance.Instance;
 
-pub const _limits = @import("limits.zig");
+const _limits = @import("limits.zig");
 pub const WGPU_LIMIT_U32_UNDEFINED = _limits.WGPU_LIMIT_U32_UNDEFINED;
 pub const WGPU_LIMIT_U64_UNDEFINED = _limits.WGPU_LIMIT_U64_UNDEFINED;
 pub const Limits = _limits.Limits;
 pub const WGPUNativeLimits = _limits.WGPUNativeLimits;
 
-pub const _log = @import("log.zig");
+const _log = @import("log.zig");
 pub const LogLevel = _log.LogLevel;
 pub const LogCallback = _log.LogCallback;
 pub const setLogCallback = _log.setLogCallback;
 pub const setLogLevel = _log.setLogLevel;
 
-pub const _pipeline = @import("pipeline.zig");
+const _pipeline = @import("pipeline.zig");
 pub const PushConstantRange = _pipeline.PushConstantRange;
 pub const PipelineLayoutExtras = _pipeline.PipelineLayoutExtras;
 pub const PipelineLayoutDescriptor = _pipeline.PipelineLayoutDescriptor;
@@ -184,7 +184,7 @@ pub const RenderPipeline = _pipeline.RenderPipeline;
 pub const CreateRenderPipelineAsyncCallbackInfo = _pipeline.CreateRenderPipelineAsyncCallbackInfo;
 pub const CreateRenderPipelineAsyncCallback = _pipeline.CreateRenderPipelineAsyncCallback;
 
-pub const _query_set = @import("query_set.zig");
+const _query_set = @import("query_set.zig");
 pub const QueryType = _query_set.QueryType;
 pub const PipelineStatisticName = _query_set.PipelineStatisticName;
 pub const QuerySetDescriptorExtras = _query_set.QuerySetDescriptorExtras;
@@ -192,7 +192,7 @@ pub const QuerySetDescriptor = _query_set.QuerySetDescriptor;
 pub const QuerySetProcs = _query_set.QuerySetProcs;
 pub const QuerySet = _query_set.QuerySet;
 
-pub const _queue = @import("queue.zig");
+const _queue = @import("queue.zig");
 pub const SubmissionIndex = _queue.SubmissionIndex;
 pub const QueueDescriptor = _queue.QueueDescriptor;
 pub const WorkDoneStatus = _queue.WorkDoneStatus;
@@ -201,7 +201,7 @@ pub const QueueWorkDoneCallback = _queue.QueueWorkDoneCallback;
 pub const QueueProcs = _queue.QueueProcs;
 pub const Queue = _queue.Queue;
 
-pub const _render_bundle = @import("render_bundle.zig");
+const _render_bundle = @import("render_bundle.zig");
 pub const RenderBundleEncoderDescriptor = _render_bundle.RenderBundleEncoderDescriptor;
 pub const RenderBundleEncoderProcs = _render_bundle.RenderBundleEncoderProcs;
 pub const RenderBundleEncoder = _render_bundle.RenderBundleEncoder;
@@ -209,7 +209,7 @@ pub const RenderBundleDescriptor = _render_bundle.RenderBundleDescriptor;
 pub const RenderBundleProcs = _render_bundle.RenderBundleProcs;
 pub const RenderBundle = _render_bundle.RenderBundle;
 
-pub const _sampler = @import("sampler.zig");
+const _sampler = @import("sampler.zig");
 pub const SamplerBindingType = _sampler.SamplerBindingType;
 pub const SamplerBindingLayout = _sampler.SamplerBindingLayout;
 pub const AddressMode = _sampler.AddressMode;
@@ -219,7 +219,7 @@ pub const SamplerDescriptor = _sampler.SamplerDescriptor;
 pub const SamplerProcs = _sampler.SamplerProcs;
 pub const Sampler = _sampler.Sampler;
 
-pub const _shader = @import("shader.zig");
+const _shader = @import("shader.zig");
 pub const ShaderStage = _shader.ShaderStage;
 pub const ShaderStages = _shader.ShaderStages;
 pub const ShaderModuleDescriptor = _shader.ShaderModuleDescriptor;
@@ -243,7 +243,7 @@ pub const CompilationInfoCallbackInfo = _shader.CompilationInfoCallbackInfo;
 pub const ShaderModuleProcs = _shader.ShaderModuleProcs;
 pub const ShaderModule = _shader.ShaderModule;
 
-pub const _surface = @import("surface.zig");
+const _surface = @import("surface.zig");
 pub const SurfaceDescriptor = _surface.SurfaceDescriptor;
 pub const SurfaceSourceAndroidNativeWindow = _surface.SurfaceSourceAndroidNativeWindow;
 pub const MergedSurfaceDescriptorFromAndroidWindow = _surface.MergedSurfaceDescriptorFromAndroidWindow;
@@ -274,7 +274,7 @@ pub const SurfaceTexture = _surface.SurfaceTexture;
 pub const SurfaceProcs = _surface.SurfaceProcs;
 pub const Surface = _surface.Surface;
 
-pub const _texture = @import("texture.zig");
+const _texture = @import("texture.zig");
 pub const WGPU_ARRAY_LAYER_COUNT_UNDEFINED = _texture.WGPU_ARRAY_LAYER_COUNT_UNDEFINED;
 pub const WGPU_MIP_LEVEL_COUNT_UNDEFINED = _texture.WGPU_MIP_LEVEL_COUNT_UNDEFINED;
 pub const WGPU_COPY_STRIDE_UNDEFINED = _texture.WGPU_COPY_STRIDE_UNDEFINED;
@@ -300,7 +300,7 @@ pub const TexelCopyTextureInfo = _texture.TexelCopyTextureInfo;
 pub const TexelCopyBufferLayout = _texture.TexelCopyBufferLayout;
 pub const TexelCopyBufferInfo = _texture.TexelCopyBufferInfo;
 
-pub const _async = @import("async.zig");
+const _async = @import("async.zig");
 pub const CallbackMode = _async.CallbackMode;
 pub const WaitStatus = _async.WaitStatus;
 pub const Future = _async.Future;
