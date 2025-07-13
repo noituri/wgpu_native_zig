@@ -125,13 +125,13 @@
             .lazy = true,
         },
         .wgpu_linux_x86_64_debug = .{
-            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v25.0.2.1/wgpu-linux-x86_64-debug.zip",
-            .hash = "N-V-__8AAHS_-BNtAmT4hK9geZG361RETmD2lG0fk2gyDYh-",
+            .url = "https://github.com/noituri/wgpu-native/releases/download/shader_int64/wgpu_linux_x86_64_debug.zip",
+            .hash = "N-V-__8AAK802RPkzYUTqR842UyGJaIBsjfruYfV3HVqNpV2",
             .lazy = true,
         },
         .wgpu_linux_x86_64_release = .{
-            .url = "https://github.com/gfx-rs/wgpu-native/releases/download/v25.0.2.1/wgpu-linux-x86_64-release.zip",
-            .hash = "N-V-__8AALK1sQPqMGESXUOHBpzwDj1GMf_nYBdfbjewJ9kH",
+            .url = "https://github.com/noituri/wgpu-native/releases/download/shader_int64/wgpu_linux_x86_64_release.zip",
+            .hash = "N-V-__8AAN8krgOalaOzTvY4QQPzrFBVagJU38cEaz_NQaz7",
             .lazy = true,
         },
         .wgpu_macos_aarch64_debug = .{
