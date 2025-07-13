@@ -75,6 +75,7 @@ pub const FeatureName = enum(u32) {
     subgroup_barrier                                              = 0x00030023,
     timestamp_query_inside_encoders                               = 0x00030024,
     timestamp_query_inside_passes                                 = 0x00030025,
+    shader_int64                                                  = 0x00030026,
 };
 
 pub const SupportedFeaturesProcs = struct {
